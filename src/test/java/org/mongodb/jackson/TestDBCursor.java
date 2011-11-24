@@ -5,6 +5,7 @@ import com.mongodb.DB;
 import com.mongodb.Mongo;
 import org.junit.After;
 import org.junit.Before;
+import org.mongodb.jackson.mock.MockObject;
 
 /**
  * Test the Json DB Cursor

@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mongodb.jackson.mock.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

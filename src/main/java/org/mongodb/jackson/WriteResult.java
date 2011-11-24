@@ -69,7 +69,7 @@ public class WriteResult<T> {
         if (dbObjects.length == 0) {
             throw new MongoException("No objects to return");
         }
-        return dbObjects[0].get("_id");
+        return jacksonDBCollection.convertFromDbId(dbObjects[0].get("_id"));
     }
 
     /**
@@ -81,7 +81,7 @@ public class WriteResult<T> {
     public Object[] getSavedIds() {
         Object[] ids = new Object[dbObjects.length];
         for (int i = 0; i < dbObjects.length; i++) {
-            ids[i] = dbObjects[i];
+            ids[i] = jacksonDBCollection.convertFromDbId(dbObjects[i].get("_id"));
         }
         return ids;
     }

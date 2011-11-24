@@ -1,17 +1,17 @@
 package org.mongodb.jackson;
 
 import com.mongodb.*;
-import org.bson.types.ObjectId;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.jackson.mock.MockObject;
+import org.mongodb.jackson.mock.MockObjectObjectIdAnnotated;
 
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 public class TestJacksonDBCollection {
@@ -113,12 +113,11 @@ public class TestJacksonDBCollection {
 
     @Test
     public void testRemoveByJavaObjectWithId() {
-        coll.insert(new MockObject("ten", 10));
-        coll.insert(new MockObject("ten", 100));
-        MockObject object = coll.insert(new MockObject("twenty", 20)).getSavedObject();
+        coll.insert(new MockObject("id1", "ten", 10));
+        coll.insert(new MockObject("id2", "ten", 100));
+        MockObject object = coll.insert(new MockObject("id3", "twenty", 20)).getSavedObject();
 
-        MockObject toRemove = new MockObject();
-        toRemove._id = object._id;
+        MockObject toRemove = new MockObject("id3", null, null);
 
         coll.remove(toRemove);
 
@@ -129,15 +128,42 @@ public class TestJacksonDBCollection {
 
     @Test
     public void testRemoveById() {
-        coll.insert(new MockObject("ten", 10));
-        coll.insert(new MockObject("ten", 100));
-        MockObject object = coll.insert(new MockObject("twenty", 20)).getSavedObject();
+        coll.insert(new MockObject("id1", "ten", 10));
+        coll.insert(new MockObject("id2", "ten", 100));
+        MockObject object = coll.insert(new MockObject("id3", "twenty", 20)).getSavedObject();
 
-
-        coll.removeById(object._id);
+        coll.removeById("id3");
 
         List<MockObject> remaining = coll.find().toArray();
         assertThat(remaining, Matchers.hasSize(2));
         assertThat(remaining, not(contains(object)));
+    }
+
+    @Test
+    public void testRemoveByIdWithObjectId() {
+        JacksonDBCollection<MockObjectObjectIdAnnotated> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
+        Object id = coll.insert(new MockObjectObjectIdAnnotated()).getSavedId();
+        coll.insert(new MockObjectObjectIdAnnotated());
+        assertThat(coll.find().toArray(), hasSize(2));
+        coll.removeById(id);
+        List<MockObjectObjectIdAnnotated> results = coll.find().toArray();
+        assertThat(results, hasSize(1));
+        assertThat(results.get(0)._id, not(equalTo(id)));
+    }
+
+    @Test
+    public void testFindOneByIdWithObjectId() {
+        JacksonDBCollection<MockObjectObjectIdAnnotated> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
+        MockObjectObjectIdAnnotated object = new MockObjectObjectIdAnnotated();
+        WriteResult<MockObjectObjectIdAnnotated> writeResult = coll.insert(object);
+        assertThat(writeResult.getDbObject().get("_id"), instanceOf(org.bson.types.ObjectId.class));
+        Object id = writeResult.getSavedId();
+        assertThat(id, instanceOf(String.class));
+        MockObjectObjectIdAnnotated result = coll.findOneById(id);
+        assertThat(result._id, equalTo(id));
+    }
+
+    private <T> JacksonDBCollection<T> getCollectionAs(Class<T> type) {
+        return JacksonDBCollection.wrap(coll.getDbCollection(), type);
     }
 }

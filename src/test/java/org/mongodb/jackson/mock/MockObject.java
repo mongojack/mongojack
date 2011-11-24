@@ -1,4 +1,4 @@
-package org.mongodb.jackson;
+package org.mongodb.jackson.mock;
 
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
@@ -26,6 +26,12 @@ public class MockObject {
     public MockEmbeddedObject object;
 
     public MockObject() {
+    }
+
+    public MockObject(String _id, String string, Integer integer) {
+        this._id = _id;
+        this.string = string;
+        this.integer = integer;
     }
 
     public MockObject(String string, Integer integer) {

@@ -1,4 +1,4 @@
-package org.mongodb.jackson;
+package org.mongodb.jackson.mock;
 
 import org.bson.types.ObjectId;
 

@@ -1,13 +1,17 @@
 package org.mongodb.jackson;
 
 import com.mongodb.*;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.deser.BeanDeserializer;
+import org.codehaus.jackson.map.deser.SettableBeanProperty;
+import org.codehaus.jackson.map.type.SimpleType;
 import org.mongodb.jackson.internal.BSONObjectGenerator;
 import org.mongodb.jackson.internal.BSONObjectTraversingParser;
+import org.mongodb.jackson.internal.IdHandler;
 import org.mongodb.jackson.internal.ObjectIdModule;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,12 +30,33 @@ public class JacksonDBCollection<T> {
     private final DBCollection dbCollection;
     private final Class<T> type;
     private final ObjectMapper objectMapper;
-
+    private final IdHandler idHandler;
 
     protected JacksonDBCollection(DBCollection dbCollection, Class<T> type, ObjectMapper objectMapper) {
         this.dbCollection = dbCollection;
         this.type = type;
         this.objectMapper = objectMapper;
+        IdHandler idHandler = null;
+        // We want to find how we should serialize the ID, in case it is passed to us
+        try {
+            JsonDeserializer deserializer = objectMapper.getDeserializerProvider().findTypedValueDeserializer(
+                    objectMapper.copyDeserializationConfig(), SimpleType.construct(type), null);
+            if (deserializer instanceof BeanDeserializer) {
+                Iterator<SettableBeanProperty> iter = ((BeanDeserializer) deserializer).properties();
+                while (iter.hasNext()) {
+                    BeanProperty beanProperty = iter.next();
+                    if (beanProperty.getName().equals("_id")) {
+                        idHandler = IdHandler.create(beanProperty);
+                    }
+                }
+            }
+        } catch (JsonMappingException e) {
+            // Ignore, it can be thrown later
+        }
+        if (idHandler == null) {
+            idHandler = new IdHandler.NoopIdHandler("_id");
+        }
+        this.idHandler = idHandler;
     }
 
     /**
@@ -289,7 +314,7 @@ public class JacksonDBCollection<T> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T> updateById(Object id, T object) throws MongoException {
-        return update(new BasicDBObjectBuilder().add("_id", id).get(), convertToDbObject(object), false, false);
+        return update(createIdQuery(id), convertToDbObject(object), false, false);
     }
 
     /**
@@ -384,7 +409,7 @@ public class JacksonDBCollection<T> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T> removeById(Object id) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.remove(new BasicDBObjectBuilder().add("_id", id).get()));
+        return new WriteResult<T>(this, dbCollection.remove(createIdQuery(id)));
     }
 
     /**
@@ -649,7 +674,7 @@ public class JacksonDBCollection<T> {
      * @throws MongoException If an error occurred
      */
     public T findOneById(Object id) throws MongoException {
-        return convertFromDbObject(dbCollection.findOne(id));
+        return convertFromDbObject(dbCollection.findOne(idHandler.toDbId(id)));
     }
 
     /**
@@ -1230,6 +1255,13 @@ public class JacksonDBCollection<T> {
         return dbCollection.getDBEncoderFactory();
     }
 
+    DBObject createIdQuery(Object object) {
+        return new BasicDBObjectBuilder().add(idHandler.getIdProperty(), idHandler.toDbId(object)).get();
+    }
+
+    Object convertFromDbId(Object object) {
+        return idHandler.fromDbId(object);
+    }
 
     DBObject convertToDbObject(T object) throws MongoException {
         if (object == null) {
