@@ -11,6 +11,6 @@ import java.lang.annotation.Target;
  * in the database as an ObjectId.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
 public @interface ObjectId {
 }

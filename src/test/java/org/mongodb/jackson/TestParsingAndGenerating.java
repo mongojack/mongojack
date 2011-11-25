@@ -17,7 +17,6 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 
 /**
  * Test for parser and generator
@@ -25,14 +24,14 @@ import static org.junit.Assert.assertThat;
 public class TestParsingAndGenerating {
     private Mongo mongo;
     private DB db;
-    private JacksonDBCollection<MockObject> coll;
+    private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
         mongo = new Mongo();
         db = mongo.getDB("test");
         coll = JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
-                MockObject.class);
+                MockObject.class, String.class);
     }
 
     @After
@@ -44,7 +43,7 @@ public class TestParsingAndGenerating {
     @Test
     public void testInsertNoId() {
         MockObject object = new MockObject();
-        WriteResult<MockObject> result = coll.insert(object);
+        WriteResult<MockObject, String> result = coll.insert(object);
         assertNotNull(result.getSavedObject()._id);
     }
 
@@ -214,7 +213,7 @@ public class TestParsingAndGenerating {
         MockObjectIntId object = new MockObjectIntId();
         object._id = 123456;
 
-        JacksonDBCollection<MockObjectIntId> coll = getCollectionAs(MockObjectIntId.class);
+        JacksonDBCollection<MockObjectIntId, Integer> coll = getCollectionAs(MockObjectIntId.class);
 
         coll.insert(object);
         MockObjectIntId result = coll.findOne();
@@ -225,9 +224,9 @@ public class TestParsingAndGenerating {
     public void testObjectId() {
         MockObjectObjectId object = new MockObjectObjectId();
 
-        JacksonDBCollection<MockObjectObjectId> coll = getCollectionAs(MockObjectObjectId.class);
+        JacksonDBCollection<MockObjectObjectId, ObjectId> coll = getCollectionAs(MockObjectObjectId.class);
 
-        ObjectId id = (ObjectId) coll.insert(object).getSavedId();
+        ObjectId id = coll.insert(object).getSavedId();
         MockObjectObjectId result = coll.findOneById(id);
         assertEquals(id, result._id);
     }
@@ -236,10 +235,10 @@ public class TestParsingAndGenerating {
     public void testObjectIdAnnotationOnString() {
         MockObjectObjectIdAnnotated object = new MockObjectObjectIdAnnotated();
 
-        JacksonDBCollection<MockObjectObjectIdAnnotated> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
+        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
 
         ObjectId id = (ObjectId) coll.insert(object).getDbObject().get("_id");
-        MockObjectObjectIdAnnotated result = coll.findOneById(id);
+        MockObjectObjectIdAnnotated result = coll.findOneById(id.toString());
         assertEquals(id.toString(), result._id);
     }
 
@@ -249,15 +248,15 @@ public class TestParsingAndGenerating {
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object.someId = id.toByteArray();
 
-        JacksonDBCollection<MockObjectObjectIdAnnotated> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
+        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
 
         MockObjectObjectIdAnnotated saved = coll.insert(object).getSavedObject();
-        MockObjectObjectIdAnnotated result = coll.findOneById(new ObjectId(saved._id));
+        MockObjectObjectIdAnnotated result = coll.findOneById(saved._id);
         assertEquals(id, new ObjectId(result.someId));
     }
 
-    private <T> JacksonDBCollection<T> getCollectionAs(Class<T> type) {
-        return JacksonDBCollection.wrap(coll.getDbCollection(), type);
+    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type) {
+        return (JacksonDBCollection) JacksonDBCollection.wrap(coll.getDbCollection(), type);
     }
 
 }

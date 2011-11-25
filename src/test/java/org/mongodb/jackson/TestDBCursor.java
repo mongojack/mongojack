@@ -22,14 +22,14 @@ import static org.junit.Assert.assertThat;
 public class TestDBCursor {
     private Mongo mongo;
     private DB db;
-    private JacksonDBCollection<MockObject> coll;
+    private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
         mongo = new Mongo();
         db = mongo.getDB("test");
         coll = JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
-                MockObject.class);
+                MockObject.class, String.class);
     }
 
     @After

@@ -17,14 +17,14 @@ import static org.junit.Assert.assertThat;
 public class TestJacksonDBCollection {
     private Mongo mongo;
     private DB db;
-    private JacksonDBCollection<MockObject> coll;
+    private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
         mongo = new Mongo();
         db = mongo.getDB("test");
         coll = JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
-                MockObject.class);
+                MockObject.class, String.class);
     }
 
     @After
@@ -141,8 +141,8 @@ public class TestJacksonDBCollection {
 
     @Test
     public void testRemoveByIdWithObjectId() {
-        JacksonDBCollection<MockObjectObjectIdAnnotated> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
-        Object id = coll.insert(new MockObjectObjectIdAnnotated()).getSavedId();
+        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
+        String id = coll.insert(new MockObjectObjectIdAnnotated()).getSavedId();
         coll.insert(new MockObjectObjectIdAnnotated());
         assertThat(coll.find().toArray(), hasSize(2));
         coll.removeById(id);
@@ -153,17 +153,17 @@ public class TestJacksonDBCollection {
 
     @Test
     public void testFindOneByIdWithObjectId() {
-        JacksonDBCollection<MockObjectObjectIdAnnotated> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
+        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
         MockObjectObjectIdAnnotated object = new MockObjectObjectIdAnnotated();
-        WriteResult<MockObjectObjectIdAnnotated> writeResult = coll.insert(object);
+        WriteResult<MockObjectObjectIdAnnotated, String> writeResult = coll.insert(object);
         assertThat(writeResult.getDbObject().get("_id"), instanceOf(org.bson.types.ObjectId.class));
-        Object id = writeResult.getSavedId();
+        String id = writeResult.getSavedId();
         assertThat(id, instanceOf(String.class));
         MockObjectObjectIdAnnotated result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
     }
 
-    private <T> JacksonDBCollection<T> getCollectionAs(Class<T> type) {
-        return JacksonDBCollection.wrap(coll.getDbCollection(), type);
+    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type) {
+        return (JacksonDBCollection) JacksonDBCollection.wrap(coll.getDbCollection(), type);
     }
 }

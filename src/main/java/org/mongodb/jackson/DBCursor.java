@@ -32,14 +32,14 @@ import java.util.List;
  */
 public class DBCursor<T> implements Iterator<T>, Iterable<T> {
     private final com.mongodb.DBCursor cursor;
-    private final JacksonDBCollection<T> jacksonDBCollection;
+    private final JacksonDBCollection<T, ?> jacksonDBCollection;
 
     // For use in iterator mode
     private T current;
     // For use in array mode
     private final List<T> all = new ArrayList<T>();
 
-    public DBCursor(JacksonDBCollection<T> jacksonDBCollection, com.mongodb.DBCursor cursor) {
+    public DBCursor(JacksonDBCollection<T, ?> jacksonDBCollection, com.mongodb.DBCursor cursor) {
         this.jacksonDBCollection = jacksonDBCollection;
         this.cursor = cursor;
     }

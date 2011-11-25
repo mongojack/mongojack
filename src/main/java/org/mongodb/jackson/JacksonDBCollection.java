@@ -2,23 +2,16 @@ package org.mongodb.jackson;
 
 import com.mongodb.*;
 import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.deser.BeanDeserializer;
-import org.codehaus.jackson.map.deser.SettableBeanProperty;
-import org.codehaus.jackson.map.type.SimpleType;
-import org.mongodb.jackson.internal.BSONObjectGenerator;
-import org.mongodb.jackson.internal.BSONObjectTraversingParser;
-import org.mongodb.jackson.internal.IdHandler;
-import org.mongodb.jackson.internal.ObjectIdModule;
+import org.mongodb.jackson.internal.*;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated classes.  It provides a very thin wrapper
  * over an existing DBCollection.
  */
-public class JacksonDBCollection<T> {
+public class JacksonDBCollection<T, K> {
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper();
 
@@ -29,37 +22,22 @@ public class JacksonDBCollection<T> {
 
     private final DBCollection dbCollection;
     private final Class<T> type;
+    private final Class<K> keyType;
     private final ObjectMapper objectMapper;
-    private final IdHandler idHandler;
+    private final IdHandler<K, Object> idHandler;
 
-    protected JacksonDBCollection(DBCollection dbCollection, Class<T> type, ObjectMapper objectMapper) {
+    protected JacksonDBCollection(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
         this.dbCollection = dbCollection;
         this.type = type;
+        this.keyType = keyType;
         this.objectMapper = objectMapper;
-        IdHandler idHandler = null;
+        IdHandler<K, Object> idHandler = null;
         // We want to find how we should serialize the ID, in case it is passed to us
         try {
-            JsonDeserializer deserializer = objectMapper.getDeserializerProvider().findTypedValueDeserializer(
-                    objectMapper.copyDeserializationConfig(), SimpleType.construct(type), null);
-            if (deserializer instanceof BeanDeserializer) {
-                Iterator<SettableBeanProperty> iter = ((BeanDeserializer) deserializer).properties();
-                while (iter.hasNext()) {
-                    BeanProperty beanProperty = iter.next();
-                    if (beanProperty.getAnnotation(Id.class) != null
-                            || beanProperty.getAnnotation(javax.persistence.Id.class) != null
-                            || beanProperty.getName().equals("_id")) {
-                        idHandler = IdHandler.create(beanProperty);
-                        break;
-                    }
-                }
-            }
+            this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type, "_id", keyType);
         } catch (JsonMappingException e) {
-            // Ignore, it can be thrown later
+            throw new MongoJsonMappingException("Unable to introspect class", e);
         }
-        if (idHandler == null) {
-            idHandler = new IdHandler.NoopIdHandler("_id");
-        }
-        this.idHandler = idHandler;
     }
 
     /**
@@ -69,8 +47,36 @@ public class JacksonDBCollection<T> {
      * @param type         The type of objects to deserialise to
      * @return The wrapped collection
      */
-    public static <T> JacksonDBCollection<T> wrap(DBCollection dbCollection, Class<T> type) {
-        return new JacksonDBCollection<T>(dbCollection, type, DEFAULT_OBJECT_MAPPER);
+    public static <T> JacksonDBCollection<T, Object> wrap(DBCollection dbCollection, Class<T> type) {
+        return new JacksonDBCollection<T, Object>(dbCollection, type, Object.class, DEFAULT_OBJECT_MAPPER);
+    }
+
+    /**
+     * Wraps a DB collection in a JacksonDBCollection
+     *
+     * @param dbCollection The DB collection to wrap
+     * @param type         The type of objects to deserialise to
+     * @param keyType      The type of the objects key
+     * @return The wrapped collection
+     */
+    public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType) {
+        return new JacksonDBCollection<T, K>(dbCollection, type, keyType, DEFAULT_OBJECT_MAPPER);
+    }
+
+    /**
+     * Wraps a DB collection in a JacksonDBCollection
+     *
+     * @param dbCollection The DB collection to wrap
+     * @param type         The type of objects to deserialise to
+     * @param keyType      The type of the objects key
+     * @param view         The JSON view to use for serialisation
+     * @return The wrapped collection
+     */
+    public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.withModule(ObjectIdModule.INSTANCE);
+        objectMapper.getSerializationConfig().withView(view);
+        return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
     }
 
     /**
@@ -81,8 +87,8 @@ public class JacksonDBCollection<T> {
      * @param objectMapper The ObjectMapper
      * @return The wrapped collection
      */
-    public static <T> JacksonDBCollection<T> wrap(DBCollection dbCollection, Class<T> type, ObjectMapper objectMapper) {
-        return new JacksonDBCollection<T>(dbCollection, type, objectMapper);
+    public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
+        return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
     }
 
     /**
@@ -103,9 +109,9 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> insert(T object) throws MongoException {
+    public WriteResult<T, K> insert(T object) throws MongoException {
         DBObject dbObject = convertToDbObject(object);
-        return new WriteResult<T>(this, dbCollection.insert(dbObject), dbObject);
+        return new WriteResult<T, K>(this, dbCollection.insert(dbObject), dbObject);
     }
 
     /**
@@ -118,9 +124,9 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> insert(T object, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> insert(T object, WriteConcern concern) throws MongoException {
         DBObject dbObject = convertToDbObject(object);
-        return new WriteResult<T>(this, dbCollection.insert(dbObject, concern), dbObject);
+        return new WriteResult<T, K>(this, dbCollection.insert(dbObject, concern), dbObject);
     }
 
     /**
@@ -132,9 +138,9 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> insert(T... objects) throws MongoException {
+    public WriteResult<T, K> insert(T... objects) throws MongoException {
         DBObject[] dbObjects = convertToDbObjects(objects);
-        return new WriteResult<T>(this, dbCollection.insert(dbObjects), dbObjects);
+        return new WriteResult<T, K>(this, dbCollection.insert(dbObjects), dbObjects);
     }
 
 
@@ -148,9 +154,9 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> insert(WriteConcern concern, T... objects) throws MongoException {
+    public WriteResult<T, K> insert(WriteConcern concern, T... objects) throws MongoException {
         DBObject[] dbObjects = convertToDbObjects(objects);
-        return new WriteResult<T>(this, dbCollection.insert(concern, dbObjects), dbObjects);
+        return new WriteResult<T, K>(this, dbCollection.insert(concern, dbObjects), dbObjects);
     }
 
     /**
@@ -163,7 +169,7 @@ public class JacksonDBCollection<T> {
      * @throws MongoException If an error occurred
      */
     @SuppressWarnings({"unchecked"})
-    public WriteResult<T> insert(List<T> list) throws MongoException {
+    public WriteResult<T, K> insert(List<T> list) throws MongoException {
         return insert(list.toArray((T[]) new Object[list.size()]));
     }
 
@@ -178,7 +184,7 @@ public class JacksonDBCollection<T> {
      * @throws MongoException If an error occurred
      */
     @SuppressWarnings({"unchecked"})
-    public WriteResult<T> insert(List<T> list, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> insert(List<T> list, WriteConcern concern) throws MongoException {
         return insert(concern, list.toArray((T[]) new Object[list.size()]));
     }
 
@@ -195,8 +201,8 @@ public class JacksonDBCollection<T> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.update(query, object, upsert, multi, concern));
+    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(query, object, upsert, multi, concern));
     }
 
     /**
@@ -212,7 +218,7 @@ public class JacksonDBCollection<T> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
         return update(convertToDbObject(query), convertToDbObject(object), upsert, multi, concern);
     }
 
@@ -230,8 +236,8 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.update(query, object, upsert, multi, concern, encoder));
+    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(query, object, upsert, multi, concern, encoder));
     }
 
     /**
@@ -248,7 +254,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
+    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
         return update(convertToDbObject(query), convertToDbObject(object), upsert, multi, concern, encoder);
     }
 
@@ -263,7 +269,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(DBObject query, DBObject object, boolean upsert, boolean multi)
+    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi)
             throws MongoException {
         return update(query, object, upsert, multi, getWriteConcern());
     }
@@ -279,7 +285,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(T query, T object, boolean upsert, boolean multi)
+    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi)
             throws MongoException {
         return update(query, object, upsert, multi, getWriteConcern());
     }
@@ -292,7 +298,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(DBObject query, DBObject object) throws MongoException {
+    public WriteResult<T, K> update(DBObject query, DBObject object) throws MongoException {
         return update(query, object, false, false);
     }
 
@@ -304,7 +310,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> update(T query, T object) throws MongoException {
+    public WriteResult<T, K> update(T query, T object) throws MongoException {
         return update(query, object, false, false);
     }
 
@@ -316,7 +322,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> updateById(Object id, T object) throws MongoException {
+    public WriteResult<T, K> updateById(K id, T object) throws MongoException {
         return update(createIdQuery(id), convertToDbObject(object), false, false);
     }
 
@@ -328,7 +334,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> updateMulti(DBObject query, DBObject object) throws MongoException {
+    public WriteResult<T, K> updateMulti(DBObject query, DBObject object) throws MongoException {
         return update(query, object, false, true);
     }
 
@@ -340,7 +346,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> updateMulti(T query, T object) throws MongoException {
+    public WriteResult<T, K> updateMulti(T query, T object) throws MongoException {
         return update(query, object, false, true);
     }
 
@@ -353,8 +359,8 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> remove(DBObject object, WriteConcern concern) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.remove(object, concern));
+    public WriteResult<T, K> remove(DBObject object, WriteConcern concern) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(object, concern));
     }
 
     /**
@@ -365,7 +371,7 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> remove(T object, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> remove(T object, WriteConcern concern) throws MongoException {
         return remove(convertToDbObject(object), concern);
     }
 
@@ -378,8 +384,8 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> remove(DBObject object, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.remove(object, concern, encoder));
+    public WriteResult<T, K> remove(DBObject object, WriteConcern concern, DBEncoder encoder) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(object, concern, encoder));
     }
 
     /**
@@ -389,8 +395,8 @@ public class JacksonDBCollection<T> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> remove(DBObject object) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.remove(object));
+    public WriteResult<T, K> remove(DBObject object) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(object));
     }
 
     /**
@@ -400,7 +406,7 @@ public class JacksonDBCollection<T> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> remove(T object) throws MongoException {
+    public WriteResult<T, K> remove(T object) throws MongoException {
         return remove(convertToDbObject(object));
     }
 
@@ -411,8 +417,8 @@ public class JacksonDBCollection<T> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> removeById(Object id) throws MongoException {
-        return new WriteResult<T>(this, dbCollection.remove(createIdQuery(id)));
+    public WriteResult<T, K> removeById(K id) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(createIdQuery(id)));
     }
 
     /**
@@ -676,7 +682,7 @@ public class JacksonDBCollection<T> {
      * @return The object
      * @throws MongoException If an error occurred
      */
-    public T findOneById(Object id) throws MongoException {
+    public T findOneById(K id) throws MongoException {
         return convertFromDbObject(dbCollection.findOne(idHandler.toDbId(id)));
     }
 
@@ -755,7 +761,7 @@ public class JacksonDBCollection<T> {
      *               will add <code>_id</code> field to jo if needed
      * @return The result
      */
-    public final WriteResult<T> save(T object) {
+    public final WriteResult<T, K> save(T object) {
         return save(object, getWriteConcern());
     }
 
@@ -767,9 +773,9 @@ public class JacksonDBCollection<T> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T> save(T object, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> save(T object, WriteConcern concern) throws MongoException {
         DBObject dbObject = convertToDbObject(object);
-        return new WriteResult<T>(this, dbCollection.save(dbObject, concern), dbObject);
+        return new WriteResult<T, K>(this, dbCollection.save(dbObject, concern), dbObject);
     }
 
     /**
@@ -917,7 +923,7 @@ public class JacksonDBCollection<T> {
      * @return the new collection
      * @throws MongoException If an error occurred
      */
-    public JacksonDBCollection<T> rename(String newName) throws MongoException {
+    public JacksonDBCollection<T, K> rename(String newName) throws MongoException {
         return rename(newName, false);
     }
 
@@ -929,8 +935,8 @@ public class JacksonDBCollection<T> {
      * @return the new collection
      * @throws MongoException If an error occurred
      */
-    public JacksonDBCollection<T> rename(String newName, boolean dropTarget) throws MongoException {
-        return JacksonDBCollection.wrap(dbCollection.rename(newName, dropTarget), type, objectMapper);
+    public JacksonDBCollection<T, K> rename(String newName, boolean dropTarget) throws MongoException {
+        return JacksonDBCollection.wrap(dbCollection.rename(newName, dropTarget), type, keyType, objectMapper);
     }
 
     /**
@@ -1121,8 +1127,8 @@ public class JacksonDBCollection<T> {
      * @param type The type of the collection
      * @return the matching collection
      */
-    public JacksonDBCollection<T> getCollection(String n, Class<T> type) {
-        return wrap(getDB().getCollection(getName() + "." + n), type, objectMapper);
+    public <S, L> JacksonDBCollection<S, L> getCollection(String n, Class<S> type, Class<L> keyType) {
+        return wrap(getDB().getCollection(getName() + "." + n), type, keyType, objectMapper);
     }
 
     /**
@@ -1258,11 +1264,11 @@ public class JacksonDBCollection<T> {
         return dbCollection.getDBEncoderFactory();
     }
 
-    DBObject createIdQuery(Object object) {
-        return new BasicDBObjectBuilder().add(idHandler.getIdProperty(), idHandler.toDbId(object)).get();
+    DBObject createIdQuery(K object) {
+        return new BasicDBObjectBuilder().add("_id", idHandler.toDbId(object)).get();
     }
 
-    Object convertFromDbId(Object object) {
+    K convertFromDbId(Object object) {
         return idHandler.fromDbId(object);
     }
 

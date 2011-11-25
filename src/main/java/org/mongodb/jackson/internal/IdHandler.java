@@ -6,24 +6,14 @@ import org.codehaus.jackson.map.BeanProperty;
 /**
  * Handler for ids.  Converts them between the objects type and the database type
  */
-public abstract class IdHandler {
-    private final String idProperty;
-
-    protected IdHandler(String idProperty) {
-        this.idProperty = idProperty;
-    }
-
-    public String getIdProperty() {
-        return idProperty;
-    }
-
+public abstract class IdHandler<K, D> {
     /**
      * Convert the given database id to the java objects id
      *
      * @param dbId The database id to convert from
      * @return The converted id
      */
-    public abstract Object fromDbId(Object dbId);
+    public abstract K fromDbId(D dbId);
 
     /**
      * Convert the given java object id to the databases id
@@ -31,76 +21,68 @@ public abstract class IdHandler {
      * @param id The java object id to convert from
      * @return The converted database id
      */
-    public abstract Object toDbId(Object id);
+    public abstract D toDbId(K id);
 
-    public static IdHandler create(BeanProperty beanProperty) {
-        if (beanProperty.getAnnotation(org.mongodb.jackson.ObjectId.class) != null) {
+    public static <K> IdHandler<K, ?> create(BeanProperty beanProperty, Class<K> keyType) {
+        if (beanProperty != null && beanProperty.getAnnotation(org.mongodb.jackson.ObjectId.class) != null) {
             if (beanProperty.getType().getRawClass() == String.class) {
-                return new StringToObjectIdHandler(beanProperty.getName());
+                return (IdHandler) new StringToObjectIdHandler();
             } else if (beanProperty.getType().getRawClass() == byte[].class) {
-                return new ByteArrayToObjectIdHandler(beanProperty.getName());
+                return (IdHandler) new ByteArrayToObjectIdHandler();
             }
         }
-        return new NoopIdHandler(beanProperty.getName());
+        return new NoopIdHandler<K>();
     }
 
-    public static class NoopIdHandler extends IdHandler {
-        public NoopIdHandler(String idProperty) {
-            super(idProperty);
+    public static class NoopIdHandler<K> extends IdHandler<K, Object> {
+        @Override
+        public K fromDbId(Object dbId) {
+            return (K) dbId;
         }
 
         @Override
-        public Object fromDbId(Object dbId) {
-            return dbId;
-        }
-
-        @Override
-        public Object toDbId(Object id) {
+        public Object toDbId(K id) {
             return id;
         }
     }
 
-    public static class StringToObjectIdHandler extends IdHandler {
-        public StringToObjectIdHandler(String idProperty) {
-            super(idProperty);
-        }
-
+    public static class StringToObjectIdHandler extends IdHandler<String, ObjectId> {
         @Override
-        public Object fromDbId(Object dbId) {
-            if (dbId instanceof ObjectId) {
+        public String fromDbId(ObjectId dbId) {
+            if (dbId != null) {
                 return dbId.toString();
+            } else {
+                return null;
             }
-            return dbId;
         }
 
         @Override
-        public Object toDbId(Object id) {
-            if (id instanceof String) {
-                return new ObjectId((String) id);
+        public ObjectId toDbId(String id) {
+            if (id != null) {
+                return new ObjectId(id);
+            } else {
+                return null;
             }
-            return id;
         }
     }
 
-    public static class ByteArrayToObjectIdHandler extends IdHandler {
-        public ByteArrayToObjectIdHandler(String idProperty) {
-            super(idProperty);
+    public static class ByteArrayToObjectIdHandler extends IdHandler<byte[], ObjectId> {
+        @Override
+        public byte[] fromDbId(ObjectId dbId) {
+            if (dbId != null) {
+            return dbId.toByteArray();
+            } else {
+                return null;
+            }
         }
 
         @Override
-        public Object fromDbId(Object dbId) {
-            if (dbId instanceof ObjectId) {
-                return ((ObjectId) dbId).toByteArray();
+        public ObjectId toDbId(byte[] id) {
+            if (id != null) {
+                return new ObjectId(id);
+            } else {
+                return null;
             }
-            return dbId;
-        }
-
-        @Override
-        public Object toDbId(Object id) {
-            if (id instanceof byte[]) {
-                return new ObjectId((byte[]) id);
-            }
-            return id;
         }
     }
 }

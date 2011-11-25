@@ -9,7 +9,6 @@ import java.util.List;
 /**
  * Test object with one of each field
  */
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 public class MockObject {
     public String _id;
     public String string;
