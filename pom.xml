@@ -77,4 +77,17 @@
         </license>
     </licenses>
 
+    <distributionManagement>
+        <repository>
+            <id>vz.releases</id>
+            <name>VZnet Release Distribution Repository</name>
+            <url>http://nexus.intern.studivz.net/content/repositories/releases</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <url>https://github.vz.net/jroper/mongo-jackson-mapper.git</url>
+        <developerConnection>scm:git:git@github.vz.net:jroper/mongo-jackson-mapper.git</developerConnection>
+    </scm>
+
 </project>
