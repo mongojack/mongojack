@@ -1,10 +1,7 @@
-Mapping to Objects couldn't be easier!
-=======================================
+Mapping to POJOs couldn't be easier!
+====================================
 
-Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON mapper is a perfect mechanism for mapping
-Java objects to MongoDB documents.  And the best Java JSON mapper is Jackson.  Jacksons parsing/generating interface
-fits serialising to MongoDBs documents like a glove.  It's plugins, custom creators, serialisers, views, pluggable
-annotators and so on give this mapping library a massive head start, making it powerful, performant, and robust.
+Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON mapper is a perfect mechanism for mapping Java objects to MongoDB documents.  And the best Java JSON mapper is Jackson.  Jackson's parsing/generating interface fits serialising to MongoDBs documents like a glove.  Its plugins, custom creators, serialisers, views, pluggable annotators and so on give this mapping library a massive head start, making it powerful, performant, and robust.
 
 Quick start
 -----------
@@ -17,9 +14,8 @@ Inserting objects is done like this:
     WriteResult<MyObject, String> result = coll.insert(myObject);
     String id = result.getSavedId();
     MyObject savedObject = result.getSavedObject();
-    
-As you can see, both the object itself and the id of the object are strongly typed.  If the id is generated, you can
-easily obtain it from the write result.  Finding objects by ID is also simple:
+
+Both the object itself and the id of the object are strongly typed.  If the id is generated, you can easily obtain it from the write result.  Finding an object by ID is also simple:
 
     MyObject foundObject = coll.findOneById(id);
 
@@ -30,25 +26,19 @@ Querying can be done using DBObjects:
         MyObject firstObject = cursor.next();
     }
 
-Or, if your object contains no primitive types, and you only want basic equals comparison to values other than null, you
-can pass your object into the query as a template:
-    
+Or, if your object contains no primitive types, and you only want basic equals comparison to values other than null, you can pass your object into the query as a template:
+
     MyObject query = ...
     DBCursor<MyObject> cursor = coll.find(query);
     if (cursor.hasNext()) {
         MyObject firstObject = cursor.next();
     }
 
-In fact, you can do the same for specifying which fields to return, just pass in a template of your object with any
-fields you want returned set not to null.
+In fact, you can do the same for specifying which fields to return, just pass in a template of your object with any fields you want returned set not to null.
 
-As you can see, the collection, cursor and write result objects are very similar to the standard Java MongoDB driver.
-In fact, almost every method is provided.
+The collection, cursor and write result interfaces are very similar to the standard Java MongoDB driver. Most methods have been copied across, with generic typing added where appropriate, and overloading to use the generic type where sometimes the generic type is not powerful enough, such as for queries and specifying fields for partial objects.
 
-When it comes to mapping your objects, generally all you need to use is the Jackson annotations, such as `@JsonProperty`
-and `@JsonCreator`.  If you want a type of `ObjectId`, you have two options, either make your field be of type
-`ObjectId`, or you can also use `String`, as long as you annotate *both* the serialising and deserialising properties
-with `@org.mongodb.jackson.ObjectId`.  For example:
+When it comes to mapping your objects, generally all you need to use is the Jackson annotations, such as `@JsonProperty` and `@JsonCreator`.  If you want a type of `ObjectId`, you have two options, either make your field be of type `ObjectId`, or you can also use `String`, as long as you annotate *both* the serialising and deserialising properties with `@org.mongodb.jackson.ObjectId`.  For example:
 
     public class MyObject {
       private String id;
@@ -64,18 +54,16 @@ with `@org.mongodb.jackson.ObjectId`.  For example:
       }
     }
 
-Now your id property will be stored in the database as an object ID, and you can let MongoDB generate it for you.  You
-might not like annotating your ids with `@JsonProperty("_id")`, the mapper supports `@javax.persistence.Id` as a short
-hand for this:
+Now your id property will be stored in the database as an object ID, and you can let MongoDB generate it for you.  You might not like annotating your ids with `@JsonProperty("_id")`, the mapper supports `@javax.persistence.Id` as a short hand for this:
 
     public class MyObjcet {
       @Id
       public Long id;
     }
 
-The only limitation to this is if you are using `@Creator` annotated constructors or factory methods, because 
-`@javax.persistence.Id` is not supported on method parameters.  For this reason, the mapper provides the annotation
-`@org.mongodb.jackson.Id`, and it can be used like so:
+Another useful implication of this is if you want to use the same object for database objects and objects to return on the web, you can name the id whatever you want for the web, and you don't need to use Jackson views to to specify which property gets mapped to what name for the database and for the web.
+
+The only limitation to using the id annotation is if you are using `@Creator` annotated constructors or factory methods, because `@javax.persistence.Id` is not supported on method parameters.  For this reason, the mapper provides the annotation `@org.mongodb.jackson.Id`, and it can be used like so:
 
     public class MyObject {
       private final String id;
