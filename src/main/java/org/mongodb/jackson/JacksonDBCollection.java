@@ -45,8 +45,11 @@ public class JacksonDBCollection<T> {
                 Iterator<SettableBeanProperty> iter = ((BeanDeserializer) deserializer).properties();
                 while (iter.hasNext()) {
                     BeanProperty beanProperty = iter.next();
-                    if (beanProperty.getName().equals("_id")) {
+                    if (beanProperty.getAnnotation(Id.class) != null
+                            || beanProperty.getAnnotation(javax.persistence.Id.class) != null
+                            || beanProperty.getName().equals("_id")) {
                         idHandler = IdHandler.create(beanProperty);
+                        break;
                     }
                 }
             }
