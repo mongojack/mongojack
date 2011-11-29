@@ -75,7 +75,7 @@ public class JacksonDBCollection<T, K> {
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.withModule(ObjectIdModule.INSTANCE);
-        objectMapper.getSerializationConfig().withView(view);
+        objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
         return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
     }
 
