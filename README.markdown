@@ -8,7 +8,7 @@ Quick start
 
 Inserting objects is done like this:
 
-    JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
+    JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(dbCollection, MyObject.class,
             String.class);
     MyObject myObject = ...
     WriteResult<MyObject, String> result = coll.insert(myObject);
@@ -56,7 +56,7 @@ When it comes to mapping your objects, generally all you need to use is the Jack
 
 Now your id property will be stored in the database as an object ID, and you can let MongoDB generate it for you.  You might not like annotating your ids with `@JsonProperty("_id")`, the mapper supports `@javax.persistence.Id` as a short hand for this:
 
-    public class MyObjcet {
+    public class MyObject {
       @Id
       public Long id;
     }
@@ -67,6 +67,7 @@ The only limitation to using the id annotation is if you are using `@Creator` an
 
     public class MyObject {
       private final String id;
+      @JsonCreator
       public MyObject(@Id @ObjectId id) {
         this.id = id;
       }
