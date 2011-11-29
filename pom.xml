@@ -6,7 +6,13 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Maps Mongo BSON objects to Jackson annotated objects</name>
+    <name>MongoDB Jackson POJO Mapper</name>
+    <description>Maps Mongo BSON objects to Jackson annotated POJOs</description>
+    <url>https://github.com/vznet/mongo-jackson-mapper</url>
+    <organization>
+        <name>VZ Netzwerke</name>
+        <url>http://vz.net</url>
+    </organization>
     <inceptionYear>2011</inceptionYear>
 
     <dependencies>
@@ -65,6 +71,7 @@
             <roles>
                 <role>Author</role>
             </roles>
+            <organization>VZ Netzwerke</organization>
         </developer>
     </developers>
 
@@ -86,8 +93,9 @@
     </distributionManagement>
 
     <scm>
-        <url>https://github.vz.net/jroper/mongo-jackson-mapper.git</url>
-        <developerConnection>scm:git:git@github.vz.net:jroper/mongo-jackson-mapper.git</developerConnection>
+        <url>https://github.com/vznet/mongo-jackson-mapper</url>
+        <connection>git://github.com/vznet/mongo-jackson-mapper.git</connection>
+        <developerConnection>scm:git:git@github.com:vznet/mongo-jackson-mapper.git</developerConnection>
     </scm>
 
 </project>
