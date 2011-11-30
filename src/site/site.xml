@@ -18,6 +18,7 @@
         </links>
         <menu name="Overview">
             <item name="Quickstart" href="./index.html"/>
+            <item name="Installation" href="./installation.html"/>
         </menu>
         <menu ref="reports"/>
     </body>
