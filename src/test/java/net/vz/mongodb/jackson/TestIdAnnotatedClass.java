@@ -15,7 +15,6 @@
  */
 package net.vz.mongodb.jackson;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 import org.codehaus.jackson.annotate.JsonCreator;
@@ -47,7 +46,7 @@ public class TestIdAnnotatedClass {
 
     private <T, K> JacksonDBCollection<T, K> createCollFor(T object, Class<K> keyType) throws Exception {
         // Stupid generics...
-        return (JacksonDBCollection) JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
+        return (JacksonDBCollection) JacksonDBCollection.wrap(db.getCollection("mockObject"),
                 object.getClass());
     }
 

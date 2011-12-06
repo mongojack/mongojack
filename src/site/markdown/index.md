@@ -21,7 +21,7 @@ Both the object itself and the id of the object are strongly typed.  If the id i
 
 Querying can be done using DBObjects:
 
-    DBCursor<MyObject> cursor = coll.find(new BasicDBObjectBuilder().add("prop", "value").get());
+    DBCursor<MyObject> cursor = coll.find(BasicDBObject("prop", "value"));
     if (cursor.hasNext()) {
         MyObject firstObject = cursor.next();
     }
@@ -79,6 +79,10 @@ The only limitation to using the id annotation is if you are using `@Creator` an
     }
 
 As you can see, immutable objects are also supported because Jackson supports them, something that most other frameworks don't support.
+
+The mapper also provides an update builder for running updates using the MongoDB [modifier operations](http://www.mongodb.org/display/DOCS/Updating#Updating-ModifierOperations).  This supports serialisation of embedded objects, and can be used like this:
+
+    coll.updateById("someid", DBUpdate.inc("someIntField").push(new EmebbedObject()));
 
 If you're using your data objects for both storage and web views, you might want to take advantage of Jacksons views feature, so that generated/transient properties aren't persisted, and properties that you don't want leaked and serialised to the web.  The mapper supports this easily, by letting you pass in a view to the wrap method:
 

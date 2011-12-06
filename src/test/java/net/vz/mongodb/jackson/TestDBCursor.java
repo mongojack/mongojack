@@ -16,7 +16,6 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 import org.junit.After;
@@ -43,8 +42,7 @@ public class TestDBCursor {
     public void setup() throws Exception {
         mongo = new Mongo();
         db = mongo.getDB("test");
-        coll = JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
-                MockObject.class, String.class);
+        coll = JacksonDBCollection.wrap(db.getCollection("mockObject"), MockObject.class, String.class);
     }
 
     @After
@@ -59,7 +57,7 @@ public class TestDBCursor {
         MockObject o2 = new MockObject("id2", "blah2", 20);
         MockObject o3 = new MockObject("id3", "blah3", 30);
         coll.insert(o1, o2, o3);
-        DBCursor<MockObject> cursor = coll.find().sort(new BasicDBObjectBuilder().add("integer", 1).get());
+        DBCursor<MockObject> cursor = coll.find().sort(new BasicDBObject("integer", 1));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(o1));
         assertThat(cursor.curr(), equalTo(o1));
@@ -78,7 +76,7 @@ public class TestDBCursor {
         MockObject o2 = new MockObject("id2", "blah2", 20);
         MockObject o3 = new MockObject("id3", "blah3", 30);
         coll.insert(o1, o2, o3);
-        List<MockObject> results = coll.find().sort(new BasicDBObjectBuilder().add("integer", 1).get()).toArray();
+        List<MockObject> results = coll.find().sort(new BasicDBObject("integer", 1)).toArray();
         assertThat(results, contains(o1, o2, o3));
         assertThat(results, hasSize(3));
     }

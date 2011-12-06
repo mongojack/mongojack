@@ -38,8 +38,7 @@ public class TestJacksonDBCollection {
     public void setup() throws Exception {
         mongo = new Mongo();
         db = mongo.getDB("test");
-        coll = JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
-                MockObject.class, String.class);
+        coll = JacksonDBCollection.wrap(db.getCollection("mockObject"), MockObject.class, String.class);
     }
 
     @After
@@ -54,7 +53,7 @@ public class TestJacksonDBCollection {
         MockObject o2 = coll.insert(new MockObject("ten", 100)).getSavedObject();
         coll.insert(new MockObject("twenty", 20));
 
-        List<MockObject> results = coll.find(new BasicDBObjectBuilder().add("string", "ten").get()).toArray();
+        List<MockObject> results = coll.find(new BasicDBObject("string", "ten")).toArray();
         assertThat(results, hasSize(2));
         assertThat(results, contains(o1, o2));
     }
@@ -76,8 +75,8 @@ public class TestJacksonDBCollection {
         coll.insert(new MockObject("ten", 100));
         coll.insert(new MockObject("twenty", 20));
 
-        List<MockObject> results = coll.find(new BasicDBObjectBuilder().add("string", "ten").get(),
-                new BasicDBObjectBuilder().add("string", "something not null").get()).toArray();
+        List<MockObject> results = coll.find(new BasicDBObject("string", "ten"),
+                new BasicDBObject("string", "something not null")).toArray();
         assertThat(results, hasSize(2));
         assertThat(results.get(0).integer, nullValue());
         assertThat(results.get(0).string, equalTo("ten"));
@@ -106,7 +105,7 @@ public class TestJacksonDBCollection {
         coll.insert(new MockObject("ten", 100));
         MockObject object = coll.insert(new MockObject("twenty", 20)).getSavedObject();
 
-        coll.remove(new BasicDBObjectBuilder().add("string", "ten").get());
+        coll.remove(new BasicDBObject("string", "ten"));
 
         List<MockObject> remaining = coll.find().toArray();
         assertThat(remaining, Matchers.hasSize(1));

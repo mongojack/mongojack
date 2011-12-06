@@ -227,6 +227,23 @@ public class JacksonDBCollection<T, K> {
      * Performs an update operation.
      *
      * @param query   search query for old object to update
+     * @param update  update with which to update <tt>query</tt>
+     * @param upsert  if the database should create the element if it does not exist
+     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
+     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
+     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * @param concern the write concern
+     * @return The write result
+     * @throws MongoException If an error occurred
+     */
+    public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
+        return this.update(query, update.serialiseAndGet(objectMapper), upsert, multi, concern);
+    }
+
+    /**
+     * Performs an update operation.
+     *
+     * @param query   search query for old object to update
      * @param object  object with which to update <tt>query</tt>
      * @param upsert  if the database should create the element if it does not exist
      * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
@@ -293,6 +310,22 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * Performs an update operation.
+     *
+     * @param query  search query for old object to update
+     * @param update update with which to update <tt>query</tt>
+     * @param upsert if the database should create the element if it does not exist
+     * @param multi  if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
+     *               not be inserted if it does not exist in the collection and upsert=true and multi=true.
+     *               See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * @return The write result
+     * @throws MongoException If an error occurred
+     */
+    public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update, boolean upsert, boolean multi) throws MongoException {
+        return this.update(query, update.serialiseAndGet(objectMapper), upsert, multi);
+    }
+
+    /**
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)} with default WriteConcern.
      *
      * @param query  search query for old object to update
@@ -321,6 +354,19 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * Performs an update operation.
+     *
+     * @param query  search query for old object to update
+     * @param update update with which to update <tt>query</tt>
+     * @return The write result
+     * @throws MongoException If an error occurred
+     */
+    public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update) throws MongoException {
+        return this.update(query, update.serialiseAndGet(objectMapper));
+    }
+
+
+    /**
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=false
      *
      * @param query  search query for old object to update
@@ -345,10 +391,22 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * Performs an update operation.
+     *
+     * @param id     The id of the document to update
+     * @param update update with which to update <tt>query</tt>
+     * @return The write result
+     * @throws MongoException If an error occurred
+     */
+    public WriteResult<T, K> updateById(K id, DBUpdate.Builder update) throws MongoException {
+        return this.update(createIdQuery(id), update.serialiseAndGet(objectMapper));
+    }
+
+    /**
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
      *
      * @param query  search query for old object to update
-     * @param object object with which to update <tt>q</tt>
+     * @param object object with which to update <tt>query</tt>
      * @return The result
      * @throws MongoException If an error occurred
      */
@@ -360,7 +418,19 @@ public class JacksonDBCollection<T, K> {
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
      *
      * @param query  search query for old object to update
-     * @param object object with which to update <tt>q</tt>
+     * @param update  update with which to update <tt>query</tt>
+     * @return The write result
+     * @throws MongoException If an error occurred
+     */
+    public WriteResult<T, K> updateMulti(DBObject query, DBUpdate.Builder update) throws MongoException {
+        return this.updateMulti(query, update.serialiseAndGet(objectMapper));
+    }
+
+    /**
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
+     *
+     * @param query  search query for old object to update
+     * @param object object with which to update <tt>query</tt>
      * @return The result
      * @throws MongoException If an error occurred
      */

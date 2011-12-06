@@ -32,12 +32,20 @@ import java.util.List;
  * @since 1.0
  */
 public class BSONObjectGenerator extends JsonGenerator {
-    private final ObjectNode rootNode = new ObjectNode(null);
+    private Node rootNode;
     private ObjectCodec objectCodec;
     private Node currentNode;
     private boolean closed = false;
 
     public DBObject getDBObject() {
+        if (rootNode instanceof ObjectNode) {
+            return ((ObjectNode) rootNode).get();
+        } else {
+            throw new IllegalStateException("Object node was not generated");
+        }
+    }
+
+    public Object getValue() {
         return rootNode.get();
     }
 
@@ -74,7 +82,8 @@ public class BSONObjectGenerator extends JsonGenerator {
 
     @Override
     public void writeStartArray() throws IOException {
-        if (currentNode == null) {
+        if (rootNode == null) {
+            rootNode = new ArrayNode(null);
             currentNode = rootNode;
         } else {
             currentNode = new ArrayNode(currentNode);
@@ -92,7 +101,8 @@ public class BSONObjectGenerator extends JsonGenerator {
 
     @Override
     public void writeStartObject() throws IOException {
-        if (currentNode == null) {
+        if (rootNode == null) {
+            rootNode = new ObjectNode(null);
             currentNode = rootNode;
         } else {
             currentNode = new ObjectNode(currentNode);
@@ -115,22 +125,22 @@ public class BSONObjectGenerator extends JsonGenerator {
 
     @Override
     public void writeString(String text) throws IOException {
-        currentNode.set(text);
+        setValue(text);
     }
 
     @Override
     public void writeString(char[] text, int offset, int len) throws IOException {
-        currentNode.set(new String(text, offset, len));
+        setValue(new String(text, offset, len));
     }
 
     @Override
     public void writeRawUTF8String(byte[] text, int offset, int length) throws IOException {
-        currentNode.set(new String(text, offset, length, "UTF-8"));
+        setValue(new String(text, offset, length, "UTF-8"));
     }
 
     @Override
     public void writeUTF8String(byte[] text, int offset, int length) throws IOException {
-        currentNode.set(new String(text, offset, length, "UTF-8"));
+        setValue(new String(text, offset, length, "UTF-8"));
     }
 
     @Override
@@ -155,17 +165,17 @@ public class BSONObjectGenerator extends JsonGenerator {
 
     @Override
     public void writeRawValue(String text) throws IOException {
-        currentNode.set(text);
+        setValue(text);
     }
 
     @Override
     public void writeRawValue(String text, int offset, int len) throws IOException {
-        currentNode.set(text.substring(offset, offset + len));
+        setValue(text.substring(offset, offset + len));
     }
 
     @Override
     public void writeRawValue(char[] text, int offset, int len) throws IOException {
-        currentNode.set(new String(text, offset, len));
+        setValue(new String(text, offset, len));
     }
 
     @Override
@@ -175,57 +185,57 @@ public class BSONObjectGenerator extends JsonGenerator {
             System.arraycopy(data, offset, subset, 0, len);
             data = subset;
         }
-        currentNode.set(data);
+        setValue(data);
     }
 
     @Override
     public void writeNumber(int v) throws IOException {
-        currentNode.set(v);
+        setValue(v);
     }
 
     @Override
     public void writeNumber(long v) throws IOException {
-        currentNode.set(v);
+        setValue(v);
     }
 
     @Override
     public void writeNumber(BigInteger v) throws IOException {
-        currentNode.set(v);
+        setValue(v);
     }
 
     @Override
     public void writeNumber(double d) throws IOException {
-        currentNode.set(d);
+        setValue(d);
     }
 
     @Override
     public void writeNumber(float f) throws IOException {
-        currentNode.set(f);
+        setValue(f);
     }
 
     @Override
     public void writeNumber(BigDecimal dec) throws IOException {
-        currentNode.set(dec);
+        setValue(dec);
     }
 
     @Override
     public void writeNumber(String encodedValue) throws IOException, UnsupportedOperationException {
-        currentNode.set(encodedValue);
+        setValue(encodedValue);
     }
 
     @Override
     public void writeBoolean(boolean state) throws IOException {
-        currentNode.set(state);
+        setValue(state);
     }
 
     @Override
     public void writeNull() throws IOException {
-        currentNode.set(null);
+        setValue(null);
     }
 
     @Override
     public void writeObject(Object pojo) throws IOException {
-        currentNode.set(pojo);
+        setValue(pojo);
     }
 
     @Override
@@ -348,6 +358,14 @@ public class BSONObjectGenerator extends JsonGenerator {
         closed = true;
     }
 
+    private void setValue(Object value) {
+        if (rootNode == null) {
+            rootNode = new RootValueNode(value);
+        } else {
+            currentNode.set(value);
+        }
+    }
+
     /**
      * A node that we are currently building from
      */
@@ -418,6 +436,28 @@ public class BSONObjectGenerator extends JsonGenerator {
         @Override
         List<Object> get() {
             return array;
+        }
+    }
+
+    /**
+     * A node that represents a root value, so for example if a String is serialised, it will just be a String
+     */
+    private class RootValueNode extends Node {
+        private final Object rootValue;
+
+        private RootValueNode(Object rootValue) {
+            super(null, JsonStreamContext.TYPE_ROOT);
+            this.rootValue = rootValue;
+        }
+
+        @Override
+        void set(Object value) {
+            throw new IllegalStateException("Cannot write multiple values to a root value node");
+        }
+
+        @Override
+        Object get() {
+            return rootValue;
         }
     }
 }

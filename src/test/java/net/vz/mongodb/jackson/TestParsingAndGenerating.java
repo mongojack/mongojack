@@ -15,7 +15,6 @@
  */
 package net.vz.mongodb.jackson;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.Mongo;
 import org.bson.types.ObjectId;
@@ -45,8 +44,7 @@ public class TestParsingAndGenerating {
     public void setup() throws Exception {
         mongo = new Mongo();
         db = mongo.getDB("test");
-        coll = JacksonDBCollection.wrap(db.createCollection("mockObject", new BasicDBObject()),
-                MockObject.class, String.class);
+        coll = JacksonDBCollection.wrap(db.getCollection("mockObject"), MockObject.class, String.class);
     }
 
     @After

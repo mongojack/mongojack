@@ -24,6 +24,13 @@ public class MockEmbeddedObject {
     public String value;
     public List<String> list;
 
+    public MockEmbeddedObject() {
+    }
+
+    public MockEmbeddedObject(String value) {
+        this.value = value;
+    }
+
     @Override
     public String toString() {
         return "MockEmbeddedObject{" +
