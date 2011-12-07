@@ -15,11 +15,7 @@
  */
 package net.vz.mongodb.jackson;
 
-import com.mongodb.DB;
-import com.mongodb.Mongo;
 import org.codehaus.jackson.annotate.JsonCreator;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -28,26 +24,11 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
-public class TestIdAnnotatedClass {
-    private Mongo mongo;
-    private DB db;
-
-    @Before
-    public void setup() throws Exception {
-        mongo = new Mongo();
-        db = mongo.getDB("test");
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        db.getCollection("mockObject").drop();
-        mongo.close();
-    }
+public class TestIdAnnotatedClass extends MongoDBTestBase {
 
     private <T, K> JacksonDBCollection<T, K> createCollFor(T object, Class<K> keyType) throws Exception {
         // Stupid generics...
-        return (JacksonDBCollection) JacksonDBCollection.wrap(db.getCollection("mockObject"),
-                object.getClass());
+        return (JacksonDBCollection) JacksonDBCollection.wrap(getCollection(), object.getClass());
     }
 
     @Test

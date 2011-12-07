@@ -35,22 +35,12 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Test for parser and generator
  */
-public class TestParsingAndGenerating {
-    private Mongo mongo;
-    private DB db;
+public class TestParsingAndGenerating extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
-        mongo = new Mongo();
-        db = mongo.getDB("test");
-        coll = JacksonDBCollection.wrap(db.getCollection("mockObject"), MockObject.class, String.class);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        coll.getDbCollection().drop();
-        mongo.close();
+        coll = JacksonDBCollection.wrap(getCollection(), MockObject.class, String.class);
     }
 
     @Test

@@ -18,7 +18,6 @@ package net.vz.mongodb.jackson;
 import com.mongodb.*;
 import net.vz.mongodb.jackson.mock.MockEmbeddedObject;
 import net.vz.mongodb.jackson.mock.MockObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,22 +33,12 @@ import static org.junit.Assert.assertThat;
 /**
  * Test a DBUpdate item
  */
-public class TestDBUpdate {
-    private Mongo mongo;
-    private DB db;
+public class TestDBUpdate extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
-        mongo = new Mongo();
-        db = mongo.getDB("test");
-        coll = JacksonDBCollection.wrap(db.getCollection("mockObject"), MockObject.class, String.class);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        coll.getDbCollection().drop();
-        mongo.close();
+        coll = JacksonDBCollection.wrap(getCollection(), MockObject.class, String.class);
     }
 
     @Test

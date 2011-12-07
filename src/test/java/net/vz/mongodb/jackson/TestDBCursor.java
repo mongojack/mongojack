@@ -16,9 +16,6 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.Mongo;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.vz.mongodb.jackson.mock.MockObject;
@@ -33,22 +30,12 @@ import static org.junit.Assert.assertThat;
 /**
  * Test the Json DB Cursor
  */
-public class TestDBCursor {
-    private Mongo mongo;
-    private DB db;
+public class TestDBCursor extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
-        mongo = new Mongo();
-        db = mongo.getDB("test");
-        coll = JacksonDBCollection.wrap(db.getCollection("mockObject"), MockObject.class, String.class);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        coll.getDbCollection().drop();
-        mongo.close();
+        coll = JacksonDBCollection.wrap(getCollection(), MockObject.class, String.class);
     }
 
     @Test
