@@ -1,17 +1,23 @@
 Changelog
 =========
 
-Version 1.1.1 TBA
------------------
+1.1.1
+-----
+
+_Released 2011.12.07_
 
 * Fixed bug in update so that multiple operations add with the same modifier don't replace each other
 
-Version 1.1 2011/12/06
-----------------------
+1.1
+---
+
+_Released 2011.12.06_
 
 * Added builder for modifier based queries, with serialisation support
 
-Version 1.0 2011/12/01
-----------------------
+1.0
+---
+
+_Released 2011.11.30_
 
 Initial release.
