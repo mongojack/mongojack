@@ -269,4 +269,13 @@ public class TestDBUpdate {
         coll.updateById("blah", DBUpdate.pushAll("complexList", Arrays.asList(new MockEmbeddedObject("hello"))));
         assertThat(coll.findOneById("blah").complexList, hasItem(new MockEmbeddedObject("hello")));
     }
+
+    @Test
+    public void testSameOperationTwice() throws Exception {
+        coll.insert(new MockObject("blah", "some string", 10));
+        coll.updateById("blah", DBUpdate.set("string", "other string").set("integer", 20));
+        MockObject updated = coll.findOneById("blah");
+        assertThat(updated.string, equalTo("other string"));
+        assertThat(updated.integer, equalTo(20));
+    }
 }

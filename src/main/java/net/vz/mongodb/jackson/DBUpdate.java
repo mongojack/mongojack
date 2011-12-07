@@ -310,8 +310,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder inc(String field, int by) {
-            update.append("$inc", new BasicDBObject(field, by));
-            return this;
+            return addOperation("$inc", field, by);
         }
 
         /**
@@ -322,8 +321,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder set(String field, Object value) {
-            update.append("$set", new BasicDBObject(field, value));
-            return this;
+            return addOperation("$set", field, value);
         }
 
         /**
@@ -333,8 +331,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder unset(String field) {
-            update.append("$unset", new BasicDBObject(field, 1));
-            return this;
+            return addOperation("$unset", field, 1);
         }
 
         /**
@@ -345,8 +342,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder push(String field, Object value) {
-            update.append("$push", new BasicDBObject(field, value));
-            return this;
+            return addOperation("$push", field, value);
         }
 
         /**
@@ -357,8 +353,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pushAll(String field, Object... values) {
-            update.append("$pushAll", new BasicDBObject(field, values));
-            return this;
+            return addOperation("$pushAll", field, values);
         }
 
         /**
@@ -369,8 +364,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pushAll(String field, List<?> values) {
-            update.append("$pushAll", new BasicDBObject(field, values));
-            return this;
+            return addOperation("$pushAll", field, values);
         }
 
         /**
@@ -381,8 +375,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder addToSet(String field, Object value) {
-            update.append("$addToSet", new BasicDBObject(field, value));
-            return this;
+            return addOperation("$addToSet", field, value);
         }
 
         /**
@@ -393,8 +386,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder addToSet(String field, Object... values) {
-            update.append("$addToSet", new BasicDBObject(field, new BasicDBObject("$each", values)));
-            return this;
+            return addOperation("$addToSet", field, new BasicDBObject("$each", values));
         }
 
         /**
@@ -405,8 +397,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder addToSet(String field, List<?> values) {
-            update.append("$addToSet", new BasicDBObject(field, new BasicDBObject("$each", values)));
-            return this;
+            return addOperation("$addToSet", field, new BasicDBObject("$each", values));
         }
 
         /**
@@ -416,8 +407,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder popFirst(String field) {
-            update.append("$pop", new BasicDBObject(field, -1));
-            return this;
+            return addOperation("$pop", field, -1);
         }
 
         /**
@@ -427,8 +417,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder popLast(String field) {
-            update.append("$pop", new BasicDBObject(field, 1));
-            return this;
+            return addOperation("$pop", field, 1);
         }
 
         /**
@@ -439,8 +428,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pull(String field, Object value) {
-            update.append("$pull", new BasicDBObject(field, value));
-            return this;
+            return addOperation("$pull", field, value);
         }
 
         /**
@@ -451,8 +439,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pullAll(String field, Object... values) {
-            update.append("$pullAll", new BasicDBObject(field, values));
-            return this;
+            return addOperation("$pullAll", field, values);
         }
 
         /**
@@ -463,8 +450,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pullAll(String field, List<?> values) {
-            update.append("$pullAll", new BasicDBObject(field, values));
-            return this;
+            return addOperation("$pullAll", field, values);
         }
 
         /**
@@ -475,8 +461,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder rename(String oldFieldName, String newFieldName) {
-            update.append("$rename", new BasicDBObject(oldFieldName, newFieldName));
-            return this;
+            return addOperation("$rename", oldFieldName, newFieldName);
         }
 
         /**
@@ -488,8 +473,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder bit(String field, String operation, int value) {
-            update.append("$bit", new BasicDBObject(field, new BasicDBObject(operation, value)));
-            return this;
+            return addOperation("$bit", field, new BasicDBObject(operation, value));
         }
 
         /**
@@ -503,8 +487,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder bit(String field, String operation1, int value1, String operation2, int value2) {
-            update.append("$bit", new BasicDBObject(field, new BasicDBObject(operation1, value1).append(operation2, value2)));
-            return this;
+            return addOperation("$bit", field, new BasicDBObject(operation1, value1).append(operation2, value2));
         }
 
         /**
@@ -538,6 +521,28 @@ public class DBUpdate {
          */
         public Builder setRaw(String field, Object value) {
             update.append(field, value);
+            return this;
+        }
+
+        /**
+         * Add an operation to the update
+         *
+         * @param modifier The modifier of the operation
+         * @param field    The field to set
+         * @param value    The value to modify it with.
+         * @return this object
+         */
+        public Builder addOperation(String modifier, String field, Object value) {
+            if (update.containsField(modifier)) {
+                Object object = update.get(modifier);
+                if (object instanceof DBObject) {
+                    ((DBObject) object).put(field, value);
+                } else {
+                    throw new IllegalStateException("Current value for modifier " + modifier + " is not a DBObject: " + object);
+                }
+            } else {
+                update.append(modifier, new BasicDBObject(field, value));
+            }
             return this;
         }
 
