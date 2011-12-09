@@ -19,7 +19,6 @@ import com.mongodb.*;
 import org.bson.BSONCallback;
 import org.bson.BSONObject;
 import org.codehaus.jackson.map.ObjectMapper;
-import sun.jvm.hotspot.utilities.UnsupportedPlatformException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -42,7 +41,7 @@ public class JacksonDBDecoder<T> implements DBDecoder {
     }
 
     public DBCallback getDBCallback(DBCollection collection) {
-        throw new UnsupportedPlatformException("JacksonDBDecoder does not support callback style decoding");
+        throw new UnsupportedOperationException("JacksonDBDecoder does not support callback style decoding");
     }
 
     public DBObject decode(byte[] b, DBCollection collection) {
@@ -69,10 +68,10 @@ public class JacksonDBDecoder<T> implements DBDecoder {
     }
 
     public int decode(byte[] b, BSONCallback callback) {
-        throw new UnsupportedPlatformException("JacksonDBDecoder does not support callback style decoding");
+        throw new UnsupportedOperationException("JacksonDBDecoder does not support callback style decoding");
     }
 
     public int decode(InputStream in, BSONCallback callback) throws IOException {
-        throw new UnsupportedPlatformException("JacksonDBDecoder does not support callback style decoding");
+        throw new UnsupportedOperationException("JacksonDBDecoder does not support callback style decoding");
     }
 }
