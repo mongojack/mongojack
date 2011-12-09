@@ -27,7 +27,11 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated classes.  It provides a very thin wrapper
@@ -37,6 +41,39 @@ import java.util.List;
  * @since 1.0
  */
 public class JacksonDBCollection<T, K> {
+
+    public enum Feature {
+        /**
+         * Deserialise objects directly from the MongoDB stream.  This is the default, as it performs the best.  If set
+         * to false, then it uses the MongoDB driver to deserialise objects to DBObjects, and then traverses those
+         * objects to do the Jackson parsing.  This may be desirable, for example, when auto hydrating of objects is
+         * enabled, because in order to hydrate objects, a second connection needs to be made to MongoDB, which has the
+         * potential to deadlock when the connection pool gets exhausted when using stream deserialization.  Using
+         * object deserialization, the hydration occurs after the connection to load the object has been returned to
+         * the pool.
+         */
+        USE_STREAM_DESERIALIZATION(true),
+
+        /**
+         * Automatically hydrate all DB references.  This is not advised, either declare the objects to be of type
+         * {@link net.vz.mongodb.jackson.DBRef}, and hydrate by calling fetch(), or declare it as the referenced type
+         * and use {@link net.vz.mongodb.jackson.JacksonDBCollection.hydrate()} to hydrate the referenced types.
+         * <p/>
+         * If using this feature, it is strongly recommended that you set {@link Feature.USE_STREAM_DESERIALIZATION} to
+         * false, to avoid potential deadlocks.
+         */
+        AUTO_HYDRATE(false);
+
+        Feature(boolean enabledByDefault) {
+            this.enabledByDefault = enabledByDefault;
+        }
+
+        private final boolean enabledByDefault;
+
+        public boolean isEnabledByDefault() {
+            return enabledByDefault;
+        }
+    }
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper();
 
@@ -51,6 +88,7 @@ public class JacksonDBCollection<T, K> {
     private final ObjectMapper objectMapper;
     private final IdHandler<K, Object> idHandler;
     private final JacksonDecoderFactory<T> decoderFactory;
+    private final Map<Feature, Boolean> features;
 
     protected JacksonDBCollection(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
         this.dbCollection = dbCollection;
@@ -58,13 +96,13 @@ public class JacksonDBCollection<T, K> {
         this.keyType = keyType;
         this.objectMapper = objectMapper;
         this.decoderFactory = new JacksonDecoderFactory<T>(objectMapper, type);
-        IdHandler<K, Object> idHandler = null;
         // We want to find how we should serialize the ID, in case it is passed to us
         try {
             this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type, "_id", keyType);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException("Unable to introspect class", e);
         }
+        this.features = new ConcurrentHashMap<Feature, Boolean>();
     }
 
     /**
@@ -117,6 +155,44 @@ public class JacksonDBCollection<T, K> {
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
         return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
     }
+
+    /**
+     * Enable the given feature
+     *
+     * @param feature The feature to enable
+     * @return this object
+     */
+    public JacksonDBCollection<T, K> enable(Feature feature) {
+        features.put(feature, true);
+        return this;
+    }
+
+    /**
+     * Disable the given feature
+     *
+     * @param feature The feature to disable
+     * @return this object
+     */
+    public JacksonDBCollection<T, K> disable(Feature feature) {
+        features.put(feature, false);
+        return this;
+    }
+
+    /**
+     * Whether the given feature is enabled
+     *
+     * @param feature The feature to check
+     * @return whether it is enabled
+     */
+    public boolean isEnabled(Feature feature) {
+        Boolean enabled = features.get(feature);
+        if (enabled == null) {
+            return feature.isEnabledByDefault();
+        } else {
+            return enabled;
+        }
+    }
+
 
     /**
      * Get the underlying db collection

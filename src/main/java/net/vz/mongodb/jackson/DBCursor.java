@@ -60,7 +60,9 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
     public DBCursor(JacksonDBCollection<T, ?> jacksonDBCollection, com.mongodb.DBCursor cursor) {
         this.jacksonDBCollection = jacksonDBCollection;
         this.cursor = cursor;
-        this.cursor.setDecoderFactory(jacksonDBCollection.getDecoderFactory());
+        if (jacksonDBCollection.isEnabled(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION)) {
+            this.cursor.setDecoderFactory(jacksonDBCollection.getDecoderFactory());
+        }
     }
 
     /**
