@@ -17,8 +17,9 @@
             <item name="Maven 2" href="http://maven.apache.org/"/>
         </links>
         <menu name="Overview">
-            <item name="Quickstart" href="./index.html"/>
+            <item name="About" href="./index.html"/>
             <item name="Installation" href="./installation.html"/>
+            <item name="Tutorial" href="./tutorial.html"/>
             <item name="Changelog" href="./changelog.html"/>
         </menu>
         <menu ref="reports"/>

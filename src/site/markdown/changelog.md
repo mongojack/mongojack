@@ -1,6 +1,14 @@
 Changelog
 =========
 
+1.1.2
+-----
+
+_Released 2011.12.09_
+
+* Fixed bug where an object containing all null values threw an NPE
+* Added parser using bson4jackson when deserialising from the DBCursor
+
 1.1.1
 -----
 
