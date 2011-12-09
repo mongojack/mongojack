@@ -9,4 +9,8 @@ If you're using maven, simply add the following dependency to your project:
         <version>${siteProjectVersion}</version>
     </dependency>
 
+You can download the dependency directly from here:
 
+http://repo1.maven.org/maven2/net/vz/mongodb/jackson/mongo-jackson-mapper/${siteProjectVersion}/mongo-jackson-mapper-${siteProjectVersion}.jar
+
+Source code can be obtained from the [GitHub project](https://github.com/vznet/mongo-jackson-mapper).

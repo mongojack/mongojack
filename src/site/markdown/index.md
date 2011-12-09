@@ -32,7 +32,7 @@ Features
 Documentation
 -------------
 
-[Installation](./installation.html)
-[Tutorial](./tutorial.html)
-[Changelog](./changelog.html)
+* [Installation](./installation.html)
+* [Tutorial](./tutorial.html)
+* [Changelog](./changelog.html)
 
