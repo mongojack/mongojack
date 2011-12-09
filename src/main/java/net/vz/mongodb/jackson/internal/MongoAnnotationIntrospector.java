@@ -28,7 +28,7 @@ import java.lang.annotation.Annotation;
  * @author James Roper
  * @since 1.0
  */
-public class ObjectIdAnnotationIntrospector extends NopAnnotationIntrospector {
+public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public boolean isHandled(Annotation ann) {
         return ann.annotationType() == ObjectId.class

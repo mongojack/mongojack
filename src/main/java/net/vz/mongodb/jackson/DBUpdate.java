@@ -17,7 +17,7 @@ package net.vz.mongodb.jackson;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import net.vz.mongodb.jackson.internal.BSONObjectGenerator;
+import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -628,7 +628,7 @@ public class DBUpdate {
                 }
             } else {
                 // We don't know what it is, serialise it
-                BSONObjectGenerator generator = new BSONObjectGenerator();
+                BsonObjectGenerator generator = new BsonObjectGenerator();
                 try {
                     objectMapper.writeValue(generator, value);
                 } catch (JsonMappingException e) {

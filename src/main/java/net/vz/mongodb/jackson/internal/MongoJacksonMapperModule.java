@@ -15,6 +15,7 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import net.vz.mongodb.jackson.internal.stream.ServerErrorProblemHandler;
 import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.Module;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -25,8 +26,8 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
  * @author James Roper
  * @since 1.0
  */
-public class ObjectIdModule extends Module {
-    public static final Module INSTANCE = new ObjectIdModule();
+public class MongoJacksonMapperModule extends Module {
+    public static final Module INSTANCE = new MongoJacksonMapperModule();
 
     @Override
     public String getModuleName() {
@@ -40,9 +41,10 @@ public class ObjectIdModule extends Module {
 
     @Override
     public void setupModule(SetupContext context) {
-        context.insertAnnotationIntrospector(new ObjectIdAnnotationIntrospector());
+        context.insertAnnotationIntrospector(new MongoAnnotationIntrospector());
         // Only include non null properties, this makes it possible to use object templates for querying and
         // partial object retrieving
         context.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+        context.getDeserializationConfig().addHandler(new ServerErrorProblemHandler());
     }
 }

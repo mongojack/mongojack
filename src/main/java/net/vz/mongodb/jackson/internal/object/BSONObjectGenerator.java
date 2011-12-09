@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.internal;
+package net.vz.mongodb.jackson.internal.object;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -31,7 +31,7 @@ import java.util.List;
  * @author James Roper
  * @since 1.0
  */
-public class BSONObjectGenerator extends JsonGenerator {
+public class BsonObjectGenerator extends JsonGenerator {
     private Node rootNode;
     private ObjectCodec objectCodec;
     private Node currentNode;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.internal;
+package net.vz.mongodb.jackson.internal.object;
 
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -23,6 +23,7 @@ import org.codehaus.jackson.JsonToken;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Helper class for MongoDbObjectJsonParser
@@ -30,14 +31,14 @@ import java.util.Iterator;
  * @author James Roper
  * @since 1.0
  */
-abstract class BSONObjectCursor extends JsonStreamContext {
+abstract class BsonObjectCursor extends JsonStreamContext {
     /**
      * Parent cursor of this cursor, if any; null for root
      * cursors.
      */
-    private final BSONObjectCursor parent;
+    private final BsonObjectCursor parent;
 
-    public BSONObjectCursor(int contextType, BSONObjectCursor p) {
+    public BsonObjectCursor(int contextType, BsonObjectCursor p) {
         super();
         _type = contextType;
         _index = -1;
@@ -46,7 +47,7 @@ abstract class BSONObjectCursor extends JsonStreamContext {
 
     // note: co-variant return type
     @Override
-    public final BSONObjectCursor getParent() {
+    public final BsonObjectCursor getParent() {
         return parent;
     }
 
@@ -63,6 +64,8 @@ abstract class BSONObjectCursor extends JsonStreamContext {
         Object o = currentNode();
         if (o instanceof Collection) {
             return !((Collection) o).isEmpty();
+        } else if (o instanceof Map) {
+            return !((Map) o).isEmpty();
         }
         return currentNode() != null;
     }
@@ -73,7 +76,7 @@ abstract class BSONObjectCursor extends JsonStreamContext {
      *
      * @return A cursor for the children
      */
-    public final BSONObjectCursor iterateChildren() {
+    public final BsonObjectCursor iterateChildren() {
         Object n = currentNode();
         if (n == null) throw new IllegalStateException("No current node");
         if (n instanceof Iterable) { // false since we have already returned START_ARRAY
@@ -88,12 +91,12 @@ abstract class BSONObjectCursor extends JsonStreamContext {
     /**
      * Cursor used for traversing iterables
      */
-    protected final static class ArrayCursor extends BSONObjectCursor {
+    protected final static class ArrayCursor extends BsonObjectCursor {
         Iterator<?> contents;
 
         Object currentNode;
 
-        public ArrayCursor(Iterable n, BSONObjectCursor p) {
+        public ArrayCursor(Iterable n, BsonObjectCursor p) {
             super(JsonStreamContext.TYPE_ARRAY, p);
             contents = n.iterator();
         }
@@ -128,14 +131,14 @@ abstract class BSONObjectCursor extends JsonStreamContext {
      * Cursor used for traversing non-empty JSON Object nodes
      */
     protected final static class ObjectCursor
-            extends BSONObjectCursor {
+            extends BsonObjectCursor {
         Iterator<String> fields;
         BSONObject object;
         String currentFieldName;
 
         boolean needField;
 
-        public ObjectCursor(BSONObject object, BSONObjectCursor p) {
+        public ObjectCursor(BSONObject object, BsonObjectCursor p) {
             super(JsonStreamContext.TYPE_OBJECT, p);
             this.object = object;
             this.fields = object.keySet().iterator();

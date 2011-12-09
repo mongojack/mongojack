@@ -31,6 +31,11 @@ import java.io.IOException;
 public class ObjectIdStringDeserializer extends JsonDeserializer<String> {
     @Override
     public String deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-        return jp.getText();
+        Object object = jp.getEmbeddedObject();
+        if (object == null) {
+            return null;
+        } else {
+            return object.toString();
+        }
     }
 }

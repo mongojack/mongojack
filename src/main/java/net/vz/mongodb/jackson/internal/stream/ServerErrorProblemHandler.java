@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.internal;
+package net.vz.mongodb.jackson.internal.stream;
 
-import org.bson.types.ObjectId;
-import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.DeserializationContext;
+import org.codehaus.jackson.map.DeserializationProblemHandler;
 import org.codehaus.jackson.map.JsonDeserializer;
-import org.codehaus.jackson.map.JsonMappingException;
 
 import java.io.IOException;
 
 /**
- * Deserialises an ObjectID into a byte array
+ * Problem handler for handling server error properties
  *
  * @author James Roper
- * @since 1.0
+ * @since 1.1.2
  */
-public class ObjectIdByteDeserializer extends JsonDeserializer<byte[]> {
+public class ServerErrorProblemHandler extends DeserializationProblemHandler {
     @Override
-    public byte[] deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-        Object object = jp.getEmbeddedObject();
-        if (object == null) {
-            return null;
-        } else if (object instanceof ObjectId) {
-            return ((ObjectId) object).toByteArray();
+    public boolean handleUnknownProperty(DeserializationContext ctxt, JsonDeserializer<?> deserializer,
+                                         Object beanOrClass, String propertyName) throws IOException, JsonProcessingException {
+        if (ctxt.getParser() instanceof DBDecoderBsonParser) {
+            return ((DBDecoderBsonParser) ctxt.getParser()).handleUnknownProperty(ctxt, deserializer, beanOrClass, propertyName);
         }
-        throw new JsonMappingException("Object is not a ObjectId: " + object);
+        return false;
     }
 }

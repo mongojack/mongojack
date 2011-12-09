@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.internal;
+package net.vz.mongodb.jackson.internal.object;
 
 import org.bson.BSONObject;
 import org.codehaus.jackson.*;
@@ -26,10 +26,13 @@ import java.math.BigInteger;
  * Parses a BSONObject by traversing it.  This class was copied from
  * {@link org.codehaus.jackson.node.TreeTraversingParser} and then adapted to be for BSONObject's, rather than JsonNode's.
  *
+ * While decoding by the cursor uses DBDecoderBsonParser, there are still things that need to be decoded from the DBObjects,
+ * including the result of findAndModify, and saved objects after saving.
+ *
  * @author James Roper
  * @since 1.0
  */
-public class BSONObjectTraversingParser extends JsonParser {
+public class BsonObjectTraversingParser extends JsonParser {
     /*
     /**********************************************************
     /* Configuration
@@ -41,7 +44,7 @@ public class BSONObjectTraversingParser extends JsonParser {
     /**
      * Traversal context within tree
      */
-    protected BSONObjectCursor nodeCursor;
+    protected BsonObjectCursor nodeCursor;
 
     /*
     /**********************************************************
@@ -74,19 +77,19 @@ public class BSONObjectTraversingParser extends JsonParser {
     /**********************************************************
      */
 
-    public BSONObjectTraversingParser(BSONObject o) {
+    public BsonObjectTraversingParser(BSONObject o) {
         this(o, null);
     }
 
-    public BSONObjectTraversingParser(BSONObject o, ObjectCodec codec) {
+    public BsonObjectTraversingParser(BSONObject o, ObjectCodec codec) {
         super(0);
         objectCodec = codec;
         if (o instanceof Iterable) {
             nextToken = JsonToken.START_ARRAY;
-            nodeCursor = new BSONObjectCursor.ArrayCursor((Iterable) o, null);
+            nodeCursor = new BsonObjectCursor.ArrayCursor((Iterable) o, null);
         } else {
             nextToken = JsonToken.START_OBJECT;
-            nodeCursor = new BSONObjectCursor.ObjectCursor(o, null);
+            nodeCursor = new BsonObjectCursor.ObjectCursor(o, null);
         }
     }
 
@@ -352,11 +355,16 @@ public class BSONObjectTraversingParser extends JsonParser {
         return null;
     }
 
+    @Override
+    public Object getEmbeddedObject() throws IOException, JsonParseException {
+        return currentNode();
+    }
+
     /*
-    /**********************************************************
-    /* Internal methods
-    /**********************************************************
-     */
+   /**********************************************************
+   /* Internal methods
+   /**********************************************************
+    */
 
     protected Object currentNode() {
         if (closed || nodeCursor == null) {

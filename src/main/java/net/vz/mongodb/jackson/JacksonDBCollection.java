@@ -16,8 +16,15 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.*;
-import org.codehaus.jackson.map.*;
-import net.vz.mongodb.jackson.internal.*;
+import net.vz.mongodb.jackson.internal.IdHandler;
+import net.vz.mongodb.jackson.internal.IdHandlerFactory;
+import net.vz.mongodb.jackson.internal.MongoJacksonMapperModule;
+import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
+import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
+import net.vz.mongodb.jackson.internal.stream.JacksonDBObject;
+import net.vz.mongodb.jackson.internal.stream.JacksonDecoderFactory;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,7 +42,7 @@ public class JacksonDBCollection<T, K> {
 
     static {
         // Configure to use the object id annotation introspector
-        DEFAULT_OBJECT_MAPPER.registerModule(ObjectIdModule.INSTANCE);
+        DEFAULT_OBJECT_MAPPER.registerModule(MongoJacksonMapperModule.INSTANCE);
     }
 
     private final DBCollection dbCollection;
@@ -43,12 +50,14 @@ public class JacksonDBCollection<T, K> {
     private final Class<K> keyType;
     private final ObjectMapper objectMapper;
     private final IdHandler<K, Object> idHandler;
+    private final JacksonDecoderFactory<T> decoderFactory;
 
     protected JacksonDBCollection(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
         this.dbCollection = dbCollection;
         this.type = type;
         this.keyType = keyType;
         this.objectMapper = objectMapper;
+        this.decoderFactory = new JacksonDecoderFactory<T>(objectMapper, type);
         IdHandler<K, Object> idHandler = null;
         // We want to find how we should serialize the ID, in case it is passed to us
         try {
@@ -92,7 +101,7 @@ public class JacksonDBCollection<T, K> {
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.withModule(ObjectIdModule.INSTANCE);
+        objectMapper.withModule(MongoJacksonMapperModule.INSTANCE);
         objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
         return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
     }
@@ -418,7 +427,7 @@ public class JacksonDBCollection<T, K> {
      * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
      *
      * @param query  search query for old object to update
-     * @param update  update with which to update <tt>query</tt>
+     * @param update update with which to update <tt>query</tt>
      * @return The write result
      * @throws MongoException If an error occurred
      */
@@ -507,18 +516,6 @@ public class JacksonDBCollection<T, K> {
      */
     public WriteResult<T, K> removeById(K id) throws MongoException {
         return new WriteResult<T, K>(this, dbCollection.remove(createIdQuery(id)));
-    }
-
-    /**
-     * Finds an object by its id.
-     * This compares the passed in value to the _id field of the document
-     *
-     * @param obj    any valid object
-     * @param fields fields to return
-     * @return the object, if found, otherwise <code>null</code>
-     */
-    public T findOneById(Object obj, DBObject fields) {
-        return convertFromDbObject(dbCollection.findOne(obj, fields));
     }
 
     /**
@@ -684,8 +681,8 @@ public class JacksonDBCollection<T, K> {
      * @return an iterator over the results
      * @throws MongoException If an error occurred
      */
-    public net.vz.mongodb.jackson.DBCursor<T> find(DBObject query) throws MongoException {
-        return new net.vz.mongodb.jackson.DBCursor<T>(this, dbCollection.find(query));
+    public DBCursor<T> find(DBObject query) throws MongoException {
+        return new DBCursor<T>(this, dbCollection.find(query));
     }
 
     /**
@@ -695,7 +692,7 @@ public class JacksonDBCollection<T, K> {
      * @return an iterator over the results
      * @throws MongoException If an error occurred
      */
-    public net.vz.mongodb.jackson.DBCursor<T> find(T query) throws MongoException {
+    public DBCursor<T> find(T query) throws MongoException {
         return find(convertToDbObject(query));
     }
 
@@ -721,8 +718,8 @@ public class JacksonDBCollection<T, K> {
      * @param keys  fields to return
      * @return a cursor to iterate over results
      */
-    public final net.vz.mongodb.jackson.DBCursor<T> find(DBObject query, DBObject keys) {
-        return new net.vz.mongodb.jackson.DBCursor<T>(this, dbCollection.find(query, keys));
+    public final DBCursor<T> find(DBObject query, DBObject keys) {
+        return new DBCursor<T>(this, dbCollection.find(query, keys));
     }
 
     /**
@@ -738,7 +735,7 @@ public class JacksonDBCollection<T, K> {
      * @param keys  fields to return
      * @return a cursor to iterate over results
      */
-    public final net.vz.mongodb.jackson.DBCursor<T> find(T query, T keys) {
+    public final DBCursor<T> find(T query, T keys) {
         return find(convertToDbObject(query), convertToDbObject(keys));
     }
 
@@ -749,8 +746,8 @@ public class JacksonDBCollection<T, K> {
      * @return a cursor which will iterate over every object
      * @throws MongoException If an error occurred
      */
-    public final net.vz.mongodb.jackson.DBCursor<T> find() throws MongoException {
-        return new net.vz.mongodb.jackson.DBCursor<T>(this, dbCollection.find());
+    public final DBCursor<T> find() throws MongoException {
+        return new DBCursor<T>(this, dbCollection.find());
     }
 
     /**
@@ -760,7 +757,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public T findOne() throws MongoException {
-        return convertFromDbObject(dbCollection.findOne());
+        return findOne(new BasicDBObject());
     }
 
     /**
@@ -771,7 +768,29 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public T findOneById(K id) throws MongoException {
-        return convertFromDbObject(dbCollection.findOne(idHandler.toDbId(id)));
+        return findOneById(id, (DBObject) null);
+    }
+
+    /**
+     * Find an object by the given id
+     *
+     * @param id The id
+     * @return The object
+     * @throws MongoException If an error occurred
+     */
+    public T findOneById(K id, DBObject fields) throws MongoException {
+        return findOne(new BasicDBObject("_id", idHandler.toDbId(id)), fields);
+    }
+
+    /**
+     * Find an object by the given id
+     *
+     * @param id The id
+     * @return The object
+     * @throws MongoException If an error occurred
+     */
+    public T findOneById(K id, T fields) throws MongoException {
+        return findOneById(id, convertToDbObject(fields));
     }
 
     /**
@@ -804,7 +823,7 @@ public class JacksonDBCollection<T, K> {
      * @return the object found, or <code>null</code> if no such object exists
      */
     public T findOne(DBObject query, DBObject fields) {
-        return convertFromDbObject(dbCollection.findOne(query, fields));
+        return findOne(query, fields, getReadPreference());
     }
 
     /**
@@ -823,11 +842,16 @@ public class JacksonDBCollection<T, K> {
      *
      * @param query    the query object
      * @param fields   fields to return
-     * @param readPref The read preferences
+     * @param readPref The read preference
      * @return the object found, or <code>null</code> if no such object exists
      */
     public T findOne(DBObject query, DBObject fields, ReadPreference readPref) {
-        return convertFromDbObject(dbCollection.findOne(query, fields, readPref));
+        DBCursor<T> cursor = find(query, fields).setReadPreference(readPref);
+        if (cursor.hasNext()) {
+            return cursor.next();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -1336,20 +1360,8 @@ public class JacksonDBCollection<T, K> {
         return dbCollection.getOptions();
     }
 
-    public void setDBDecoderFactory(DBDecoderFactory fact) {
-        dbCollection.setDBDecoderFactory(fact);
-    }
-
-    public DBDecoderFactory getDBDecoderFactory() {
-        return dbCollection.getDBDecoderFactory();
-    }
-
-    public void setDBEncoderFactory(DBEncoderFactory fact) {
-        dbCollection.setDBEncoderFactory(fact);
-    }
-
-    public DBEncoderFactory getDBEncoderFactory() {
-        return dbCollection.getDBEncoderFactory();
+    JacksonDecoderFactory<T> getDecoderFactory() {
+        return decoderFactory;
     }
 
     DBObject createIdQuery(K object) {
@@ -1364,7 +1376,7 @@ public class JacksonDBCollection<T, K> {
         if (object == null) {
             return null;
         }
-        BSONObjectGenerator generator = new BSONObjectGenerator();
+        BsonObjectGenerator generator = new BsonObjectGenerator();
         try {
             objectMapper.writeValue(generator, object);
         } catch (JsonMappingException e) {
@@ -1389,8 +1401,11 @@ public class JacksonDBCollection<T, K> {
         if (dbObject == null) {
             return null;
         }
+        if (dbObject instanceof JacksonDBObject) {
+            return (T) ((JacksonDBObject) dbObject).getObject();
+        }
         try {
-            return objectMapper.readValue(new BSONObjectTraversingParser(dbObject), type);
+            return objectMapper.readValue(new BsonObjectTraversingParser(dbObject), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {

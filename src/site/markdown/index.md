@@ -92,7 +92,7 @@ If you're using your data objects for both storage and web views, you might want
 Of course, if you really want to control things and Jackson's annotations aren't enough, the wrap method is also overloaded to accept an `ObjectMapper`.  For convenience, you should add the object ID module in order to get the object id and id annotation mapping features:
 
     ObjectMapper myObjectMapper = ...
-    myObjectMapper.withModule(net.vz.mongodb.jackson.internal.ObjectIdModule.INSTANCE);
+    myObjectMapper.withModule(net.vz.mongodb.jackson.internal.MongoJacksonMapperModule.INSTANCE);
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
             String.class, myObjectMapper);
 
