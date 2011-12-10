@@ -1,6 +1,15 @@
 Changelog
 =========
 
+1.2
+---
+
+_Released 2011.12.??_
+
+* Added support for references
+* Made the use of stream parser optional
+* Allowed lists of `@ObjectId` annotated items to be serialised
+
 1.1.2
 -----
 

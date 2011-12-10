@@ -24,6 +24,7 @@ import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
 
 import java.io.IOException;
+import java.util.Collection;
 
 /**
  * Serializer for object ids, serialises strings or byte arrays to an ObjectId class
@@ -34,7 +35,15 @@ import java.io.IOException;
 public class ObjectIdSerializer extends JsonSerializer {
     @Override
     public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
-        jgen.writeObject(serialiseObject(value));
+        if (value instanceof Iterable) {
+            jgen.writeStartArray();
+            for (Object item : (Iterable) value) {
+                jgen.writeObject(serialiseObject(value));
+            }
+            jgen.writeEndArray();
+        } else {
+            jgen.writeObject(serialiseObject(value));
+        }
     }
 
     private Object serialiseObject(Object value) throws JsonMappingException {

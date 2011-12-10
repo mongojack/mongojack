@@ -84,6 +84,29 @@ The mapper also provides an update builder for running updates using the MongoDB
 
     coll.updateById("someid", DBUpdate.inc("someIntField").push(new EmebbedObject()));
 
+If you're using references, the mapper makes it easy to work with them.  You can declare a property to be of type `net.vz.mongodb.jackson.DBRef`, which can be instantiated by supplying the ID and the collection name for the reference.  Alternatively, you can supply the class of that reference, if that class is annotated with `@MongoCollection`.  Having loaded the saved object with the reference, you can load the reference by calling `fetch()`:
+
+    @MongoCollection("comments")
+    public class Comment {
+        @Id
+        @ObjectId
+        public String id;
+        public String text;
+    }
+
+    public class Post {
+        @Id
+        @ObjectId
+        public String id;
+        @ObjectId
+        public List<DBRef<Comment, String>> comments;
+    }
+
+    Post post = coll.findOneById(someId);
+    for (DBRef<Comment, String> comment : post.comments) {
+        System.out.println(comment.fetch().text);
+    }
+
 If you're using your data objects for both storage and web views, you might want to take advantage of Jacksons views feature, so that generated/transient properties aren't persisted, and properties that you don't want leaked and serialised to the web.  The mapper supports this easily, by letting you pass in a view to the wrap method:
 
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
