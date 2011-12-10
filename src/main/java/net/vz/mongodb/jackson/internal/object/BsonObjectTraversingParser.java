@@ -15,6 +15,8 @@
  */
 package net.vz.mongodb.jackson.internal.object;
 
+import net.vz.mongodb.jackson.JacksonDBCollection;
+import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
 import org.bson.BSONObject;
 import org.codehaus.jackson.*;
 
@@ -32,7 +34,10 @@ import java.math.BigInteger;
  * @author James Roper
  * @since 1.0
  */
-public class BsonObjectTraversingParser extends JsonParser {
+public class BsonObjectTraversingParser extends JsonParser implements JacksonDBCollectionProvider {
+
+    private final JacksonDBCollection dbCollection;
+
     /*
     /**********************************************************
     /* Configuration
@@ -77,12 +82,13 @@ public class BsonObjectTraversingParser extends JsonParser {
     /**********************************************************
      */
 
-    public BsonObjectTraversingParser(BSONObject o) {
-        this(o, null);
+    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, BSONObject o) {
+        this(dbCollection, o, null);
     }
 
-    public BsonObjectTraversingParser(BSONObject o, ObjectCodec codec) {
+    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, BSONObject o, ObjectCodec codec) {
         super(0);
+        this.dbCollection = dbCollection;
         objectCodec = codec;
         if (o instanceof Iterable) {
             nextToken = JsonToken.START_ARRAY;
@@ -371,6 +377,10 @@ public class BsonObjectTraversingParser extends JsonParser {
             return null;
         }
         return nodeCursor.currentNode();
+    }
+
+    public JacksonDBCollection getDBCollection() {
+        return dbCollection;
     }
 }
 

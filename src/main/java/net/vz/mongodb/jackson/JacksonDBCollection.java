@@ -23,8 +23,10 @@ import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
 import net.vz.mongodb.jackson.internal.stream.JacksonDBObject;
 import net.vz.mongodb.jackson.internal.stream.JacksonDecoderFactory;
+import org.bson.types.*;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.JavaType;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -83,26 +85,31 @@ public class JacksonDBCollection<T, K> {
     }
 
     private final DBCollection dbCollection;
-    private final Class<T> type;
-    private final Class<K> keyType;
+    private final JavaType type;
+    private final JavaType keyType;
     private final ObjectMapper objectMapper;
     private final IdHandler<K, Object> idHandler;
     private final JacksonDecoderFactory<T> decoderFactory;
     private final Map<Feature, Boolean> features;
 
-    protected JacksonDBCollection(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
+    protected JacksonDBCollection(DBCollection dbCollection, JavaType type, JavaType keyType, ObjectMapper objectMapper,
+                                  Map<Feature, Boolean> features) {
         this.dbCollection = dbCollection;
         this.type = type;
         this.keyType = keyType;
         this.objectMapper = objectMapper;
-        this.decoderFactory = new JacksonDecoderFactory<T>(objectMapper, type);
+        this.decoderFactory = new JacksonDecoderFactory<T>(this, objectMapper, type);
         // We want to find how we should serialize the ID, in case it is passed to us
         try {
-            this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type, "_id", keyType);
+            this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type.getRawClass(), keyType.getRawClass());
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException("Unable to introspect class", e);
         }
-        this.features = new ConcurrentHashMap<Feature, Boolean>();
+        if (features == null) {
+            this.features = new ConcurrentHashMap<Feature, Boolean>();
+        } else {
+            this.features = features;
+        }
     }
 
     /**
@@ -113,7 +120,8 @@ public class JacksonDBCollection<T, K> {
      * @return The wrapped collection
      */
     public static <T> JacksonDBCollection<T, Object> wrap(DBCollection dbCollection, Class<T> type) {
-        return new JacksonDBCollection<T, Object>(dbCollection, type, Object.class, DEFAULT_OBJECT_MAPPER);
+        return new JacksonDBCollection<T, Object>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
+                DEFAULT_OBJECT_MAPPER.constructType(Object.class), DEFAULT_OBJECT_MAPPER, null);
     }
 
     /**
@@ -125,7 +133,8 @@ public class JacksonDBCollection<T, K> {
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType) {
-        return new JacksonDBCollection<T, K>(dbCollection, type, keyType, DEFAULT_OBJECT_MAPPER);
+        return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
+                DEFAULT_OBJECT_MAPPER.constructType(keyType), DEFAULT_OBJECT_MAPPER, null);
     }
 
     /**
@@ -141,7 +150,8 @@ public class JacksonDBCollection<T, K> {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.withModule(MongoJacksonMapperModule.INSTANCE);
         objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
-        return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
+        return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
+                DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, null);
     }
 
     /**
@@ -153,7 +163,8 @@ public class JacksonDBCollection<T, K> {
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
-        return new JacksonDBCollection<T, K>(dbCollection, type, keyType, objectMapper);
+        return new JacksonDBCollection<T, K>(dbCollection, objectMapper.constructType(type),
+                objectMapper.constructType(keyType), objectMapper, null);
     }
 
     /**
@@ -855,7 +866,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public T findOneById(K id, DBObject fields) throws MongoException {
-        return findOne(new BasicDBObject("_id", idHandler.toDbId(id)), fields);
+        return findOne(createIdQuery(id), fields);
     }
 
     /**
@@ -1124,7 +1135,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public JacksonDBCollection<T, K> rename(String newName, boolean dropTarget) throws MongoException {
-        return JacksonDBCollection.wrap(dbCollection.rename(newName, dropTarget), type, keyType, objectMapper);
+        return new JacksonDBCollection<T, K>(dbCollection.rename(newName, dropTarget), type, keyType, objectMapper, features);
     }
 
     /**
@@ -1436,15 +1447,35 @@ public class JacksonDBCollection<T, K> {
         return dbCollection.getOptions();
     }
 
+    /**
+     * Get a collection for loading a reference of the given type
+     *
+     * @param collectionName The name of the collection
+     * @param type The type of the object
+     * @param keyType the type of the id
+     * @return The collection
+     */
+    public <T, K> JacksonDBCollection<T, K> getReferenceCollection(String collectionName, JavaType type, JavaType keyType) {
+        // todo possible optimisation here is to cache the collections
+        return new JacksonDBCollection<T, K>(getDB().getCollection(collectionName), type, keyType, objectMapper, features);
+    }
+
     JacksonDecoderFactory<T> getDecoderFactory() {
         return decoderFactory;
     }
 
     DBObject createIdQuery(K object) {
-        return new BasicDBObjectBuilder().add("_id", idHandler.toDbId(object)).get();
+        Object converted;
+        if (object instanceof org.bson.types.ObjectId) {
+            // Do not try and convert it
+            converted = object;
+        } else {
+            converted = idHandler.toDbId(object);
+        }
+        return new BasicDBObject("_id", converted);
     }
 
-    K convertFromDbId(Object object) {
+    public K convertFromDbId(Object object) {
         return idHandler.fromDbId(object);
     }
 
@@ -1481,7 +1512,7 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(dbObject), type);
+            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {

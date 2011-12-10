@@ -15,6 +15,8 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import net.vz.mongodb.jackson.DBRef;
+import org.bson.types.ObjectId;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -32,12 +34,26 @@ import java.io.IOException;
 public class ObjectIdSerializer extends JsonSerializer {
     @Override
     public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+        jgen.writeObject(serialiseObject(value));
+    }
+
+    private Object serialiseObject(Object value) throws JsonMappingException {
         if (value == null) {
-            jgen.writeObject(null);
+            return null;
         } else if (value instanceof String) {
-            jgen.writeObject(new org.bson.types.ObjectId((String) value));
+            return new ObjectId((String) value);
         } else if (value instanceof byte[]) {
-            jgen.writeObject(new org.bson.types.ObjectId((byte[]) value));
+            return new ObjectId((byte[]) value);
+        } else if (value instanceof DBRef) {
+            DBRef dbRef = (DBRef) value;
+            Object id = serialiseObject(dbRef.getId());
+            if (id == null) {
+                return null;
+            }
+            return new com.mongodb.DBRef(null, dbRef.getCollectionName(), id);
+        } else if (value instanceof ObjectId) {
+            // Putting @ObjectId annotation on an ObjectId is redundant, but that doesn't mean we shouldn't support it
+            return value;
         } else {
             throw new JsonMappingException("Cannot deserialise object of type " + value.getClass() + " to ObjectId");
         }

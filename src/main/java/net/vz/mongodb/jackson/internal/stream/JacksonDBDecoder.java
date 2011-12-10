@@ -16,9 +16,11 @@
 package net.vz.mongodb.jackson.internal.stream;
 
 import com.mongodb.*;
+import net.vz.mongodb.jackson.JacksonDBCollection;
 import org.bson.BSONCallback;
 import org.bson.BSONObject;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.JavaType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,10 +34,12 @@ import java.io.InputStream;
  */
 public class JacksonDBDecoder<T> implements DBDecoder {
 
+    private final JacksonDBCollection<T, ?> dbCollection;
     private final ObjectMapper objectMapper;
-    private final Class<T> type;
+    private final JavaType type;
 
-    public JacksonDBDecoder(ObjectMapper objectMapper, Class<T> type) {
+    public JacksonDBDecoder(JacksonDBCollection<T, ?> dbCollection, ObjectMapper objectMapper, JavaType type) {
+        this.dbCollection = dbCollection;
         this.objectMapper = objectMapper;
         this.type = type;
     }
@@ -55,7 +59,7 @@ public class JacksonDBDecoder<T> implements DBDecoder {
 
     public DBObject decode(InputStream in, DBCollection collection) throws IOException {
         JacksonDBObject<T> decoded = new JacksonDBObject<T>();
-        decoded.setObject(objectMapper.readValue(new DBDecoderBsonParser(0, new LimitingInputStream(in), decoded), type));
+        decoded.setObject((T) objectMapper.readValue(new DBDecoderBsonParser(0, new LimitingInputStream(in), decoded, dbCollection), type));
         return decoded;
     }
 

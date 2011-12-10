@@ -46,5 +46,7 @@ public class MongoJacksonMapperModule extends Module {
         // partial object retrieving
         context.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         context.getDeserializationConfig().addHandler(new ServerErrorProblemHandler());
+        context.addSerializers(new MongoJacksonSerializers());
+        context.addDeserializers(new MongoJacksonDeserializers());
     }
 }

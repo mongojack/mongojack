@@ -17,6 +17,8 @@ package net.vz.mongodb.jackson.internal.stream;
 
 import de.undercouch.bson4jackson.BsonParser;
 import de.undercouch.bson4jackson.types.ObjectId;
+import net.vz.mongodb.jackson.JacksonDBCollection;
+import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.DeserializationContext;
@@ -31,13 +33,15 @@ import java.io.InputStream;
  * @author James Roper
  * @since 1.1.2
  */
-public class DBDecoderBsonParser extends BsonParser {
+public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollectionProvider{
 
     private final JacksonDBObject<?> dbObject;
+    private final JacksonDBCollection dbCollection;
 
-    public DBDecoderBsonParser(int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject) {
+    public DBDecoderBsonParser(int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject, JacksonDBCollection dbCollection) {
         super(jsonFeatures, in);
         this.dbObject = dbObject;
+        this.dbCollection = dbCollection;
     }
 
     @Override
@@ -64,5 +68,9 @@ public class DBDecoderBsonParser extends BsonParser {
             return true;
         }
         return false;
+    }
+
+    public JacksonDBCollection getDBCollection() {
+        return dbCollection;
     }
 }

@@ -47,12 +47,11 @@ public class IdHandlerFactory {
 
 
     public static <K> IdHandler<K, ?> getIdHandlerForProperty(ObjectMapper objectMapper, Class klass,
-                                                              String property, Class<K> type) throws JsonMappingException {
-        return IdHandler.create(getBeanProperty(objectMapper, klass, property, type), type);
+                                                              Class<K> type) throws JsonMappingException {
+        return IdHandler.create(getBeanProperty(objectMapper, klass, type), type);
     }
 
-    private static <K> BeanProperty getBeanProperty(ObjectMapper objectMapper, Class klass,
-                                                               String property, Class<K> type) throws JsonMappingException {
+    private static <K> BeanProperty getBeanProperty(ObjectMapper objectMapper, Class klass, Class<K> type) throws JsonMappingException {
 
         JsonDeserializer deserializer = objectMapper.getDeserializerProvider().findTypedValueDeserializer(
                 objectMapper.copyDeserializationConfig(), SimpleType.construct(klass), null);

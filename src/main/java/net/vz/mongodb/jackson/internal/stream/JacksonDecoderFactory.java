@@ -17,7 +17,9 @@ package net.vz.mongodb.jackson.internal.stream;
 
 import com.mongodb.DBDecoder;
 import com.mongodb.DBDecoderFactory;
+import net.vz.mongodb.jackson.JacksonDBCollection;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.JavaType;
 
 /**
  * DBDecoder factory for jackson
@@ -26,15 +28,17 @@ import org.codehaus.jackson.map.ObjectMapper;
  * @since 1.1.2
  */
 public class JacksonDecoderFactory<T> implements DBDecoderFactory {
+    private final JacksonDBCollection<T, ?> dbCollection;
     private final ObjectMapper objectMapper;
-    private final Class<T> type;
+    private final JavaType type;
 
-    public JacksonDecoderFactory(ObjectMapper objectMapper, Class<T> type) {
+    public JacksonDecoderFactory(JacksonDBCollection<T, ?> dbCollection, ObjectMapper objectMapper, JavaType type) {
+        this.dbCollection = dbCollection;
         this.objectMapper = objectMapper;
         this.type = type;
     }
 
     public DBDecoder create() {
-        return new JacksonDBDecoder(objectMapper, type);
+        return new JacksonDBDecoder(dbCollection, objectMapper, type);
     }
 }
