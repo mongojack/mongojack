@@ -38,7 +38,7 @@ public class ObjectIdSerializer extends JsonSerializer {
         if (value instanceof Iterable) {
             jgen.writeStartArray();
             for (Object item : (Iterable) value) {
-                jgen.writeObject(serialiseObject(value));
+                jgen.writeObject(serialiseObject(item));
             }
             jgen.writeEndArray();
         } else {

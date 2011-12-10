@@ -18,6 +18,7 @@ package net.vz.mongodb.jackson;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -144,5 +145,63 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     public static class ByteArrayId {
         @ObjectId
         public byte[] _id;
+    }
+
+    @Test
+    public void testCollectionOfObjectIds() {
+        ObjectIdCollection object = new ObjectIdCollection();
+        object._id = "id";
+        object.list = Arrays.asList(org.bson.types.ObjectId.get(), org.bson.types.ObjectId.get());
+
+        JacksonDBCollection<ObjectIdCollection, String> coll = getCollection(ObjectIdCollection.class, String.class);
+        coll.insert(object);
+
+        ObjectIdCollection result = coll.findOneById("id");
+        assertThat(result.list, equalTo(object.list));
+    }
+
+    public static class ObjectIdCollection {
+        public String _id;
+        public List<org.bson.types.ObjectId> list;
+    }
+
+    @Test
+    public void testCollectionOfObjectIdStrings() {
+        StringIdCollection object = new StringIdCollection();
+        object._id = "id";
+        object.list = Arrays.asList(org.bson.types.ObjectId.get().toString(), org.bson.types.ObjectId.get().toString());
+
+        JacksonDBCollection<StringIdCollection, String> coll = getCollection(StringIdCollection.class, String.class);
+        coll.insert(object);
+
+        StringIdCollection result = coll.findOneById("id");
+        assertThat(result.list, equalTo(object.list));
+    }
+
+    public static class StringIdCollection {
+        public String _id;
+        @ObjectId
+        public List<String> list;
+    }
+
+    @Test
+    public void testCollectionOfObjectIdByteArrays() {
+        ByteArrayIdCollection object = new ByteArrayIdCollection();
+        object._id = "id";
+        object.list = Arrays.asList(org.bson.types.ObjectId.get().toByteArray(), org.bson.types.ObjectId.get().toByteArray());
+
+        JacksonDBCollection<ByteArrayIdCollection, String> coll = getCollection(ByteArrayIdCollection.class, String.class);
+        coll.insert(object);
+
+        ByteArrayIdCollection result = coll.findOneById("id");
+        assertThat(result.list, hasSize(2));
+        assertThat(result.list.get(0), equalTo(object.list.get(0)));
+        assertThat(result.list.get(1), equalTo(object.list.get(1)));
+    }
+
+    public static class ByteArrayIdCollection {
+        public String _id;
+        @ObjectId
+        public List<byte[]> list;
     }
 }

@@ -18,9 +18,14 @@ package net.vz.mongodb.jackson.internal;
 import net.vz.mongodb.jackson.Id;
 import net.vz.mongodb.jackson.ObjectId;
 import org.codehaus.jackson.map.BeanProperty;
+import org.codehaus.jackson.map.JsonDeserializer;
+import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.introspect.*;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 /**
  * Annotation introspector that supports @ObjectId's
@@ -71,7 +76,6 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     }
 
 
-
     // Handling of ObjectId annotated properties
     @Override
     public Object findSerializer(Annotated am, BeanProperty property) {
@@ -84,11 +88,39 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public Object findDeserializer(Annotated am, BeanProperty property) {
         if (am.hasAnnotation(ObjectId.class)) {
-            if (am.getRawType() == String.class) {
-                return ObjectIdStringDeserializer.class;
-            } else if (am.getRawType() == byte[].class) {
-                return ObjectIdByteDeserializer.class;
+            return findObjectIdDeserializer(am.getRawType());
+        }
+        return null;
+    }
+
+    @Override
+    public Class findContentDeserializer(Annotated am) {
+        if (am.hasAnnotation(ObjectId.class)) {
+            if (am.getGenericType() instanceof ParameterizedType) {
+                Type[] types = ((ParameterizedType) am.getGenericType()).getActualTypeArguments();
+                if (types.length > 0) {
+                    if (types[0] instanceof Class) {
+                        return findObjectIdDeserializer((Class) types[0]);
+                    } else if (types[0] instanceof GenericArrayType) {
+                        GenericArrayType arrayType = (GenericArrayType) types[0];
+                        if (arrayType.getGenericComponentType() == byte.class) {
+                            return ObjectIdDeserializers.ToByteArrayDeserializer.class;
+                        }
+                    }
+                }
             }
+        }
+        return null;
+    }
+
+    private Class<? extends JsonDeserializer<?>> findObjectIdDeserializer(Class<?> type) {
+        if (type == String.class) {
+            return ObjectIdDeserializers.ToStringDeserializer.class;
+        } else if (type == byte[].class) {
+            return ObjectIdDeserializers.ToByteArrayDeserializer.class;
+        } else if (type == org.bson.types.ObjectId.class) {
+            // Don't know why someone would annotated an ObjectId with @ObjectId, but handle it
+            return ObjectIdDeserializers.ToObjectIdDeserializer.class;
         }
         return null;
     }
