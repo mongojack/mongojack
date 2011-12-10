@@ -240,41 +240,6 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         assertEquals(object._id, result._id);
     }
 
-    @Test
-    public void testObjectId() {
-        MockObjectObjectId object = new MockObjectObjectId();
-
-        JacksonDBCollection<MockObjectObjectId, ObjectId> coll = getCollectionAs(MockObjectObjectId.class);
-
-        ObjectId id = coll.insert(object).getSavedId();
-        MockObjectObjectId result = coll.findOneById(id);
-        assertEquals(id, result._id);
-    }
-
-    @Test
-    public void testObjectIdAnnotationOnString() {
-        MockObjectObjectIdAnnotated object = new MockObjectObjectIdAnnotated();
-
-        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
-
-        ObjectId id = (ObjectId) coll.insert(object).getDbObject().get("_id");
-        MockObjectObjectIdAnnotated result = coll.findOneById(id.toString());
-        assertEquals(id.toString(), result._id);
-    }
-
-    @Test
-    public void testObjectIdAnnotationOnByteArray() {
-        MockObjectObjectIdAnnotated object = new MockObjectObjectIdAnnotated();
-        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
-        object.someId = id.toByteArray();
-
-        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
-
-        MockObjectObjectIdAnnotated saved = coll.insert(object).getSavedObject();
-        MockObjectObjectIdAnnotated result = coll.findOneById(saved._id);
-        assertEquals(id, new ObjectId(result.someId));
-    }
-
     private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type) {
         return (JacksonDBCollection) JacksonDBCollection.wrap(coll.getDbCollection(), type);
     }

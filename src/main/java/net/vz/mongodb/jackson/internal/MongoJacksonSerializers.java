@@ -26,5 +26,6 @@ import org.codehaus.jackson.map.module.SimpleSerializers;
 public class MongoJacksonSerializers extends SimpleSerializers {
     public MongoJacksonSerializers() {
         addSerializer(new DBRefSerializer());
+        addSerializer(org.bson.types.ObjectId.class, new ObjectIdSerializer());
     }
 }

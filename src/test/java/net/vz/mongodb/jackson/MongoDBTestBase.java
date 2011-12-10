@@ -20,6 +20,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -29,8 +30,11 @@ import java.util.Set;
  * Base class for unit tests that run against MongoDB.  Assumes there is a MongoDB instance listening on the default
  * port on localhost, and that we can do whatever we want to a database called "unittest".
  */
-public class MongoDBTestBase {
+@RunWith(MongoDBTestCaseRunner.class)
+public abstract class MongoDBTestBase {
     private static final Random rand = new Random();
+    private boolean useStreamParser = true;
+
     protected Mongo mongo;
     protected DB db;
     private Set<String> collections;
@@ -80,4 +84,27 @@ public class MongoDBTestBase {
         return getCollection(name.toString());
     }
 
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType) {
+        JacksonDBCollection<T, K> collection = JacksonDBCollection.wrap(getCollection(), type, keyType);
+        if (useStreamParser) {
+            collection.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+        } else {
+            collection.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+        }
+        return collection;
+    }
+
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, String collectionName) {
+        JacksonDBCollection<T, K> coll = JacksonDBCollection.wrap(getCollection(collectionName), type, keyType);
+        if (useStreamParser) {
+            coll.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+        } else {
+            coll.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+        }
+        return coll;
+    }
+
+    public void setUseStreamParser(boolean useStreamParser) {
+        this.useStreamParser = useStreamParser;
+    }
 }

@@ -20,7 +20,6 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import net.vz.mongodb.jackson.mock.MockObject;
-import net.vz.mongodb.jackson.mock.MockObjectObjectIdAnnotated;
 
 import java.util.List;
 
@@ -33,7 +32,7 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
 
     @Before
     public void setup() throws Exception {
-        coll = JacksonDBCollection.wrap(getCollection(), MockObject.class, String.class);
+        coll = getCollection(MockObject.class, String.class);
     }
 
     @Test
@@ -142,31 +141,4 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         assertThat(remaining, not(contains(object)));
     }
 
-    @Test
-    public void testRemoveByIdWithObjectId() {
-        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
-        String id = coll.insert(new MockObjectObjectIdAnnotated()).getSavedId();
-        coll.insert(new MockObjectObjectIdAnnotated());
-        assertThat(coll.find().toArray(), hasSize(2));
-        coll.removeById(id);
-        List<MockObjectObjectIdAnnotated> results = coll.find().toArray();
-        assertThat(results, hasSize(1));
-        assertThat(results.get(0)._id, not(equalTo(id)));
-    }
-
-    @Test
-    public void testFindOneByIdWithObjectId() {
-        JacksonDBCollection<MockObjectObjectIdAnnotated, String> coll = getCollectionAs(MockObjectObjectIdAnnotated.class);
-        MockObjectObjectIdAnnotated object = new MockObjectObjectIdAnnotated();
-        net.vz.mongodb.jackson.WriteResult<MockObjectObjectIdAnnotated, String> writeResult = coll.insert(object);
-        assertThat(writeResult.getDbObject().get("_id"), instanceOf(org.bson.types.ObjectId.class));
-        String id = writeResult.getSavedId();
-        assertThat(id, instanceOf(String.class));
-        MockObjectObjectIdAnnotated result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-    }
-
-    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type) {
-        return (JacksonDBCollection) JacksonDBCollection.wrap(coll.getDbCollection(), type);
-    }
 }

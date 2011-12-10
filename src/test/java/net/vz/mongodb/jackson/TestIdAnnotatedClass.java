@@ -28,7 +28,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
     private <T, K> JacksonDBCollection<T, K> createCollFor(T object, Class<K> keyType) throws Exception {
         // Stupid generics...
-        return (JacksonDBCollection) JacksonDBCollection.wrap(getCollection(), object.getClass());
+        return (JacksonDBCollection) getCollection(object.getClass(), keyType);
     }
 
     @Test

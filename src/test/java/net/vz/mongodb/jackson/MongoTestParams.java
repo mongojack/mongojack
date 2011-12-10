@@ -13,17 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.mock;
+package net.vz.mongodb.jackson;
 
-import net.vz.mongodb.jackson.ObjectId;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Mock object with object id annotated String
+ * Configuration for tests
  */
-public class MockObjectObjectIdAnnotated {
-    @ObjectId
-    public String _id;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface MongoTestParams {
 
-    @ObjectId
-    public byte[] someId;
+    /**
+     * The type of deserialiser to run the test with, by default, both.
+     */
+    DeserializerType deserializerType() default DeserializerType.BOTH;
+
+    public enum DeserializerType {
+        STREAM,
+        OBJECT,
+        BOTH
+    }
 }

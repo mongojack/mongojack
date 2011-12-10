@@ -26,18 +26,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
-@RunWith(Parameterized.class)
 public class TestDBRefHandling extends MongoDBTestBase {
-    private final boolean useStreamDeserialization;
-
-    @Parameterized.Parameters
-    public static List<Object[]> getParameters() {
-        return Arrays.asList(new Object[]{true}, new Object[]{false});
-    }
-
-    public TestDBRefHandling(boolean useStreamDeserialization) {
-        this.useStreamDeserialization = useStreamDeserialization;
-    }
 
     @Test
     public void simpleDbRefShouldBeSavedAsDbRef() {
@@ -152,25 +141,4 @@ public class TestDBRefHandling extends MongoDBTestBase {
         public String _id;
         public int i;
     }
-
-    private <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType) {
-        JacksonDBCollection<T, K> coll = JacksonDBCollection.wrap(getCollection(), type, keyType);
-        if (useStreamDeserialization) {
-            coll.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        } else {
-            coll.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        }
-        return coll;
-    }
-
-    private <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, String collectionName) {
-        JacksonDBCollection<T, K> coll = JacksonDBCollection.wrap(getCollection(collectionName), type, keyType);
-        if (useStreamDeserialization) {
-            coll.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        } else {
-            coll.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        }
-        return coll;
-    }
-
 }

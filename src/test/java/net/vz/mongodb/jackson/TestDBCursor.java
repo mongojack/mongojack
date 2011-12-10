@@ -35,7 +35,7 @@ public class TestDBCursor extends MongoDBTestBase {
 
     @Before
     public void setup() throws Exception {
-        coll = JacksonDBCollection.wrap(getCollection(), MockObject.class, String.class);
+        coll = getCollection(MockObject.class, String.class);
     }
 
     @Test
