@@ -89,14 +89,12 @@ If you're using references, the mapper makes it easy to work with them.  You can
     @MongoCollection("comments")
     public class Comment {
         @Id
-        @ObjectId
         public String id;
         public String text;
     }
 
     public class Post {
         @Id
-        @ObjectId
         public String id;
         @ObjectId
         public List<DBRef<Comment, String>> comments;
@@ -106,6 +104,10 @@ If you're using references, the mapper makes it easy to work with them.  You can
     for (DBRef<Comment, String> comment : post.comments) {
         System.out.println(comment.fetch().text);
     }
+
+To avoid the *n+1 selects* issue, you can use the more efficient `fetch()` method on `JacksonDBCollection`:
+
+    List<Comment> comments = coll.fetch(post.comments);
 
 If you're using your data objects for both storage and web views, you might want to take advantage of Jacksons views feature, so that generated/transient properties aren't persisted, and properties that you don't want leaked and serialised to the web.  The mapper supports this easily, by letting you pass in a view to the wrap method:
 

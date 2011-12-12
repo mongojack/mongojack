@@ -16,8 +16,10 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.*;
+import net.vz.mongodb.jackson.internal.FetchableDBRef;
 import net.vz.mongodb.jackson.internal.IdHandler;
 import net.vz.mongodb.jackson.internal.IdHandlerFactory;
+import net.vz.mongodb.jackson.internal.JacksonCollectionKey;
 import net.vz.mongodb.jackson.internal.MongoJacksonMapperModule;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
@@ -29,7 +31,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.JavaType;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,6 +96,11 @@ public class JacksonDBCollection<T, K> {
     private final IdHandler<K, Object> idHandler;
     private final JacksonDecoderFactory<T> decoderFactory;
     private final Map<Feature, Boolean> features;
+
+    /**
+     * Cache of referenced collections
+     */
+    private final Map<JacksonCollectionKey, JacksonDBCollection> referencedCollectionCache = new ConcurrentHashMap<JacksonCollectionKey, JacksonDBCollection>();
 
     protected JacksonDBCollection(DBCollection dbCollection, JavaType type, JavaType keyType, ObjectMapper objectMapper,
                                   Map<Feature, Boolean> features) {
@@ -954,6 +964,36 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * Fetch a collection of dbrefs.  This is more efficient than fetching one at a time.
+     *
+     * @param collection the collection to fetch
+     * @param <R>        The type of the reference
+     * @return The collection of referenced objcets
+     */
+    public <R, RK> List<R> fetch(Collection<DBRef<R, RK>> collection) {
+        Map<JacksonCollectionKey, List<Object>> collectionsToIds = new HashMap<JacksonCollectionKey, List<Object>>();
+        for (DBRef<R, RK> ref : collection) {
+            if (ref instanceof FetchableDBRef) {
+                JacksonCollectionKey key = ((FetchableDBRef) ref).getCollectionKey();
+                List<Object> ids = collectionsToIds.get(key);
+                if (ids == null) {
+                    ids = new ArrayList<Object>();
+                    collectionsToIds.put(key, ids);
+                }
+                ids.add(getReferenceCollection(key).convertToDbId(ref.getId()));
+            }
+        }
+        List<R> results = new ArrayList<R>();
+        for (Map.Entry<JacksonCollectionKey, List<Object>> entry : collectionsToIds.entrySet()) {
+            for (R result : this.<R, RK>getReferenceCollection(entry.getKey()).find(
+                    new QueryBuilder().put("_id").in(entry.getValue()).get())) {
+                results.add(result);
+            }
+        }
+        return results;
+    }
+
+    /**
      * calls {@link DBCollection#save(com.mongodb.DBObject, com.mongodb.WriteConcern)} with default WriteConcern
      *
      * @param object the object to save
@@ -1448,16 +1488,40 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * Get the type of this collection
+     *
+     * @return The type
+     */
+    public JacksonCollectionKey getCollectionKey() {
+        return new JacksonCollectionKey(getName(), type, keyType);
+    }
+
+    /**
      * Get a collection for loading a reference of the given type
      *
      * @param collectionName The name of the collection
-     * @param type The type of the object
-     * @param keyType the type of the id
+     * @param type           The type of the object
+     * @param keyType        the type of the id
      * @return The collection
      */
     public <T, K> JacksonDBCollection<T, K> getReferenceCollection(String collectionName, JavaType type, JavaType keyType) {
-        // todo possible optimisation here is to cache the collections
-        return new JacksonDBCollection<T, K>(getDB().getCollection(collectionName), type, keyType, objectMapper, features);
+        return getReferenceCollection(new JacksonCollectionKey(collectionName, type, keyType));
+    }
+
+    /**
+     * Get a collection for loading a reference of the given type
+     *
+     * @param collectionKey The key for the collection
+     * @return The collection
+     */
+    public <T, K> JacksonDBCollection<T, K> getReferenceCollection(JacksonCollectionKey collectionKey) {
+        JacksonDBCollection<T, K> collection = referencedCollectionCache.get(collectionKey);
+        if (collection == null) {
+            collection = new JacksonDBCollection<T, K>(getDB().getCollection(collectionKey.getName()),
+                    collectionKey.getType(), collectionKey.getKeyType(), objectMapper, features);
+            referencedCollectionCache.put(collectionKey, collection);
+        }
+        return collection;
     }
 
     JacksonDecoderFactory<T> getDecoderFactory() {
@@ -1465,14 +1529,16 @@ public class JacksonDBCollection<T, K> {
     }
 
     DBObject createIdQuery(K object) {
-        Object converted;
+        return new BasicDBObject("_id", convertToDbId(object));
+    }
+
+    Object convertToDbId(K object) {
         if (object instanceof org.bson.types.ObjectId) {
             // Do not try and convert it
-            converted = object;
+            return object;
         } else {
-            converted = idHandler.toDbId(object);
+            return idHandler.toDbId(object);
         }
-        return new BasicDBObject("_id", converted);
     }
 
     public K convertFromDbId(Object object) {

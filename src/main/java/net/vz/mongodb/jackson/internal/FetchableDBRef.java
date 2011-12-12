@@ -15,6 +15,7 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.mongodb.DBObject;
 import net.vz.mongodb.jackson.DBRef;
 import net.vz.mongodb.jackson.JacksonDBCollection;
 
@@ -39,5 +40,15 @@ public class FetchableDBRef<T, K> extends DBRef<T, K> {
             object = dbCollection.findOneById(getId());
         }
         return object;
+    }
+
+    @Override
+    public T fetch(DBObject fields) {
+        // No caching, because otherwise we'd have to track which fields were passed in
+        return dbCollection.findOneById(getId(), fields);
+    }
+
+    public JacksonCollectionKey getCollectionKey() {
+        return dbCollection.getCollectionKey();
     }
 }

@@ -17,10 +17,9 @@ package net.vz.mongodb.jackson;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -175,6 +174,28 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo("world"));
         assertThat(ref.i, equalTo(20));
+    }
+
+    @Test
+    public void fetchCollectionOfDBRefsShouldReturnRightResults() {
+        JacksonDBCollection<CollectionOwner, String> coll = getCollection(CollectionOwner.class, String.class);
+        JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class, "referenced");
+
+        refColl.insert(new Referenced("hello", 10));
+        refColl.insert(new Referenced("world", 20));
+
+        CollectionOwner owner = new CollectionOwner();
+        owner.list = Arrays.asList(new DBRef<Referenced, String>("hello", refColl.getName()), new DBRef<Referenced, String>("world", refColl.getName()));
+        owner._id = "foo";
+        coll.insert(owner);
+
+        CollectionOwner saved = coll.findOneById("foo");
+        List<Referenced> fetched = coll.fetch(saved.list);
+        assertThat(fetched, hasSize(2));
+        assertThat(fetched.get(0)._id, equalTo("hello"));
+        assertThat(fetched.get(0).i, equalTo(10));
+        assertThat(fetched.get(1)._id, equalTo("world"));
+        assertThat(fetched.get(1).i, equalTo(20));
     }
 
     public static class CollectionOwner {

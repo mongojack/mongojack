@@ -15,6 +15,7 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.mongodb.DBObject;
 import org.codehaus.jackson.annotate.JsonCreator;
 
 /**
@@ -82,6 +83,21 @@ public class DBRef<T, K> {
      * @return If this DBRef was returned by the mapper, the referenced object, if it exists, or null
      */
     public T fetch() {
+        return null;
+    }
+
+    /**
+     * Fetch only the given fields of the object.  Should only be called for references that have been returned by the
+     * mapper, will return null otherwise.
+     * <p/>
+     * Deserialisation is done by the ObjectMapper that fetched the object that this reference belongs to.
+     * <p/>
+     * Unlike the <code>fetch()</code> method, calls to this are not cached.
+     *
+     * @param fields The fields to fetch
+     * @return If this DBRef was returned by the mapper, the referenced object, if it exists, or null
+     */
+    public T fetch(DBObject fields) {
         return null;
     }
 }
