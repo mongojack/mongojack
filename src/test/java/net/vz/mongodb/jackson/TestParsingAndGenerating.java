@@ -15,19 +15,15 @@
  */
 package net.vz.mongodb.jackson;
 
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import net.vz.mongodb.jackson.mock.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -35,29 +31,12 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Test for parser and generator
  */
-@RunWith(Parameterized.class)
 public class TestParsingAndGenerating extends MongoDBTestBase {
-    private final boolean useStreamDeserialization;
-
-    @Parameterized.Parameters
-    public static List<Object[]> getParameters() {
-        return Arrays.asList(new Object[] {true}, new Object[] {false});
-    }
-
-    public TestParsingAndGenerating(boolean useStreamDeserialization) {
-        this.useStreamDeserialization = useStreamDeserialization;
-    }
-
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
     public void setup() throws Exception {
-        coll = JacksonDBCollection.wrap(getCollection(), MockObject.class, String.class);
-        if (useStreamDeserialization) {
-            coll.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        } else {
-            coll.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        }
+        coll = getCollection(MockObject.class, String.class);
     }
 
     @Test
@@ -233,15 +212,15 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         MockObjectIntId object = new MockObjectIntId();
         object._id = 123456;
 
-        JacksonDBCollection<MockObjectIntId, Integer> coll = getCollectionAs(MockObjectIntId.class);
+        JacksonDBCollection<MockObjectIntId, Integer> coll = getCollectionAs(MockObjectIntId.class, Integer.class);
 
         coll.insert(object);
         MockObjectIntId result = coll.findOne();
         assertEquals(object._id, result._id);
     }
 
-    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type) {
-        return (JacksonDBCollection) JacksonDBCollection.wrap(coll.getDbCollection(), type);
+    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type, Class<K> keyType) {
+        return getCollection(type, keyType, coll.getName());
     }
 
 }

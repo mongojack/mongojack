@@ -36,10 +36,16 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
 
     private final JavaType type;
     private final JavaType keyType;
+    private final JsonDeserializer<K> keyDeserializer;
 
     public DBRefDeserializer(JavaType type, JavaType keyType) {
+        this(type, keyType, null);
+    }
+
+    public DBRefDeserializer(JavaType type, JavaType keyType, JsonDeserializer<K> keyDeserializer) {
         this.type = type;
         this.keyType = keyType;
+        this.keyDeserializer = keyDeserializer;
     }
 
     @Override
@@ -65,7 +71,11 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
                 token = jp.nextValue();
                 while (token != JsonToken.END_OBJECT) {
                     if (jp.getCurrentName().equals("$id")) {
-                        id = (K) jp.getEmbeddedObject();
+                        if (keyDeserializer != null) {
+                            id = keyDeserializer.deserialize(jp, ctxt);
+                        } else {
+                            id = (K) jp.getEmbeddedObject();
+                        }
                     } else if (jp.getCurrentName().equals("$ref")) {
                         collectionName = jp.getText();
                     } else {

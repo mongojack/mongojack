@@ -15,6 +15,7 @@
  */
 package net.vz.mongodb.jackson;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -22,6 +23,7 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -51,10 +53,10 @@ public class TestDBRefHandling extends MongoDBTestBase {
     @Test
     public void dbRefWithObjectIdShouldBeSavedAsDbRef() {
         JacksonDBCollection<ObjectIdOwner, String> coll = getCollection(ObjectIdOwner.class, String.class);
-        JacksonDBCollection<ObjectIdReferenced, String> refColl = getCollection(ObjectIdReferenced.class, String.class);
+        JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class);
 
-        String refId = refColl.insert(new ObjectIdReferenced(10)).getSavedId();
-        String id = coll.insert(new ObjectIdOwner(new DBRef<ObjectIdReferenced, String>(refId, refColl.getName()))).getSavedId();
+        byte[] refId = refColl.insert(new ObjectIdReferenced(10)).getSavedId();
+        String id = coll.insert(new ObjectIdOwner(new DBRef<ObjectIdReferenced, byte[]>(refId, refColl.getName()))).getSavedId();
 
         ObjectIdOwner saved = coll.findOneById(id);
         assertThat(saved.ref, notNullValue());
@@ -116,7 +118,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
     }
 
     public static class ObjectIdOwner {
-        public ObjectIdOwner(DBRef<ObjectIdReferenced, String> ref) {
+        public ObjectIdOwner(DBRef<ObjectIdReferenced, byte[]> ref) {
             this.ref = ref;
         }
 
@@ -126,7 +128,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
         @ObjectId
         public String _id;
         @ObjectId
-        public DBRef<ObjectIdReferenced, String> ref;
+        public DBRef<ObjectIdReferenced, byte[]> ref;
     }
 
     public static class ObjectIdReferenced {
@@ -138,7 +140,87 @@ public class TestDBRefHandling extends MongoDBTestBase {
         }
 
         @ObjectId
-        public String _id;
+        public byte[] _id;
         public int i;
     }
+
+    @Test
+    public void collectionOfDbRefsShouldBeSavedAsDbRefs() {
+        JacksonDBCollection<CollectionOwner, String> coll = getCollection(CollectionOwner.class, String.class);
+        JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class, "referenced");
+
+        refColl.insert(new Referenced("hello", 10));
+        refColl.insert(new Referenced("world", 20));
+
+        CollectionOwner owner = new CollectionOwner();
+        owner.list = Arrays.asList(new DBRef<Referenced, String>("hello", refColl.getName()), new DBRef<Referenced, String>("world", refColl.getName()));
+        owner._id = "foo";
+        coll.insert(owner);
+
+        CollectionOwner saved = coll.findOneById("foo");
+        assertThat(saved.list, notNullValue());
+        assertThat(saved.list, hasSize(2));
+        assertThat(saved.list.get(0).getId(), equalTo("hello"));
+        assertThat(saved.list.get(0).getCollectionName(), equalTo(refColl.getName()));
+        assertThat(saved.list.get(1).getId(), equalTo("world"));
+        assertThat(saved.list.get(1).getCollectionName(), equalTo(refColl.getName()));
+
+        // Try loading them
+        Referenced ref = saved.list.get(0).fetch();
+        assertThat(ref, notNullValue());
+        assertThat(ref._id, equalTo("hello"));
+        assertThat(ref.i, equalTo(10));
+
+        ref = saved.list.get(1).fetch();
+        assertThat(ref, notNullValue());
+        assertThat(ref._id, equalTo("world"));
+        assertThat(ref.i, equalTo(20));
+    }
+
+    public static class CollectionOwner {
+        public String _id;
+        public List<DBRef<Referenced, String>> list;
+    }
+
+    @Test
+    @Ignore("Ignored until I create permutations of classes for configuration")
+    public void collectionOfObjectIdDbRefsShouldBeSavedAsObjectIdDbRefs() {
+        JacksonDBCollection<ObjectIdCollectionOwner, String> coll = getCollection(ObjectIdCollectionOwner.class, String.class);
+        JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class, "referenced");
+
+        byte[] refId1 = refColl.insert(new ObjectIdReferenced(10)).getSavedId();
+        byte[] refId2 = refColl.insert(new ObjectIdReferenced(20)).getSavedId();
+
+        ObjectIdCollectionOwner owner = new ObjectIdCollectionOwner();
+        owner.list = Arrays.asList(new DBRef<ObjectIdReferenced, byte[]>(refId1, refColl.getName()), new DBRef<ObjectIdReferenced, byte[]>(refId2, refColl.getName()));
+        owner._id = "foo";
+        coll.insert(owner);
+
+        ObjectIdCollectionOwner saved = coll.findOneById("foo");
+        assertThat(saved.list, notNullValue());
+        assertThat(saved.list, hasSize(2));
+        assertThat(saved.list.get(0).getId(), equalTo(refId1));
+        assertThat(saved.list.get(0).getCollectionName(), equalTo(refColl.getName()));
+        assertThat(saved.list.get(1).getId(), equalTo(refId2));
+        assertThat(saved.list.get(1).getCollectionName(), equalTo(refColl.getName()));
+
+
+        // Try loading them
+        ObjectIdReferenced ref = saved.list.get(0).fetch();
+        assertThat(ref, notNullValue());
+        assertThat(ref._id, equalTo(refId1));
+        assertThat(ref.i, equalTo(10));
+
+        ref = saved.list.get(1).fetch();
+        assertThat(ref, notNullValue());
+        assertThat(ref._id, equalTo(refId2));
+        assertThat(ref.i, equalTo(20));
+    }
+
+    public static class ObjectIdCollectionOwner {
+        public String _id;
+        @ObjectId
+        public List<DBRef<ObjectIdReferenced, byte[]>> list;
+    }
+
 }
