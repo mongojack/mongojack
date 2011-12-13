@@ -204,7 +204,6 @@ public class TestDBRefHandling extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until I create permutations of classes for configuration")
     public void collectionOfObjectIdDbRefsShouldBeSavedAsObjectIdDbRefs() {
         JacksonDBCollection<ObjectIdCollectionOwner, String> coll = getCollection(ObjectIdCollectionOwner.class, String.class);
         JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class, "referenced");

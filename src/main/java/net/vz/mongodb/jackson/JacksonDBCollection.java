@@ -20,6 +20,8 @@ import net.vz.mongodb.jackson.internal.FetchableDBRef;
 import net.vz.mongodb.jackson.internal.IdHandler;
 import net.vz.mongodb.jackson.internal.IdHandlerFactory;
 import net.vz.mongodb.jackson.internal.JacksonCollectionKey;
+import net.vz.mongodb.jackson.internal.MongoAnnotationIntrospector;
+import net.vz.mongodb.jackson.internal.MongoJacksonHandlerInstantiator;
 import net.vz.mongodb.jackson.internal.MongoJacksonMapperModule;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
@@ -87,6 +89,8 @@ public class JacksonDBCollection<T, K> {
     static {
         // Configure to use the object id annotation introspector
         DEFAULT_OBJECT_MAPPER.registerModule(MongoJacksonMapperModule.INSTANCE);
+        DEFAULT_OBJECT_MAPPER.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
+                new MongoAnnotationIntrospector(DEFAULT_OBJECT_MAPPER.getDeserializationConfig())));
     }
 
     private final DBCollection dbCollection;
@@ -160,6 +164,8 @@ public class JacksonDBCollection<T, K> {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.withModule(MongoJacksonMapperModule.INSTANCE);
         objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
+        objectMapper.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
+                (MongoAnnotationIntrospector) objectMapper.getDeserializationConfig().getAnnotationIntrospector()));
         return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
                 DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, null);
     }
