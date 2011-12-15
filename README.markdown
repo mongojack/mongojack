@@ -6,7 +6,7 @@ Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON m
 Installation and Additional documentation 
 -----------------------------------------
 
-This tools website is online at [VSNet's Github Site](http://vznet.github.com/mongo-jackson-mapper/)
+This tools website is online at [VZNet's Github Site](http://vznet.github.com/mongo-jackson-mapper/)
 
 Looking specifically for the Maven dependency snippet?  It's [Here](http://vznet.github.com/mongo-jackson-mapper/installation.html).
 
