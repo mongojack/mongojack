@@ -3,6 +3,13 @@ Mapping to POJOs couldn't be easier!
 
 Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON mapper is a perfect mechanism for mapping Java objects to MongoDB documents.  And the best Java JSON mapper is Jackson.  Jackson's parsing/generating interface fits serialising to MongoDBs documents like a glove.  Its plugins, custom creators, serialisers, views, pluggable annotators and so on give this mapping library a massive head start, making it powerful, performant, and robust.
 
+Installation and Additional documentation 
+-----------------------------------------
+
+This tools website is online at [VSNet's Github Site](http://vznet.github.com/mongo-jackson-mapper/)
+
+Looking specifically for the Maven dependency snippet?  It's [Here](http://vznet.github.com/mongo-jackson-mapper/installation.html).
+
 Quick start
 -----------
 
