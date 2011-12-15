@@ -15,10 +15,8 @@
  */
 package net.vz.mongodb.jackson;
 
-import com.mongodb.DB;
-import com.mongodb.Mongo;
+import com.mongodb.DBObject;
 import org.bson.types.ObjectId;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -29,8 +27,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 /**
  * Test for parser and generator
@@ -225,6 +225,24 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
 
     @Test
     public void testObjectId() {
+        MockObjectObjectId object = new MockObjectObjectId();
+        object._id = new ObjectId();
+        ObjectId id = object._id;
+
+        JacksonDBCollection<MockObjectObjectId, ObjectId> coll = getCollectionAs(MockObjectObjectId.class);
+
+        coll.insert(object);
+        MockObjectObjectId result = coll.findOneById(id);
+        assertNotNull(result);
+        assertEquals(id, result._id);
+        // Check that underlying object also equals
+        DBObject o = coll.getDbCollection().findOne(id);
+        assertNotNull(o);
+        assertThat((ObjectId) o.get("_id"), equalTo(id));
+    }
+
+    @Test
+    public void testObjectIdGenerated() {
         MockObjectObjectId object = new MockObjectObjectId();
 
         JacksonDBCollection<MockObjectObjectId, ObjectId> coll = getCollectionAs(MockObjectObjectId.class);

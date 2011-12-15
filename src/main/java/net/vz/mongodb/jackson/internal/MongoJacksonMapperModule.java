@@ -45,6 +45,7 @@ public class MongoJacksonMapperModule extends Module {
         // Only include non null properties, this makes it possible to use object templates for querying and
         // partial object retrieving
         context.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+        context.addSerializers(new MongoJacksonSerializers());
         context.getDeserializationConfig().addHandler(new ServerErrorProblemHandler());
     }
 }

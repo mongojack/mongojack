@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.1.3
+-----
+
+_Released 2011.12.15_
+
+* Fixed serialisation bug where ObjectId's were being serialised to object
+
 1.1.2
 -----
 

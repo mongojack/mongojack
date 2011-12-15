@@ -15,6 +15,7 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import org.bson.types.ObjectId;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -35,9 +36,11 @@ public class ObjectIdSerializer extends JsonSerializer {
         if (value == null) {
             jgen.writeObject(null);
         } else if (value instanceof String) {
-            jgen.writeObject(new org.bson.types.ObjectId((String) value));
+            jgen.writeObject(new ObjectId((String) value));
         } else if (value instanceof byte[]) {
-            jgen.writeObject(new org.bson.types.ObjectId((byte[]) value));
+            jgen.writeObject(new ObjectId((byte[]) value));
+        } else if (value instanceof ObjectId) {
+            jgen.writeObject(value);
         } else {
             throw new JsonMappingException("Cannot deserialise object of type " + value.getClass() + " to ObjectId");
         }
