@@ -9,6 +9,15 @@ _Released 2011.12.??_
 * Added support for references
 * Made the use of stream parser optional
 * Allowed lists of `@ObjectId` annotated items to be serialised
+* Fixed handling of error objects in stream parser
+* Added DBQuery builder
+
+1.1.3
+-----
+
+_Released 2011.12.09_
+
+* Fixed serialisation bug where ObjectId’s were being serialised to object
 
 1.1.2
 -----
