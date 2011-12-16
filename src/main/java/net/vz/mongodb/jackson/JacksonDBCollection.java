@@ -552,7 +552,7 @@ public class JacksonDBCollection<T, K> {
     /**
      * Removes objects from the database collection.
      *
-     * @param query  the object that documents to be removed must match
+     * @param query   the object that documents to be removed must match
      * @param concern WriteConcern for this operation
      * @return The result
      * @throws MongoException If an error occurred
@@ -576,7 +576,7 @@ public class JacksonDBCollection<T, K> {
     /**
      * Removes objects from the database collection.
      *
-     * @param query  the object that documents to be removed must match
+     * @param query   the object that documents to be removed must match
      * @param concern WriteConcern for this operation
      * @param encoder the DBEncoder to use
      * @return The result
@@ -980,6 +980,17 @@ public class JacksonDBCollection<T, K> {
      * @return The collection of referenced objcets
      */
     public <R, RK> List<R> fetch(Collection<DBRef<R, RK>> collection) {
+        return fetch(collection, null);
+    }
+
+    /**
+     * Fetch a collection of dbrefs.  This is more efficient than fetching one at a time.
+     *
+     * @param collection the collection to fetch
+     * @param fields     The fields to retrieve for each of the documents
+     * @return The collection of referenced objcets
+     */
+    public <R, RK> List<R> fetch(Collection<DBRef<R, RK>> collection, DBObject fields) {
         Map<JacksonCollectionKey, List<Object>> collectionsToIds = new HashMap<JacksonCollectionKey, List<Object>>();
         for (DBRef<R, RK> ref : collection) {
             if (ref instanceof FetchableDBRef) {
@@ -995,7 +1006,7 @@ public class JacksonDBCollection<T, K> {
         List<R> results = new ArrayList<R>();
         for (Map.Entry<JacksonCollectionKey, List<Object>> entry : collectionsToIds.entrySet()) {
             for (R result : this.<R, RK>getReferenceCollection(entry.getKey()).find(
-                    new QueryBuilder().put("_id").in(entry.getValue()).get())) {
+                    new QueryBuilder().put("_id").in(entry.getValue()).get(), fields)) {
                 results.add(result);
             }
         }

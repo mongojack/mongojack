@@ -54,7 +54,7 @@ When it comes to mapping your objects, generally all you need to use is the Jack
       }
     }
 
-Now your id property will be stored in the database as an object ID, and you can let MongoDB generate it for you.  You might not like annotating your ids with `@JsonProperty("_id")`, the mapper supports `@javax.persistence.Id` as a short hand for this:
+Now your id property will be stored in the database as an object ID, and you can let MongoDB generate it for you.  More information about ObjectIds can be found [here](./object-ids.html).  You might not like annotating your ids with `@JsonProperty("_id")`, the mapper supports `@javax.persistence.Id` as a short hand for this:
 
     public class MyObject {
       @Id
@@ -108,6 +108,8 @@ If you're using references, the mapper makes it easy to work with them.  You can
 To avoid the *n+1 selects* issue, you can use the more efficient `fetch()` method on `JacksonDBCollection`:
 
     List<Comment> comments = coll.fetch(post.comments);
+
+More information about DBRefs can be found [here](./dbrefs.html).
 
 If you're using your data objects for both storage and web views, you might want to take advantage of Jacksons views feature, so that generated/transient properties aren't persisted, and properties that you don't want leaked and serialised to the web.  The mapper supports this easily, by letting you pass in a view to the wrap method:
 

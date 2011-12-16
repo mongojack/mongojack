@@ -34,5 +34,6 @@ Documentation
 
 * [Installation](./installation.html)
 * [Tutorial](./tutorial.html)
-* [Changelog](./changelog.html)
-
+* Advanced
+    * [ObjectId Handling](./object-ids.html)
+    * [Database References](./dbrefs.html)
