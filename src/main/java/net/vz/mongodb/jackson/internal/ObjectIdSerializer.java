@@ -61,7 +61,6 @@ public class ObjectIdSerializer extends JsonSerializer {
             }
             return new com.mongodb.DBRef(null, dbRef.getCollectionName(), id);
         } else if (value instanceof ObjectId) {
-            // Putting @ObjectId annotation on an ObjectId is redundant, but that doesn't mean we shouldn't support it
             return value;
         } else {
             throw new JsonMappingException("Cannot deserialise object of type " + value.getClass() + " to ObjectId");

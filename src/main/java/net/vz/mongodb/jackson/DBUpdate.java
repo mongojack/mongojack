@@ -18,6 +18,7 @@ package net.vz.mongodb.jackson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
+import net.vz.mongodb.jackson.internal.util.SerializationUtils;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -36,35 +37,6 @@ import java.util.regex.Pattern;
  * @since 1.1
  */
 public class DBUpdate {
-
-    private static final Set<Class<?>> BASIC_TYPES;
-
-    static {
-        Set<Class<?>> types = new HashSet<Class<?>>();
-        types.add(String.class);
-        types.add(Integer.class);
-        types.add(Boolean.class);
-        types.add(Short.class);
-        types.add(Long.class);
-        types.add(BigInteger.class);
-        types.add(Float.class);
-        types.add(Double.class);
-        types.add(Byte.class);
-        types.add(Character.class);
-        types.add(BigDecimal.class);
-        types.add(int[].class);
-        types.add(boolean[].class);
-        types.add(short[].class);
-        types.add(long[].class);
-        types.add(float[].class);
-        types.add(double[].class);
-        types.add(byte[].class);
-        types.add(char[].class);
-        types.add(Date.class);
-        // Patterns are used by the regex method of the query builder
-        types.add(Pattern.class);
-        BASIC_TYPES = types;
-    }
 
     /**
      * Increment the given field atomically by one
@@ -553,91 +525,8 @@ public class DBUpdate {
          * @return The object
          */
         public DBObject serialiseAndGet(ObjectMapper objectMapper) {
-            return serialise(objectMapper, update);
+            return SerializationUtils.serializeFields(objectMapper, update);
         }
 
-        private DBObject serialise(ObjectMapper objectMapper, DBObject object) {
-            BasicDBObject serialised = null;
-            for (String field : object.keySet()) {
-                Object value = object.get(field);
-                Object serialisedValue = serialise(objectMapper, value);
-                if (value != serialisedValue) {
-                    // It's changed
-                    if (serialised == null) {
-                        // Make a shallow copy of the object
-                        serialised = new BasicDBObject();
-                        for (String f : object.keySet()) {
-                            serialised.put(f, object.get(f));
-                        }
-                    }
-                    serialised.put(field, serialisedValue);
-                }
-            }
-            if (serialised != null) {
-                return serialised;
-            } else {
-                return object;
-            }
-        }
-
-        private Object serialise(ObjectMapper objectMapper, Object value) {
-            if (value == null || BASIC_TYPES.contains(value.getClass())) {
-                // Return as is
-                return value;
-            } else if (value instanceof DBObject) {
-                return serialise(objectMapper, (DBObject) value);
-            } else if (value instanceof Collection) {
-                Collection<?> coll = (Collection<?>) value;
-                List<Object> copy = null;
-                int position = 0;
-                for (Object item : coll) {
-                    Object returned = serialise(objectMapper, item);
-                    if (returned != item) {
-                        if (copy == null) {
-                            copy = new ArrayList<Object>(coll);
-                        }
-                        copy.set(position, returned);
-                    }
-                    position++;
-                }
-                if (copy != null) {
-                    return copy;
-                } else {
-                    return coll;
-                }
-            } else if (value.getClass().isArray()) {
-                if (BASIC_TYPES.contains(value.getClass().getComponentType())) {
-                    return value;
-                }
-                Object[] array = (Object[]) value;
-                Object[] copy = null;
-                for (int i = 0; i < array.length; i++) {
-                    Object returned = serialise(objectMapper, array[i]);
-                    if (returned != array[i]) {
-                        if (copy == null) {
-                            copy = new Object[array.length];
-                            System.arraycopy(array, 0, copy, 0, array.length);
-                        }
-                        copy[i] = returned;
-                    }
-                }
-                if (copy != null) {
-                    return copy;
-                } else {
-                    return array;
-                }
-            } else {
-                // We don't know what it is, serialise it
-                BsonObjectGenerator generator = new BsonObjectGenerator();
-                try {
-                    objectMapper.writeValue(generator, value);
-                } catch (JsonMappingException e) {
-                    throw new MongoJsonMappingException(e);
-                } catch (IOException e) {
-                    throw new RuntimeException("Somehow got an IOException writing to memory", e);
-                }
-                return generator.getValue();
-            }
-        }
     }
 }

@@ -15,6 +15,9 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.MongoException;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,8 +28,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 /**
  * Test for parser and generator
@@ -217,6 +222,12 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         coll.insert(object);
         MockObjectIntId result = coll.findOne();
         assertEquals(object._id, result._id);
+    }
+
+    @Test(expected = MongoException.class)
+    public void testParseErrors() {
+        DBCursor<MockObject> cursor = coll.find(new BasicDBObject("integer", new BasicDBObject("$thisisinvalid", "true")));
+        cursor.hasNext();
     }
 
     private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type, Class<K> keyType) {

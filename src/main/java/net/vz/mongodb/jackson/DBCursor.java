@@ -16,6 +16,7 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.*;
+import net.vz.mongodb.jackson.internal.util.SerializationUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -48,7 +49,7 @@ import java.util.List;
  * @author James Roper
  * @since 1.0
  */
-public class DBCursor<T> implements Iterator<T>, Iterable<T> {
+public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements Iterator<T>, Iterable<T> {
     private final com.mongodb.DBCursor cursor;
     private final JacksonDBCollection<T, ?> jacksonDBCollection;
 
@@ -56,8 +57,11 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
     private T current;
     // For use in array mode
     private final List<T> all = new ArrayList<T>();
+    // Flag to indicate that the query has been executed
+    private boolean executed;
 
     public DBCursor(JacksonDBCollection<T, ?> jacksonDBCollection, com.mongodb.DBCursor cursor) {
+        super(cursor.getQuery());
         this.jacksonDBCollection = jacksonDBCollection;
         this.cursor = cursor;
         if (jacksonDBCollection.isEnabled(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION)) {
@@ -307,6 +311,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @throws MongoException
      */
     public boolean hasNext() throws MongoException {
+        executed();
         return cursor.hasNext();
     }
 
@@ -317,6 +322,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @throws MongoException
      */
     public T next() throws MongoException {
+        executed();
         current = jacksonDBCollection.convertFromDbObject(cursor.next());
         return current;
     }
@@ -349,6 +355,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @see #size()
      */
     public int length() throws MongoException {
+        executed();
         return cursor.length();
     }
 
@@ -359,6 +366,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @throws MongoException If an error occurred
      */
     public List<T> toArray() throws MongoException {
+        executed();
         return toArray(Integer.MAX_VALUE);
     }
 
@@ -370,6 +378,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @throws MongoException If an error occurred
      */
     public List<T> toArray(int max) throws MongoException {
+        executed();
         if (max > all.size()) {
             List<DBObject> objects = cursor.toArray(max);
             for (int i = all.size(); i < objects.size(); i++) {
@@ -387,6 +396,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @see #count()
      */
     public int itcount() {
+        executed();
         return cursor.itcount();
     }
 
@@ -399,6 +409,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @see #size()
      */
     public int count() {
+        executed();
         return cursor.count();
     }
 
@@ -411,6 +422,7 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      * @see #count()
      */
     public int size() {
+        executed();
         return cursor.size();
     }
 
@@ -493,5 +505,31 @@ public class DBCursor<T> implements Iterator<T>, Iterable<T> {
      */
     public com.mongodb.DBCursor getCursor() {
         return cursor;
+    }
+
+    private void executed() {
+        executed = true;
+    }
+
+    private void checkExecuted() {
+        if (executed) {
+            throw new MongoException("Cannot modify query after it's been executed");
+        }
+    }
+
+    @Override
+    protected DBCursor<T> put(String field, String op, Object value) {
+        checkExecuted();
+        return super.put(field, op, jacksonDBCollection.serializeField(value));
+    }
+
+    @Override
+    protected DBCursor<T> putGroup(String op, Object... expressions) {
+        checkExecuted();
+        Object[] serialized = new Object[expressions.length];
+        for (int i = 0; i < expressions.length; i++) {
+            serialized[i] = jacksonDBCollection.serializeField(expressions[i]);
+        }
+        return super.putGroup(op, serialized);
     }
 }

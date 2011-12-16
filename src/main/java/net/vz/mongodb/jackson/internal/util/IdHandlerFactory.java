@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.internal;
+package net.vz.mongodb.jackson.internal.util;
 
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.deser.BeanDeserializer;

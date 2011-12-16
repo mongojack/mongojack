@@ -15,6 +15,7 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import org.bson.types.ObjectId;
 import org.codehaus.jackson.map.module.SimpleSerializers;
 
 /**
@@ -26,6 +27,6 @@ import org.codehaus.jackson.map.module.SimpleSerializers;
 public class MongoJacksonSerializers extends SimpleSerializers {
     public MongoJacksonSerializers() {
         addSerializer(new DBRefSerializer());
-        addSerializer(org.bson.types.ObjectId.class, new ObjectIdSerializer());
+        addSerializer(ObjectId.class, new ObjectIdSerializer());
     }
 }

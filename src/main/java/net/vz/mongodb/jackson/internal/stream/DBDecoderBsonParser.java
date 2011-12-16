@@ -23,6 +23,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.DeserializationContext;
 import org.codehaus.jackson.map.JsonDeserializer;
+import sun.tools.jstat.Token;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,9 +57,12 @@ public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollecti
 
     public boolean handleUnknownProperty(DeserializationContext ctxt, JsonDeserializer<?> deserializer,
                                          Object beanOrClass, String propertyName) throws IOException {
-        if (propertyName.startsWith("$")) {
+        if (propertyName.startsWith("$") || propertyName.equals("code")) {
             // It's a special server response
-            JsonToken token = nextToken();
+            JsonToken token = getCurrentToken();
+            if (token == JsonToken.FIELD_NAME) {
+                 token = nextToken();
+            }
             if (token == JsonToken.START_ARRAY || token == JsonToken.START_OBJECT) {
                 // The server shouldn't be returning arrays or objects as the response, skip all children
                 skipChildren();
