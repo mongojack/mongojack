@@ -26,9 +26,9 @@ Both the object itself and the id of the object are strongly typed.  If the id i
 
     MyObject foundObject = coll.findOneById(id);
 
-Querying can be done using DBObjects:
+Querying can be done using chained query builder methods on the DBCursor:
 
-    DBCursor<MyObject> cursor = coll.find(new BasicDBObjectBuilder().add("prop", "value").get());
+    DBCursor<MyObject> cursor = coll.find().is("prop", "value");
     if (cursor.hasNext()) {
         MyObject firstObject = cursor.next();
     }

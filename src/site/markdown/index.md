@@ -28,6 +28,8 @@ Features
 * Supports mapping ObjectIds to strings and byte arrays, using an `@ObjectID` annotation.
 * Supports `@javax.persistance.Id` annotation for marking which property is the id (or just call it `_id`).
 * Provides interface to building update commands with update modifiers, which supports POJOs which will be serialised by Jackson.
+* Provides terse chained query builders
+* Supports database reference conventions, with convenience methods for fetching references and collections of references in one query.
 
 Documentation
 -------------
@@ -35,5 +37,6 @@ Documentation
 * [Installation](./installation.html)
 * [Tutorial](./tutorial.html)
 * Advanced
+    * [Building Queries](./queries.html)
     * [ObjectId Handling](./object-ids.html)
     * [Database References](./dbrefs.html)
