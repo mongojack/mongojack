@@ -4,7 +4,7 @@ Changelog
 1.2
 ---
 
-_Released 2011.12.??_
+_Released 2011.12.22_
 
 * Added support for references
 * Made the use of stream parser optional
