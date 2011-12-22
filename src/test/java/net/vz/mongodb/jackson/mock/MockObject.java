@@ -17,6 +17,7 @@ package net.vz.mongodb.jackson.mock;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -32,6 +33,7 @@ public class MockObject {
     public Double doubles;
     public BigDecimal bigDecimal;
     public Boolean booleans;
+    public Date date;
 
     public List<String> simpleList;
     public List<MockEmbeddedObject> complexList;
@@ -63,6 +65,7 @@ public class MockObject {
                 ", doubles=" + doubles +
                 ", bigDecimal=" + bigDecimal +
                 ", booleans=" + booleans +
+                ", date=" + date +
                 ", simpleList=" + simpleList +
                 ", complexList=" + complexList +
                 ", object=" + object +
@@ -85,6 +88,7 @@ public class MockObject {
         if (floats != null ? !floats.equals(that.floats) : that.floats != null) return false;
         if (integer != null ? !integer.equals(that.integer) : that.integer != null) return false;
         if (longs != null ? !longs.equals(that.longs) : that.longs != null) return false;
+        if (date != null ? !date.equals(that.date) : that.date != null) return false;
         if (object != null ? !object.equals(that.object) : that.object != null) return false;
         if (simpleList != null ? !simpleList.equals(that.simpleList) : that.simpleList != null) return false;
         if (string != null ? !string.equals(that.string) : that.string != null) return false;
@@ -103,6 +107,7 @@ public class MockObject {
         result = 31 * result + (doubles != null ? doubles.hashCode() : 0);
         result = 31 * result + (bigDecimal != null ? bigDecimal.hashCode() : 0);
         result = 31 * result + (booleans != null ? booleans.hashCode() : 0);
+        result = 31 * result + (date != null ? date.hashCode() : 0);
         result = 31 * result + (simpleList != null ? simpleList.hashCode() : 0);
         result = 31 * result + (complexList != null ? complexList.hashCode() : 0);
         result = 31 * result + (object != null ? object.hashCode() : 0);

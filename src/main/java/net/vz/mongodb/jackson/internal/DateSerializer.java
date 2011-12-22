@@ -15,23 +15,23 @@
  */
 package net.vz.mongodb.jackson.internal;
 
-import org.bson.types.ObjectId;
-import org.codehaus.jackson.map.module.SimpleSerializers;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonProcessingException;
+import org.codehaus.jackson.map.JsonSerializer;
+import org.codehaus.jackson.map.SerializerProvider;
 
-import java.util.Calendar;
+import java.io.IOException;
 import java.util.Date;
 
 /**
- * Serializers for Mongo Jackson Mapper
+ * Serialises dates as BSON dates.  Basically this just requires writing it as an object rather than a long.
  *
  * @author James Roper
  * @since 1.2
  */
-public class MongoJacksonSerializers extends SimpleSerializers {
-    public MongoJacksonSerializers() {
-        addSerializer(new DBRefSerializer());
-        addSerializer(ObjectId.class, new ObjectIdSerializer());
-        addSerializer(Date.class, new DateSerializer());
-        addSerializer(Calendar.class, new CalendarSerializer());
+public class DateSerializer extends JsonSerializer<Date> {
+    @Override
+    public void serialize(Date value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
+        jgen.writeObject(value);
     }
 }

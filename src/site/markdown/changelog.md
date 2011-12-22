@@ -11,6 +11,7 @@ _Released 2011.12.??_
 * Allowed lists of `@ObjectId` annotated items to be serialised
 * Fixed handling of error objects in stream parser
 * Added DBQuery builder
+* Ensured Dates get serialised/deserialised to/from BSON date types
 
 1.1.3
 -----

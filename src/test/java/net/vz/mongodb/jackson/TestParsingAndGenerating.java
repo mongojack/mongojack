@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
@@ -132,6 +133,24 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         coll.insert(object);
         MockObject result = coll.findOne();
         assertEquals(object.booleans, result.booleans);
+    }
+
+    @Test
+    public void testInsertRetrieveDate() {
+        MockObject object = new MockObject();
+        object.date = new Date(10000);
+        coll.insert(object);
+        MockObject result = coll.findOne();
+        assertEquals(object.date, result.date);
+    }
+
+    @Test
+    public void testDateIsStoredAsBsonDate() {
+        MockObject object = new MockObject();
+        object.date = new Date(10000);
+        coll.insert(object);
+        DBObject result = coll.getDbCollection().findOne();
+        assertEquals(object.date, result.get("date"));
     }
 
     @Test

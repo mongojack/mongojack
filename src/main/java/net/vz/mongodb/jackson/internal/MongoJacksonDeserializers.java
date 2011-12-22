@@ -26,6 +26,7 @@ import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.KeyDeserializer;
 import org.codehaus.jackson.map.TypeDeserializer;
+import org.codehaus.jackson.map.module.SimpleDeserializers;
 import org.codehaus.jackson.map.type.ArrayType;
 import org.codehaus.jackson.map.type.CollectionLikeType;
 import org.codehaus.jackson.map.type.CollectionType;
@@ -33,39 +34,19 @@ import org.codehaus.jackson.map.type.MapLikeType;
 import org.codehaus.jackson.map.type.MapType;
 import org.codehaus.jackson.type.JavaType;
 
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * Deserializers for Mongo Jackson Mapper
  *
  * @author James Roper
  * @since 1.2
  */
-public class MongoJacksonDeserializers implements Deserializers{
-    public JsonDeserializer<?> findArrayDeserializer(ArrayType type, DeserializationConfig config, DeserializerProvider provider, BeanProperty property, TypeDeserializer elementTypeDeserializer, JsonDeserializer<?> elementDeserializer) throws JsonMappingException {
-        return null;
-    }
-
-    public JsonDeserializer<?> findCollectionDeserializer(CollectionType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property, TypeDeserializer elementTypeDeserializer, JsonDeserializer<?> elementDeserializer) throws JsonMappingException {
-        return null;
-    }
-
-    public JsonDeserializer<?> findCollectionLikeDeserializer(CollectionLikeType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property, TypeDeserializer elementTypeDeserializer, JsonDeserializer<?> elementDeserializer) throws JsonMappingException {
-        return null;
-    }
-
-    public JsonDeserializer<?> findEnumDeserializer(Class<?> type, DeserializationConfig config, BeanDescription beanDesc, BeanProperty property) throws JsonMappingException {
-        return null;
-    }
-
-    public JsonDeserializer<?> findMapDeserializer(MapType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property, KeyDeserializer keyDeserializer, TypeDeserializer elementTypeDeserializer, JsonDeserializer<?> elementDeserializer) throws JsonMappingException {
-        return null;
-    }
-
-    public JsonDeserializer<?> findMapLikeDeserializer(MapLikeType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property, KeyDeserializer keyDeserializer, TypeDeserializer elementTypeDeserializer, JsonDeserializer<?> elementDeserializer) throws JsonMappingException {
-        return null;
-    }
-
-    public JsonDeserializer<?> findTreeNodeDeserializer(Class<? extends JsonNode> nodeType, DeserializationConfig config, BeanProperty property) throws JsonMappingException {
-        return null;
+public class MongoJacksonDeserializers extends SimpleDeserializers {
+    public MongoJacksonDeserializers() {
+        addDeserializer(Date.class, new DateDeserializer());
+        addDeserializer(Calendar.class, new CalendarDeserializer());
     }
 
     public JsonDeserializer<?> findBeanDeserializer(JavaType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property) throws JsonMappingException {
@@ -77,6 +58,6 @@ public class MongoJacksonDeserializers implements Deserializers{
             JavaType keyType = type.containedType(1);
             return new DBRefDeserializer(objectType, keyType);
         }
-        return null;
+        return super.findBeanDeserializer(type, config, provider, beanDesc, property);
     }
 }
