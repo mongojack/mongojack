@@ -29,10 +29,6 @@ import java.nio.ByteOrder;
 public class ObjectIdConvertor {
 
     public static ObjectId convert(de.undercouch.bson4jackson.types.ObjectId objectId) {
-        // bson4jackson uses little endian to decode the ids, while org.bson uses big endian... need to convert
-        byte[] buf = new byte[12];
-        ByteBuffer byteBuffer = ByteBuffer.wrap(buf).order(ByteOrder.LITTLE_ENDIAN);
-        byteBuffer.putInt(objectId.getTime()).putInt(objectId.getMachine()).putInt(objectId.getInc());
-        return new ObjectId(buf);
+        return new ObjectId(objectId.getTime(), objectId.getMachine(), objectId.getInc());
     }
 }

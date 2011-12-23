@@ -40,7 +40,8 @@ public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollecti
     private final JacksonDBCollection dbCollection;
 
     public DBDecoderBsonParser(int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject, JacksonDBCollection dbCollection) {
-        super(jsonFeatures, in);
+        // Honor document length must be true
+        super(jsonFeatures, Feature.HONOR_DOCUMENT_LENGTH.getMask(), in);
         this.dbObject = dbObject;
         this.dbCollection = dbCollection;
     }

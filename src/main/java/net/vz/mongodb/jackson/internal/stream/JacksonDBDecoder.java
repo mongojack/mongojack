@@ -59,7 +59,7 @@ public class JacksonDBDecoder<T> implements DBDecoder {
 
     public DBObject decode(InputStream in, DBCollection collection) throws IOException {
         JacksonDBObject<T> decoded = new JacksonDBObject<T>();
-        decoded.setObject((T) objectMapper.readValue(new DBDecoderBsonParser(0, new LimitingInputStream(in), decoded, dbCollection), type));
+        decoded.setObject((T) objectMapper.readValue(new DBDecoderBsonParser(0, in, decoded, dbCollection), type));
         return decoded;
     }
 
