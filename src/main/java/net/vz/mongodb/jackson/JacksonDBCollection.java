@@ -17,6 +17,7 @@ package net.vz.mongodb.jackson;
 
 import com.mongodb.*;
 import net.vz.mongodb.jackson.internal.FetchableDBRef;
+import net.vz.mongodb.jackson.internal.stream.JacksonEncoderFactory;
 import net.vz.mongodb.jackson.internal.util.IdHandler;
 import net.vz.mongodb.jackson.internal.util.IdHandlerFactory;
 import net.vz.mongodb.jackson.internal.JacksonCollectionKey;
@@ -121,6 +122,11 @@ public class JacksonDBCollection<T, K> {
             this.features = new ConcurrentHashMap<Feature, Boolean>();
         } else {
             this.features = features;
+        }
+        DBEncoderFactory encoderFactory = dbCollection.getDBEncoderFactory();
+        // Make sure we don't double wrap
+        if (!(encoderFactory instanceof JacksonEncoderFactory)) {
+            dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(encoderFactory, objectMapper));
         }
     }
 
@@ -364,43 +370,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return update(convertToDbObject(query), convertToDbObject(object), upsert, multi, concern);
-    }
-
-    /**
-     * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param object  object with which to update <tt>q</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @param encoder the DBEncoder to use
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.update(serializeFields(query), object, upsert, multi, concern, encoder));
-    }
-
-    /**
-     * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param object  object with which to update <tt>q</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @param encoder the DBEncoder to use
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return update(convertToDbObject(query), convertToDbObject(object), upsert, multi, concern, encoder);
+        return update(convertToBasicDbObject(query), convertToBasicDbObject(object), upsert, multi, concern);
     }
 
     /**
@@ -574,19 +544,6 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Removes objects from the database collection.
-     *
-     * @param query   the object that documents to be removed must match
-     * @param concern WriteConcern for this operation
-     * @param encoder the DBEncoder to use
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> remove(DBObject query, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(serializeFields(query), concern, encoder));
-    }
-
-    /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
      *
      * @param query the query that documents to be removed must match
@@ -694,18 +651,6 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Forces creation of an index on a set of fields, if one does not already exist.
-     *
-     * @param keys    The keys to index
-     * @param options The index options
-     * @param encoder the DBEncoder to use
-     * @throws MongoException If an error occurred
-     */
-    public void createIndex(DBObject keys, DBObject options, DBEncoder encoder) throws MongoException {
-        dbCollection.createIndex(keys, options, encoder);
-    }
-
-    /**
      * Creates an ascending index on a field with default options, if one does not already exist.
      *
      * @param name name of field to index on
@@ -794,7 +739,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public DBCursor<T> find(T query) throws MongoException {
-        return new DBCursor<T>(this, dbCollection.find(convertToDbObject(query)));
+        return new DBCursor<T>(this, dbCollection.find(convertToBasicDbObject(query)));
     }
 
     /**
@@ -837,7 +782,7 @@ public class JacksonDBCollection<T, K> {
      * @return a cursor to iterate over results
      */
     public final DBCursor<T> find(T query, T keys) {
-        return new DBCursor<T>(this, dbCollection.find(convertToDbObject(query), convertToDbObject(keys)));
+        return new DBCursor<T>(this, dbCollection.find(convertToBasicDbObject(query), convertToBasicDbObject(keys)));
     }
 
 
@@ -891,7 +836,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public T findOneById(K id, T fields) throws MongoException {
-        return findOneById(id, convertToDbObject(fields));
+        return findOneById(id, convertToBasicDbObject(fields));
     }
 
     /**
@@ -1172,7 +1117,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public long getCount(T query, T fields, long limit, long skip) throws MongoException {
-        return dbCollection.getCount(convertToDbObject(query), convertToDbObject(fields), limit, skip);
+        return dbCollection.getCount(convertToBasicDbObject(query), convertToBasicDbObject(fields), limit, skip);
     }
 
     /**
@@ -1565,7 +1510,7 @@ public class JacksonDBCollection<T, K> {
         return idHandler.fromDbId(object);
     }
 
-    DBObject convertToDbObject(T object) throws MongoException {
+    DBObject convertToBasicDbObject(T object) throws MongoException {
         if (object == null) {
             return null;
         }
@@ -1581,8 +1526,14 @@ public class JacksonDBCollection<T, K> {
         return generator.getDBObject();
     }
 
+    DBObject convertToDbObject(T object) throws MongoException {
+        if (object == null) {
+            return null;
+        }
+        return new JacksonDBObject<T>(object);
+    }
+
     DBObject[] convertToDbObjects(T... objects) throws MongoException {
-        // Yay for generic array creation
         DBObject[] results = new DBObject[objects.length];
         for (int i = 0; i < objects.length; i++) {
             results[i] = convertToDbObject(objects[i]);

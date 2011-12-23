@@ -48,8 +48,8 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     @Test
     public void testInsertNoId() {
         MockObject object = new MockObject();
-        WriteResult<MockObject, String> result = coll.insert(object);
-        assertNotNull(result.getSavedObject()._id);
+        coll.insert(object);
+        assertNotNull(coll.findOne()._id);
     }
 
     @Test
