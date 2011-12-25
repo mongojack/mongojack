@@ -15,18 +15,12 @@
  */
 package net.vz.mongodb.jackson.internal;
 
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.HandlerInstantiator;
-import org.codehaus.jackson.map.JsonDeserializer;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.KeyDeserializer;
-import org.codehaus.jackson.map.MapperConfig;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.introspect.Annotated;
-import org.codehaus.jackson.map.jsontype.TypeIdResolver;
-import org.codehaus.jackson.map.jsontype.TypeResolverBuilder;
-import org.codehaus.jackson.map.util.ClassUtil;
-import org.codehaus.jackson.type.JavaType;
+
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.introspect.Annotated;
+import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
+import com.fasterxml.jackson.databind.jsontype.TypeResolverBuilder;
+import com.fasterxml.jackson.databind.util.ClassUtil;
 
 /**
  * This works around JACKSON-732

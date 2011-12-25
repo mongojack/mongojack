@@ -15,12 +15,12 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.introspect.*;
 import net.vz.mongodb.jackson.DBRef;
 import net.vz.mongodb.jackson.Id;
 import net.vz.mongodb.jackson.ObjectId;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.introspect.*;
-import org.codehaus.jackson.type.JavaType;
 
 import java.lang.annotation.Annotation;
 

@@ -15,8 +15,8 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import de.undercouch.bson4jackson.serializers.SimpleSerializers;
 import org.bson.types.ObjectId;
-import org.codehaus.jackson.map.module.SimpleSerializers;
 
 import java.util.Calendar;
 import java.util.Date;

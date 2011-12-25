@@ -15,10 +15,11 @@
  */
 package net.vz.mongodb.jackson.internal.stream;
 
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.map.DeserializationContext;
-import org.codehaus.jackson.map.DeserializationProblemHandler;
-import org.codehaus.jackson.map.JsonDeserializer;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 
 import java.io.IOException;
 

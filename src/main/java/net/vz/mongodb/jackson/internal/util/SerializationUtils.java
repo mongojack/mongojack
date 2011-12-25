@@ -15,14 +15,14 @@
  */
 package net.vz.mongodb.jackson.internal.util;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import net.vz.mongodb.jackson.DBRef;
 import net.vz.mongodb.jackson.MongoJsonMappingException;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import org.bson.types.ObjectId;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
 import java.math.BigDecimal;

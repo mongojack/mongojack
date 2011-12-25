@@ -18,13 +18,13 @@ package net.vz.mongodb.jackson.internal.stream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.io.IOContext;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import net.vz.mongodb.jackson.JacksonDBCollection;
 import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
-
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonToken;
-import org.codehaus.jackson.map.DeserializationContext;
-import org.codehaus.jackson.map.JsonDeserializer;
 
 import de.undercouch.bson4jackson.BsonParser;
 import de.undercouch.bson4jackson.types.ObjectId;
@@ -40,9 +40,9 @@ public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollecti
     private final JacksonDBObject<?> dbObject;
     private final JacksonDBCollection dbCollection;
 
-    public DBDecoderBsonParser(int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject, JacksonDBCollection dbCollection) {
+    public DBDecoderBsonParser(IOContext ctxt, int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject, JacksonDBCollection dbCollection) {
         // Honor document length must be true
-        super(jsonFeatures, Feature.HONOR_DOCUMENT_LENGTH.getMask(), in);
+        super(ctxt, jsonFeatures, Feature.HONOR_DOCUMENT_LENGTH.getMask(), in);
         this.dbObject = dbObject;
         this.dbCollection = dbCollection;
     }

@@ -15,11 +15,11 @@
  */
 package net.vz.mongodb.jackson.internal.object;
 
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
 import com.mongodb.DBRef;
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
-import org.codehaus.jackson.JsonStreamContext;
-import org.codehaus.jackson.JsonToken;
 
 import java.math.BigDecimal;
 import java.util.Collection;

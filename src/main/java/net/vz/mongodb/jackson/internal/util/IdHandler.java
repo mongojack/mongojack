@@ -15,8 +15,8 @@
  */
 package net.vz.mongodb.jackson.internal.util;
 
+import com.fasterxml.jackson.databind.BeanProperty;
 import org.bson.types.ObjectId;
-import org.codehaus.jackson.map.BeanProperty;
 
 /**
  * Handler for ids.  Converts them between the objects type and the database type
