@@ -15,18 +15,19 @@
  */
 package net.vz.mongodb.jackson.internal.stream;
 
-import de.undercouch.bson4jackson.BsonParser;
-import de.undercouch.bson4jackson.types.ObjectId;
+import java.io.IOException;
+import java.io.InputStream;
+
 import net.vz.mongodb.jackson.JacksonDBCollection;
 import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
+
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.DeserializationContext;
 import org.codehaus.jackson.map.JsonDeserializer;
-import sun.tools.jstat.Token;
 
-import java.io.IOException;
-import java.io.InputStream;
+import de.undercouch.bson4jackson.BsonParser;
+import de.undercouch.bson4jackson.types.ObjectId;
 
 /**
  * Parser that wraps BSONParser to convert bson4jackson ObjectIds to org.bson ObjectIds, and stores error codes

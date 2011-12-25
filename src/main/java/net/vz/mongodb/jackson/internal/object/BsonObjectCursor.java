@@ -23,6 +23,7 @@ import org.codehaus.jackson.JsonToken;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -203,6 +204,8 @@ abstract class BsonObjectCursor extends JsonStreamContext {
         } else if (o instanceof ObjectId) {
             return JsonToken.VALUE_STRING;
         } else if (o instanceof DBRef) {
+            return JsonToken.VALUE_EMBEDDED_OBJECT;
+        } else if (o instanceof Date) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else {
             throw new IllegalStateException("Don't know how to parse type: " + o.getClass());
