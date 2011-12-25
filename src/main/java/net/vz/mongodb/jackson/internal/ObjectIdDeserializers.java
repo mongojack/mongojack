@@ -15,12 +15,12 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.mongodb.DBRef;
 import org.bson.types.ObjectId;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.DeserializationContext;
 import org.codehaus.jackson.map.JsonDeserializer;
-import org.codehaus.jackson.map.JsonMappingException;
 
 import java.io.IOException;
 
@@ -40,6 +40,13 @@ public class ObjectIdDeserializers {
                 return null;
             } else if (object instanceof ObjectId) {
                 return object.toString();
+            } else if (object instanceof DBRef) {
+                Object id = ((DBRef) object).getId();
+                if (!(id instanceof ObjectId)) {
+                    throw ctxt.instantiationException(String.class,
+                            "Expected an ObjectId id in the DBRef to deserialise to string, but found " + id.getClass());
+                }
+                return id.toString();
             } else {
                 throw ctxt.instantiationException(String.class,
                         "Expected an ObjectId to deserialise to string, but found " + object.getClass());
@@ -55,6 +62,13 @@ public class ObjectIdDeserializers {
                 return null;
             } else if (object instanceof ObjectId) {
                 return ((ObjectId) object).toByteArray();
+            } else if (object instanceof DBRef) {
+                Object id = ((DBRef) object).getId();
+                if (!(id instanceof ObjectId)) {
+                    throw ctxt.instantiationException(String.class,
+                            "Expected an ObjectId id in the DBRef to deserialise to byte array, but found " + id.getClass());
+                }
+                return ((ObjectId) id).toByteArray();
             } else {
                 throw ctxt.instantiationException(String.class,
                         "Expected an ObjectId to deserialise to byte array, but found " + object.getClass());
@@ -70,6 +84,13 @@ public class ObjectIdDeserializers {
                 return null;
             } else if (object instanceof ObjectId) {
                 return (ObjectId) object;
+            } else if (object instanceof DBRef) {
+                Object id = ((DBRef) object).getId();
+                if (!(id instanceof ObjectId)) {
+                    throw ctxt.instantiationException(String.class,
+                            "Expected an ObjectId id in the DBRef, but found " + id.getClass());
+                }
+                return (ObjectId) id;
             } else {
                 throw ctxt.instantiationException(String.class,
                         "Expected an ObjectId, but found " + object.getClass());

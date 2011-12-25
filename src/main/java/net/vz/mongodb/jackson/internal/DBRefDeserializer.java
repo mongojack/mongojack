@@ -62,7 +62,11 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
                 // Someones already kindly decoded it for us
                 Object object = jp.getEmbeddedObject();
                 if (object instanceof com.mongodb.DBRef) {
-                    id = (K) ((com.mongodb.DBRef) object).getId();
+                    if (keyDeserializer != null) {
+                        id = keyDeserializer.deserialize(jp, ctxt);
+                    } else {
+                        id = (K) ((com.mongodb.DBRef) object).getId();
+                    }
                     collectionName = ((com.mongodb.DBRef) object).getRef();
                 } else {
                     throw ctxt.instantiationException(DBRef.class, "Don't know what to do with embedded object: " + object);

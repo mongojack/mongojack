@@ -89,7 +89,7 @@ public abstract class MongoDBTestBase {
         if (useStreamParser) {
             collection.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         } else {
-            collection.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+            collection.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         }
         return collection;
     }
