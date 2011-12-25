@@ -15,11 +15,9 @@
  */
 package net.vz.mongodb.jackson;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;

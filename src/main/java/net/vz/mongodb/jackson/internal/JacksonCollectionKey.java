@@ -15,7 +15,7 @@
  */
 package net.vz.mongodb.jackson.internal;
 
-import org.codehaus.jackson.type.JavaType;
+import com.fasterxml.jackson.databind.JavaType;
 
 /**
  * A key for uniquely referencing a Jackson Collection, for use in HashMaps

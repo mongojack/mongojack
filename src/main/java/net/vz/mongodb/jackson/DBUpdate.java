@@ -15,18 +15,12 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.util.SerializationUtils;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * A database update.  This can be used to build queries using the MongoDB modifier operations.  It also will do

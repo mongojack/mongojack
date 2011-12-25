@@ -15,6 +15,10 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.mongodb.*;
 import net.vz.mongodb.jackson.internal.FetchableDBRef;
 import net.vz.mongodb.jackson.internal.util.IdHandler;
@@ -28,9 +32,6 @@ import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
 import net.vz.mongodb.jackson.internal.stream.JacksonDBObject;
 import net.vz.mongodb.jackson.internal.stream.JacksonDecoderFactory;
 import net.vz.mongodb.jackson.internal.util.SerializationUtils;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.JavaType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,6 +88,7 @@ public class JacksonDBCollection<T, K> {
     static {
         // Configure to use the object id annotation introspector
         DEFAULT_OBJECT_MAPPER.registerModule(MongoJacksonMapperModule.INSTANCE);
+        DEFAULT_OBJECT_MAPPER.setSerializationConfig(DEFAULT_OBJECT_MAPPER.getSerializationConfig().withSerializationInclusion(JsonSerialize.Inclusion.NON_NULL));
         DEFAULT_OBJECT_MAPPER.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
                 new MongoAnnotationIntrospector(DEFAULT_OBJECT_MAPPER.getDeserializationConfig())));
     }
@@ -160,8 +162,9 @@ public class JacksonDBCollection<T, K> {
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.withModule(MongoJacksonMapperModule.INSTANCE);
-        objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
+        objectMapper.registerModule(MongoJacksonMapperModule.INSTANCE);
+        objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view)
+            .withSerializationInclusion(JsonSerialize.Inclusion.NON_NULL));
         objectMapper.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
                 (MongoAnnotationIntrospector) objectMapper.getDeserializationConfig().getAnnotationIntrospector()));
         return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),

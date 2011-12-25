@@ -15,24 +15,9 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.fasterxml.jackson.databind.*;
 import net.vz.mongodb.jackson.DBRef;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.BeanDescription;
-import org.codehaus.jackson.map.BeanProperty;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.DeserializerProvider;
-import org.codehaus.jackson.map.Deserializers;
-import org.codehaus.jackson.map.JsonDeserializer;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.KeyDeserializer;
-import org.codehaus.jackson.map.TypeDeserializer;
-import org.codehaus.jackson.map.module.SimpleDeserializers;
-import org.codehaus.jackson.map.type.ArrayType;
-import org.codehaus.jackson.map.type.CollectionLikeType;
-import org.codehaus.jackson.map.type.CollectionType;
-import org.codehaus.jackson.map.type.MapLikeType;
-import org.codehaus.jackson.map.type.MapType;
-import org.codehaus.jackson.type.JavaType;
+import net.vz.mongodb.jackson.internal.util.SimpleDeserializers;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -51,7 +36,7 @@ public class MongoJacksonDeserializers extends SimpleDeserializers {
 
     public JsonDeserializer<?> findBeanDeserializer(JavaType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property) throws JsonMappingException {
         if (type.getRawClass() == DBRef.class) {
-            if (!type.hasGenericTypes()) {
+            if (type.containedTypeCount() != 2) {
                 throw new JsonMappingException("Property " + property + " doesn't declare object and key type");
             }
             JavaType objectType = type.containedType(0);

@@ -16,7 +16,6 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.DBObject;
-import org.codehaus.jackson.annotate.JsonCreator;
 
 /**
  * A database reference object

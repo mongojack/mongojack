@@ -15,8 +15,8 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.mongodb.MongoException;
-import org.codehaus.jackson.map.JsonMappingException;
 
 /**
  * Exception used to indicate a problem occurred when converting the MongoDB objects to Jackson

@@ -15,10 +15,13 @@
  */
 package net.vz.mongodb.jackson.internal.util;
 
-import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.deser.BeanDeserializer;
-import org.codehaus.jackson.map.deser.SettableBeanProperty;
-import org.codehaus.jackson.map.type.SimpleType;
+import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.BeanDeserializer;
+import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
+import com.fasterxml.jackson.databind.type.SimpleType;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;

@@ -15,16 +15,15 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import net.vz.mongodb.jackson.DBRef;
 import org.bson.types.ObjectId;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.JsonSerializer;
-import org.codehaus.jackson.map.SerializerProvider;
 
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * Serializer for object ids, serialises strings or byte arrays to an ObjectId class

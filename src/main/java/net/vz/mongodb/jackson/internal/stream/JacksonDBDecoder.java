@@ -15,12 +15,14 @@
  */
 package net.vz.mongodb.jackson.internal.stream;
 
+import com.fasterxml.jackson.core.io.IOContext;
+import com.fasterxml.jackson.core.util.BufferRecycler;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.*;
 import net.vz.mongodb.jackson.JacksonDBCollection;
 import org.bson.BSONCallback;
 import org.bson.BSONObject;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.JavaType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -59,7 +61,8 @@ public class JacksonDBDecoder<T> implements DBDecoder {
 
     public DBObject decode(InputStream in, DBCollection collection) throws IOException {
         JacksonDBObject<T> decoded = new JacksonDBObject<T>();
-        decoded.setObject((T) objectMapper.readValue(new DBDecoderBsonParser(0, in, decoded, dbCollection), type));
+        decoded.setObject((T) objectMapper.readValue(new DBDecoderBsonParser(
+                new IOContext(new BufferRecycler(), in, false), 0, in, decoded, dbCollection), type));
         return decoded;
     }
 

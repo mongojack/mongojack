@@ -15,10 +15,10 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.vz.mongodb.jackson.internal.stream.ServerErrorProblemHandler;
-import org.codehaus.jackson.Version;
-import org.codehaus.jackson.map.Module;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * The ObjectID serialising module
@@ -45,7 +45,7 @@ public class MongoJacksonMapperModule extends Module {
         context.insertAnnotationIntrospector(annotationIntrospector);
         // Only include non null properties, this makes it possible to use object templates for querying and
         // partial object retrieving
-        context.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+        context.getSerializationConfig().withSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         context.getDeserializationConfig().addHandler(new ServerErrorProblemHandler());
         context.addSerializers(new MongoJacksonSerializers());
         context.addDeserializers(new MongoJacksonDeserializers());

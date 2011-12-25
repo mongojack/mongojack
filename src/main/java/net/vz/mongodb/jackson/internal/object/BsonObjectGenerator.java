@@ -15,9 +15,9 @@
  */
 package net.vz.mongodb.jackson.internal.object;
 
+import com.fasterxml.jackson.core.*;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import org.codehaus.jackson.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;

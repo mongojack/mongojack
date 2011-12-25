@@ -15,10 +15,10 @@
  */
 package net.vz.mongodb.jackson.internal.object;
 
+import com.fasterxml.jackson.core.*;
 import net.vz.mongodb.jackson.JacksonDBCollection;
 import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
 import org.bson.BSONObject;
-import org.codehaus.jackson.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -26,7 +26,7 @@ import java.math.BigInteger;
 
 /**
  * Parses a BSONObject by traversing it.  This class was copied from
- * {@link org.codehaus.jackson.node.TreeTraversingParser} and then adapted to be for BSONObject's, rather than JsonNode's.
+ * {@link com.fasterxml.jackson.databind.node.TreeTraversingParser} and then adapted to be for BSONObject's, rather than JsonNode's.
  *
  * While decoding by the cursor uses DBDecoderBsonParser, there are still things that need to be decoded from the DBObjects,
  * including the result of findAndModify, and saved objects after saving.

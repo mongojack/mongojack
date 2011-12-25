@@ -15,11 +15,11 @@
  */
 package net.vz.mongodb.jackson.internal.stream;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBDecoder;
 import com.mongodb.DBDecoderFactory;
 import net.vz.mongodb.jackson.JacksonDBCollection;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.JavaType;
 
 /**
  * DBDecoder factory for jackson
