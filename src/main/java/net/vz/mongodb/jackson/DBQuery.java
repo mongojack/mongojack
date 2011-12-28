@@ -125,7 +125,7 @@ public class DBQuery {
      * @param values The value to compare to
      * @return the query
      */
-    public static Query in(String field, Collection<Object> values) {
+    public static Query in(String field, Collection<?> values) {
         return new Query().in(field, values);
     }
 
@@ -147,7 +147,7 @@ public class DBQuery {
      * @param values The value to compare to
      * @return the query
      */
-    public static Query notIn(String field, Collection<Object> values) {
+    public static Query notIn(String field, Collection<?> values) {
         return new Query().notIn(field, values);
     }
 
@@ -170,7 +170,7 @@ public class DBQuery {
      * @param values The values to compare to
      * @return the query
      */
-    public static Query all(String field, Collection<Object> values) {
+    public static Query all(String field, Collection<?> values) {
         return new Query().all(field, values);
     }
 
@@ -349,7 +349,7 @@ public class DBQuery {
          * @param values The value to compare to
          * @return the query
          */
-        public Q in(String field, Collection<Object> values) {
+        public Q in(String field, Collection<?> values) {
             return put(field, QueryOperators.IN, values);
         }
 
@@ -371,7 +371,7 @@ public class DBQuery {
          * @param values The value to compare to
          * @return the query
          */
-        public Q notIn(String field, Collection<Object> values) {
+        public Q notIn(String field, Collection<?> values) {
             return put(field, QueryOperators.NIN, values);
         }
 
@@ -394,7 +394,7 @@ public class DBQuery {
          * @param values The values to compare to
          * @return the query
          */
-        public Q all(String field, Collection<Object> values) {
+        public Q all(String field, Collection<?> values) {
             return put(field, QueryOperators.ALL, values);
         }
 

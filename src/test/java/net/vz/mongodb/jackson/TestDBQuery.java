@@ -136,6 +136,14 @@ public class TestDBQuery extends MongoDBTestBase {
     }
 
     @Test
+    public void testInCollectionPositive() throws Exception {
+        MockObject mockObject = insertMockObject();
+        DBCursor<MockObject> cursor = coll.find().in("integer", Arrays.asList(9, 10, 11));
+        assertThat(cursor.hasNext(), equalTo(true));
+        assertThat(cursor.next(), equalTo(mockObject));
+    }
+
+    @Test
     public void testInNegative() throws Exception {
         insertMockObject();
         DBCursor<MockObject> cursor = coll.find().in("integer", 9, 11);
