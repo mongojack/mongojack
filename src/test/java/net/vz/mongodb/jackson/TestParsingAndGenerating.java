@@ -18,6 +18,7 @@ package net.vz.mongodb.jackson;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
+import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -29,6 +30,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -247,6 +250,29 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     public void testParseErrors() {
         DBCursor<MockObject> cursor = coll.find(new BasicDBObject("integer", new BasicDBObject("$thisisinvalid", "true")));
         cursor.hasNext();
+    }
+
+
+    @Test
+    public void testByteArray() throws Exception {
+        ObjectWithByteArray object = new ObjectWithByteArray();
+        object._id = "id";
+        object.bytes = new byte[] {1, 2, 3, 4, 5};
+
+        JacksonDBCollection<ObjectWithByteArray, String> coll = getCollectionAs(ObjectWithByteArray.class, String.class);
+        coll.insert(object);
+
+        ObjectWithByteArray result = coll.findOne();
+        assertThat(result.bytes, equalTo(object.bytes));
+
+        // Ensure that it is actually stored as binary
+        DBObject dbObject = coll.getDbCollection().findOne();
+        assertThat(dbObject.get("bytes"), instanceOf(byte[].class));
+    }
+
+    public static class ObjectWithByteArray {
+        public String _id;
+        public byte[] bytes;
     }
 
     private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type, Class<K> keyType) {

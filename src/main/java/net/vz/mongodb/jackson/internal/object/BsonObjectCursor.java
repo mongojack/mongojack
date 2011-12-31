@@ -207,6 +207,8 @@ abstract class BsonObjectCursor extends JsonStreamContext {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else if (o instanceof Date) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
+        } else if (o instanceof byte[]) {
+            return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else {
             throw new IllegalStateException("Don't know how to parse type: " + o.getClass());
         }
