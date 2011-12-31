@@ -1,6 +1,16 @@
 Changelog
 =========
 
+1.2.1
+-----
+
+_Released 2011.12.31_
+
+* Upgraded to bson4jackson 1.2
+* Ensured byte arrays could be handled correctly
+* Fixed DBQuery collection method signature so its a collection of wildcards, not objects
+* Fixed bug in date handling
+
 1.2
 ---
 
