@@ -257,6 +257,27 @@ public class DBQuery {
         return new Query().regex(field, regex);
     }
 
+    /**
+     * An element in the given array field matches the given query
+     *
+     * @param field the array field
+     * @param query The query to attempt to match against the elements of the array field
+     * @return the query
+     */
+    public static Query elemMatch(String field, Query query) {
+        return new Query().elemMatch(field, query);
+    }
+
+    /**
+     * Execute the given JavaScript code as part of the query
+     *
+     * @param code the JavaScript code
+     * @return the query
+     */
+    public static Query where(String code) {
+        return new Query().where(code);
+    }
+
     public static abstract class AbstractBuilder<Q extends AbstractBuilder> {
         protected final DBObject query;
 
@@ -479,6 +500,27 @@ public class DBQuery {
          */
         public Q regex(String field, Pattern regex) {
             return put(field, null, regex);
+        }
+
+        /**
+         * An element in the given array field matches the given query
+         *
+         * @param field the array field
+         * @param query The query to attempt to match against the elements of the array field
+         * @return the query
+         */
+        public Q elemMatch(String field, Query query) {
+            return put(field, "$elemMatch", query);
+        }
+
+        /**
+         * Execute the given JavaScript code as part of the query
+         *
+         * @param code the JavaScript code
+         * @return the query
+         */
+        public Q where(String code) {
+            return put("$where", null, code);
         }
 
         protected Q put(String field, String op, Object value) {

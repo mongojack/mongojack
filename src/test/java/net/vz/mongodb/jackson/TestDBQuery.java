@@ -16,7 +16,6 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.MongoException;
-import com.mongodb.QueryBuilder;
 import net.vz.mongodb.jackson.mock.MockEmbeddedObject;
 import net.vz.mongodb.jackson.mock.MockObject;
 import org.junit.Before;
@@ -306,27 +305,49 @@ public class TestDBQuery extends MongoDBTestBase {
     }
 
     @Test
+    public void testElemMatchPositive() throws Exception {
+        MockObject mockObject = insertMockObjectWithComplexList();
+        DBCursor<MockObject> cursor = coll.find().elemMatch("complexList",
+                DBQuery.in("value", "foo", "la").size("list", 3));
+        assertThat(cursor.hasNext(), equalTo(true));
+        assertThat(cursor.next(), equalTo(mockObject));
+    }
+
+    @Test
+    public void testElemMatchNegative() throws Exception {
+        insertMockObjectWithComplexList();
+        DBCursor<MockObject> cursor = coll.find().elemMatch("complexList",
+                DBQuery.in("value", "foo", "la").size("list", 2));
+        assertThat(cursor.hasNext(), equalTo(false));
+    }
+
+    @Test
+    public void testWherePositive() throws Exception {
+        MockObject mockObject = insertMockObject();
+        DBCursor<MockObject> cursor = coll.find().where("this.integer > 9");
+        assertThat(cursor.hasNext(), equalTo(true));
+        assertThat(cursor.next(), equalTo(mockObject));
+    }
+
+    @Test
+    public void testWhereNegative() throws Exception {
+        insertMockObject();
+        DBCursor<MockObject> cursor = coll.find().where("this.integer < 9");
+        assertThat(cursor.hasNext(), equalTo(false));
+    }
+
+    @Test
     public void testSerializationFromDBCursor() throws Exception {
-        MockObject mockObject = new MockObject("someid", "hello", 10);
-        MockEmbeddedObject embeddedObject = new MockEmbeddedObject();
-        embeddedObject.value = "hello";
-        embeddedObject.list = Arrays.asList("a", "b", "c");
-        mockObject.object = embeddedObject;
-        coll.insert(mockObject);
-        DBCursor<MockObject> cursor = coll.find().is("object", embeddedObject);
+        MockObject mockObject = insertMockObjectWithEmbedded();
+        DBCursor<MockObject> cursor = coll.find().is("object", mockObject.object);
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
 
     @Test
     public void testSerializationFromInFind() throws Exception {
-        MockObject mockObject = new MockObject("someid", "hello", 10);
-        MockEmbeddedObject embeddedObject = new MockEmbeddedObject();
-        embeddedObject.value = "hello";
-        embeddedObject.list = Arrays.asList("a", "b", "c");
-        mockObject.object = embeddedObject;
-        coll.insert(mockObject);
-        DBCursor<MockObject> cursor = coll.find(DBQuery.in("object", embeddedObject));
+        MockObject mockObject = insertMockObjectWithEmbedded();
+        DBCursor<MockObject> cursor = coll.find(DBQuery.in("object", mockObject.object));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -342,6 +363,29 @@ public class TestDBQuery extends MongoDBTestBase {
     private MockObject insertMockObject() {
         MockObject mockObject = new MockObject("someid", "hello", 10);
         mockObject.simpleList = Arrays.asList("a", "b", "c");
+        coll.insert(mockObject);
+        return mockObject;
+    }
+
+    private MockObject insertMockObjectWithEmbedded() {
+        MockObject mockObject = new MockObject("someid", "hello", 10);
+        MockEmbeddedObject embeddedObject = new MockEmbeddedObject();
+        embeddedObject.value = "hello";
+        embeddedObject.list = Arrays.asList("a", "b", "c");
+        mockObject.object = embeddedObject;
+        coll.insert(mockObject);
+        return mockObject;
+    }
+
+    private MockObject insertMockObjectWithComplexList() {
+        MockObject mockObject = new MockObject("someid", "hello", 10);
+        MockEmbeddedObject embeddedObject1 = new MockEmbeddedObject();
+        embeddedObject1.value = "foo";
+        embeddedObject1.list = Arrays.asList("a", "b", "c");
+        MockEmbeddedObject embeddedObject2 = new MockEmbeddedObject();
+        embeddedObject2.value = "bar";
+        embeddedObject2.list = Arrays.asList("d", "e");
+        mockObject.complexList = Arrays.asList(embeddedObject1, embeddedObject2);
         coll.insert(mockObject);
         return mockObject;
     }
