@@ -21,20 +21,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
-import net.vz.mongodb.jackson.DBQuery.Query;
 import net.vz.mongodb.jackson.mock.MockEmbeddedObject;
 import net.vz.mongodb.jackson.mock.MockObject;
 import net.vz.mongodb.jackson.mock.MockObjectIntId;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -283,43 +279,5 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
 
     private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type, Class<K> keyType) {
         return getCollection(type, keyType, coll.getName());
-    }
-
-    @Test
-    public void testHugeData() throws Exception {
-
-        BiggerObjectWithByteArray o = new BiggerObjectWithByteArray();
-
-        File dataFile = new File(TestParsingAndGenerating.class.getResource("dataFile").getFile());
-        assertEquals(true, dataFile.exists());
-        o.bytes = IOUtils.toByteArray(new FileInputStream(dataFile));;
-        o.name = "ANAME";
-        o.size = "ASIZE";
-        JacksonDBCollection<BiggerObjectWithByteArray, String> coll = getCollectionAs(BiggerObjectWithByteArray.class, String.class);
-
-        for (int i = 0; i < 1500; i++) {
-
-            o._id = "id" + i;
-            coll.insert(o);
-        }
-
-        for (int i = 0; i < 1500; i++) {
-            final Query q = DBQuery.is("_id", o._id)
-                                   .is("name", o.name)
-                                   .is("size", o.size);
-
-            final DBCursor<BiggerObjectWithByteArray> cursor = coll.find(q);
-
-            assertEquals(true, cursor.hasNext());
-
-            assertThat(cursor.next().bytes, equalTo(o.bytes));
-        }
-    }
-
-    public static class BiggerObjectWithByteArray {
-        public String _id;
-        public String name;
-        public String size;
-        public byte[] bytes;
     }
 }
