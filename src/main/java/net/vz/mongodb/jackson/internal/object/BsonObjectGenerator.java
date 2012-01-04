@@ -18,6 +18,7 @@ package net.vz.mongodb.jackson.internal.object;
 import com.fasterxml.jackson.core.*;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import net.vz.mongodb.jackson.internal.util.VersionUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -47,6 +48,11 @@ public class BsonObjectGenerator extends JsonGenerator {
 
     public Object getValue() {
         return rootNode.get();
+    }
+
+    @Override
+    public Version version() {
+        return VersionUtils.VERSION;
     }
 
     @Override

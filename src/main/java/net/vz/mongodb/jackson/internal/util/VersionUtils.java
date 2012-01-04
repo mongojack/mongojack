@@ -13,25 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.vz.mongodb.jackson.internal;
+package net.vz.mongodb.jackson.internal.util;
 
-import com.fasterxml.jackson.databind.module.SimpleSerializers;
-import org.bson.types.ObjectId;
-
-import java.util.Calendar;
-import java.util.Date;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.core.util.VersionUtil;
 
 /**
- * Serializers for Mongo Jackson Mapper
- *
- * @author James Roper
- * @since 1.2
+ * Looks up the version of the Mongo Jackson Mapper
  */
-public class MongoJacksonSerializers extends SimpleSerializers {
-    public MongoJacksonSerializers() {
-        addSerializer(new DBRefSerializer());
-        addSerializer(ObjectId.class, new ObjectIdSerializer());
-        addSerializer(Date.class, new DateSerializer());
-        addSerializer(Calendar.class, new CalendarSerializer());
-    }
+public class VersionUtils {
+    public static final Version VERSION = VersionUtil.mavenVersionFor(VersionUtils.class.getClassLoader(),
+            "net.vz.jackson.mongodb", "mongo-jackson-mapper");
 }

@@ -16,8 +16,8 @@
 package net.vz.mongodb.jackson.internal;
 
 import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.module.SimpleDeserializers;
 import net.vz.mongodb.jackson.DBRef;
-import net.vz.mongodb.jackson.internal.util.SimpleDeserializers;
 
 import java.util.Calendar;
 import java.util.Date;

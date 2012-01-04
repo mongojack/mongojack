@@ -15,7 +15,7 @@
  */
 package net.vz.mongodb.jackson;
 
-import org.codehaus.jackson.annotate.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import org.junit.Test;
 
 import static org.hamcrest.core.IsEqual.equalTo;

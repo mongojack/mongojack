@@ -18,6 +18,7 @@ package net.vz.mongodb.jackson.internal.object;
 import com.fasterxml.jackson.core.*;
 import net.vz.mongodb.jackson.JacksonDBCollection;
 import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
+import net.vz.mongodb.jackson.internal.util.VersionUtils;
 import org.bson.BSONObject;
 
 import java.io.IOException;
@@ -97,6 +98,11 @@ public class BsonObjectTraversingParser extends JsonParser implements JacksonDBC
             nextToken = JsonToken.START_OBJECT;
             nodeCursor = new BsonObjectCursor.ObjectCursor(o, null);
         }
+    }
+
+    @Override
+    public Version version() {
+        return VersionUtils.VERSION;
     }
 
     @Override
