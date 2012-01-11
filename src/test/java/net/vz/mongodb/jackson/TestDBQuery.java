@@ -15,18 +15,23 @@
  */
 package net.vz.mongodb.jackson;
 
-import com.mongodb.MongoException;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
+
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+
 import net.vz.mongodb.jackson.mock.MockEmbeddedObject;
 import net.vz.mongodb.jackson.mock.MockObject;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.regex.Pattern;
-
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
+import com.mongodb.BasicDBObject;
+import com.mongodb.MongoException;
 
 public class TestDBQuery extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
@@ -360,6 +365,24 @@ public class TestDBQuery extends MongoDBTestBase {
         cursor.in("blah", "blah");
     }
 
+    @Test
+    public void testSortByDate() {
+
+        insertMockWithDate("1", new Date(456));
+        insertMockWithDate("2", new Date(12));
+        insertMockWithDate("3", new Date(123));
+
+        final DBCursor<MockObject> result = coll.find(DBQuery.lessThan("date", new Date())).sort(new BasicDBObject("date", "-1"));
+        assertThat(result.next().date.getTime(), equalTo(new Date(456).getTime()));
+        assertThat(result.next().date.getTime(), equalTo(new Date(123).getTime()));
+        assertThat(result.next().date.getTime(), equalTo(new Date(12).getTime()));
+
+        final List<MockObject> array = coll.find(DBQuery.lessThan("date", new Date())).sort(new BasicDBObject("date", "-1")).toArray();
+        assertThat(array.get(0).date.getTime(), equalTo(new Date(456).getTime()));
+        assertThat(array.get(1).date.getTime(), equalTo(new Date(123).getTime()));
+        assertThat(array.get(2).date.getTime(), equalTo(new Date(12).getTime()));
+    }
+
     private MockObject insertMockObject() {
         MockObject mockObject = new MockObject("someid", "hello", 10);
         mockObject.simpleList = Arrays.asList("a", "b", "c");
@@ -390,4 +413,10 @@ public class TestDBQuery extends MongoDBTestBase {
         return mockObject;
     }
 
+    private MockObject insertMockWithDate(String id, Date date) {
+        MockObject mockObject = new MockObject(id, id, 1);
+        mockObject.date = date;
+        coll.insert(mockObject);
+        return mockObject;
+    }
 }
