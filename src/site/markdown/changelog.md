@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.3
+-----
+
+* Upgraded to bson4jackson 1.3.0 to fix bug
+* Added elemMatch and where support to DBQuery
+
 1.2.1
 -----
 
