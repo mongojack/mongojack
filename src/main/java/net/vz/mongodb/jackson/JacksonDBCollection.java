@@ -1275,7 +1275,8 @@ public class JacksonDBCollection<T, K> {
      * @return The output
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(String map, String reduce, String outputTarget, DBObject query) throws MongoException {
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce, String outputTarget, DBObject query) throws MongoException {
         return mapReduce(new MapReduceCommand(dbCollection, map, reduce, outputTarget, MapReduceCommand.OutputType.REPLACE, serializeFields(query)));
     }
 
@@ -1296,7 +1297,8 @@ public class JacksonDBCollection<T, K> {
      * @return The output
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType, DBObject query)
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType, DBObject query)
             throws MongoException {
         return mapReduce(new MapReduceCommand(dbCollection, map, reduce, outputTarget, outputType, serializeFields(query)));
     }
@@ -1308,7 +1310,8 @@ public class JacksonDBCollection<T, K> {
      * @return The results
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(MapReduceCommand command) throws MongoException {
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(MapReduceCommand command) throws MongoException {
         return dbCollection.mapReduce(command);
     }
 
@@ -1319,8 +1322,21 @@ public class JacksonDBCollection<T, K> {
      * @return The output
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(DBObject command) throws MongoException {
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(DBObject command) throws MongoException {
         return dbCollection.mapReduce(command);
+    }
+
+    /**
+     * Performs a map reduce operation
+     *
+     * @param command The command to execute
+     * @return The output
+     * @throws MongoException If an error occurred
+     */
+    public <S, L> MapReduceOutput<S, L> mapReduce(MapReduce.MapReduceCommand<S, L> command) throws MongoException {
+        return new MapReduceOutput<S, L>(this, dbCollection.mapReduce(command.build(this)), command.getResultType(),
+                command.getKeyType());
     }
 
     /**
@@ -1607,6 +1623,23 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
+    <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz) throws MongoException {
+        if (dbObject == null) {
+            return null;
+        }
+        if (dbObject instanceof JacksonDBObject) {
+            return (S) ((JacksonDBObject) dbObject).getObject();
+        }
+        try {
+            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), clazz);
+        } catch (JsonMappingException e) {
+            throw new MongoJsonMappingException(e);
+        } catch (IOException e) {
+            // This shouldn't happen
+            throw new MongoException("Unknown error occurred converting BSON to object", e);
+        }
+    }
+
     @SuppressWarnings({"unchecked"})
     T[] convertFromDbObjects(DBObject... dbObjects) throws MongoException {
         T[] results = (T[]) new Object[dbObjects.length];
@@ -1622,5 +1655,9 @@ public class JacksonDBCollection<T, K> {
 
     Object serializeField(Object value) {
         return SerializationUtils.serializeField(objectMapper, value);
+    }
+
+    ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 }
