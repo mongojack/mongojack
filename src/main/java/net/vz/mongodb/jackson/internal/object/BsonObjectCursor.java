@@ -202,7 +202,7 @@ abstract class BsonObjectCursor extends JsonStreamContext {
         } else if (o instanceof CharSequence) {
             return JsonToken.VALUE_STRING;
         } else if (o instanceof ObjectId) {
-            return JsonToken.VALUE_STRING;
+            return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else if (o instanceof DBRef) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else if (o instanceof Date) {
