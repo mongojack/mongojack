@@ -1598,7 +1598,7 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), type);
+            return (T) objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
