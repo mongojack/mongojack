@@ -241,7 +241,6 @@ public class TestDBQuery extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("I'm currently testing on MongoDB 1.8 and $and is only supported in 2")
     public void testAndPositive() throws Exception {
         MockObject mockObject = insertMockObject();
         DBCursor<MockObject> cursor = coll.find().and(DBQuery.greaterThan("integer", 9), DBQuery.lessThan("integer", 11));
@@ -250,7 +249,6 @@ public class TestDBQuery extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("I'm currently testing on MongoDB 1.8 and $and is only supported in 2")
     public void testAndNegative() throws Exception {
         insertMockObject();
         DBCursor<MockObject> cursor = coll.find().and(DBQuery.greaterThan("integer", 9), DBQuery.is("string", "blah"),
