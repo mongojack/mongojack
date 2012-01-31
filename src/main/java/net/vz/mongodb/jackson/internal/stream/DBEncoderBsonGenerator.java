@@ -15,11 +15,15 @@
  */
 package net.vz.mongodb.jackson.internal.stream;
 
+import com.mongodb.DBRef;
 import de.undercouch.bson4jackson.BsonGenerator;
+import org.bson.types.ObjectId;
 import org.codehaus.jackson.JsonGenerationException;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * BsonGenerator that adds a bit of functionality specific to DBEncoding to the bson4jackson DBEncoder
@@ -31,6 +35,26 @@ public class DBEncoderBsonGenerator extends BsonGenerator {
 
     @Override
     protected void _writeSimpleObject(Object value) throws IOException, JsonGenerationException {
-        super._writeSimpleObject(value);    //To change body of overridden methods use File | Settings | File Templates.
+        if (value instanceof Date) {
+            writeDateTime((Date) value);
+        } else if (value instanceof Calendar) {
+            writeDateTime(((Calendar) value).getTime());
+        } else if (value instanceof ObjectId) {
+            writeObjectId(ObjectIdConvertor.convert((ObjectId) value));
+        } else if (value instanceof DBRef) {
+            DBRef dbRef = (DBRef) value;
+            writeStartObject();
+            writeFieldName("$ref");
+            writeString(dbRef.getRef());
+            writeFieldName("$id");
+            writeObject(dbRef.getId());
+            if (dbRef.getDB() != null) {
+                writeFieldName("$db");
+                writeString(dbRef.getDB().getName());
+            }
+            writeEndObject();
+        } else {
+            super._writeSimpleObject(value);
+        }
     }
 }

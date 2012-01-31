@@ -31,32 +31,28 @@ import java.io.IOException;
  * DBEncoder that uses bson4jackson if the object is a JacksonDBObject
  */
 public class JacksonDBEncoder implements DBEncoder {
-    private final DBEncoder defaultEncoder;
     private final ObjectMapper objectMapper;
 
-    public JacksonDBEncoder(DBEncoder defaultEncoder, ObjectMapper objectMapper) {
-        this.defaultEncoder = defaultEncoder;
+    public JacksonDBEncoder(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
     public int writeObject(OutputBuffer buf, BSONObject object) {
+        Object actualObject = object;
         if (object instanceof JacksonDBObject) {
-            Object actualObject = ((JacksonDBObject) object).getObject();
-            OutputBufferOutputStream stream = new OutputBufferOutputStream(buf);
-            BsonGenerator generator = new BsonGenerator(JsonGenerator.Feature.collectDefaults(), 0, stream);
-            try {
-                objectMapper.writeValue(generator, actualObject);
-                // The generator buffers everything so that it can write the number of bytes to the stream
-                generator.close();
-            } catch (JsonMappingException e) {
-                throw new MongoJsonMappingException(e);
-            } catch (IOException e) {
-                throw new MongoException("Error writing object out", e);
-            }
-            return stream.getCount();
-        } else {
-            // Fallback to the default one
-            return defaultEncoder.writeObject(buf, object);
+            actualObject = ((JacksonDBObject) object).getObject();
         }
+        OutputBufferOutputStream stream = new OutputBufferOutputStream(buf);
+        BsonGenerator generator = new DBEncoderBsonGenerator(JsonGenerator.Feature.collectDefaults(), stream);
+        try {
+            objectMapper.writeValue(generator, actualObject);
+            // The generator buffers everything so that it can write the number of bytes to the stream
+            generator.close();
+        } catch (JsonMappingException e) {
+            throw new MongoJsonMappingException(e);
+        } catch (IOException e) {
+            throw new MongoException("Error writing object out", e);
+        }
+        return stream.getCount();
     }
 }

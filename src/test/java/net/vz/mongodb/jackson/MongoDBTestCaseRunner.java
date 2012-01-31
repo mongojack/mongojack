@@ -38,17 +38,21 @@ public class MongoDBTestCaseRunner extends Suite {
     }
 
     private static List<Runner> createChildren(Class<?> klass) throws InitializationError {
-        MongoTestParams.DeserializerType deserializerType = MongoTestParams.DeserializerType.BOTH;
+        MongoTestParams.SerializationType deserializerType = MongoTestParams.SerializationType.BOTH;
+        MongoTestParams.SerializationType serializerType = MongoTestParams.SerializationType.BOTH;
         MongoTestParams params = klass.getAnnotation(MongoTestParams.class);
         if (params != null) {
             deserializerType = params.deserializerType();
+            serializerType = params.serializerType();
         }
         List<Runner> runners = new ArrayList<Runner>();
-        if (deserializerType != MongoTestParams.DeserializerType.OBJECT) {
-            runners.add(new TestRunner(klass, "stream", "[stream]", true));
-        }
-        if (deserializerType != MongoTestParams.DeserializerType.STREAM) {
-            runners.add(new TestRunner(klass, "object", "[object]", false));
+        for (MongoTestParams.SerializationConfig deser : deserializerType.getConfigs()) {
+            List<Runner> sers = new ArrayList<Runner>();
+            for (MongoTestParams.SerializationConfig ser : serializerType.getConfigs()) {
+                sers.add(new TestRunner(klass, ser.getName() + "-serializer", "[" + deser.getName() + "-des][" + ser.getName() + "-ser]",
+                        deser.isEnabled(), ser.isEnabled()));
+            }
+            runners.add(new NamedParentRunner(klass, sers, deser.getName() + "-deserializer"));
         }
         return runners;
     }
@@ -91,12 +95,14 @@ public class MongoDBTestCaseRunner extends Suite {
         private final String name;
         private final String description;
         private final boolean useStreamDeserialisation;
+        private final boolean useStreamSerialisation;
 
-        private TestRunner(Class<?> klass, String name, String description, boolean useStreamDeserialisation) throws InitializationError {
+        private TestRunner(Class<?> klass, String name, String description, boolean useStreamDeserialisation, boolean useStreamSerialisation) throws InitializationError {
             super(klass);
             this.name = name;
             this.description = description;
             this.useStreamDeserialisation = useStreamDeserialisation;
+            this.useStreamSerialisation = useStreamSerialisation;
         }
 
         @Override
@@ -104,6 +110,7 @@ public class MongoDBTestCaseRunner extends Suite {
             Object test = super.createTest();
             if (test instanceof MongoDBTestBase) {
                 ((MongoDBTestBase) test).setUseStreamParser(useStreamDeserialisation);
+                ((MongoDBTestBase) test).setUseStreamSerialiser(useStreamSerialisation);
             }
             return test;
         }

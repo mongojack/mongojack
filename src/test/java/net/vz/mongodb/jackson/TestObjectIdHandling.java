@@ -38,9 +38,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         JacksonDBCollection<ObjectIdId, org.bson.types.ObjectId> coll = getCollection(ObjectIdId.class,
                 org.bson.types.ObjectId.class);
 
-        org.bson.types.ObjectId id = coll.insert(object).getSavedId();
+        coll.insert(object);
+        org.bson.types.ObjectId id = coll.findOne()._id;
         ObjectIdId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
+        assertThat((org.bson.types.ObjectId) coll.getDbCollection().findOne().get("_id"), equalTo(id));
     }
 
     @Test
@@ -55,6 +57,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         ObjectIdId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
+        assertThat((org.bson.types.ObjectId) coll.getDbCollection().findOne().get("_id"), equalTo(id));
     }
 
     public static class ObjectIdId {
@@ -67,11 +70,13 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
 
-        String id = coll.insert(object).getSavedId();
+        coll.insert(object);
+        String id = coll.findOne()._id;
         // Check that it's a valid object id
         assertTrue(org.bson.types.ObjectId.isValid(id));
         StringId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
+        assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
     }
 
     @Test
@@ -85,12 +90,14 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         StringId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
+        assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
     }
 
     @Test
     public void testRemoveByIdWithObjectId() {
         JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
-        String id = coll.insert(new StringId()).getSavedId();
+        coll.insert(new StringId());
+        String id = coll.findOne()._id;
         coll.insert(new StringId());
         assertThat(coll.find().toArray(), hasSize(2));
         coll.removeById(id);
@@ -103,9 +110,9 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     public void testFindOneByIdWithObjectId() {
         JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
         StringId object = new StringId();
-        net.vz.mongodb.jackson.WriteResult<StringId, String> writeResult = coll.insert(object);
-        assertThat(writeResult.getDbObject().get("_id"), instanceOf(org.bson.types.ObjectId.class));
-        String id = writeResult.getSavedId();
+        coll.insert(object);
+        assertThat(coll.getDbCollection().findOne().get("_id"), instanceOf(org.bson.types.ObjectId.class));
+        String id = coll.findOne()._id;
         assertThat(id, instanceOf(String.class));
         StringId result = coll.findOneById(id);
         assertThat(result._id, Matchers.equalTo(id));
@@ -122,7 +129,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         JacksonDBCollection<ByteArrayId, byte[]> coll = getCollection(ByteArrayId.class, byte[].class);
 
-        byte[] id = coll.insert(object).getSavedId();
+        coll.insert(object);
+        byte[] id = coll.findOne()._id;
         // Check that it's a valid object id, should be 12 bytes
         assertEquals(12, id.length);
         ByteArrayId result = coll.findOneById(id);

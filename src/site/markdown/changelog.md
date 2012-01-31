@@ -8,6 +8,7 @@ _Released TBA_
 
 * Added map/reduce deserialisation support
 * Fixed bug in object deserialisation where ObjectIds were reported as string values
+* Added support for stream serialisation
 
 1.3
 ---

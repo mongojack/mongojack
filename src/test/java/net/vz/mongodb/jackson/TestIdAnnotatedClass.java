@@ -36,9 +36,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         IdFieldAnnotated o = new IdFieldAnnotated();
         o.id = "blah";
         JacksonDBCollection<IdFieldAnnotated, String> coll = createCollFor(o, String.class);
-        WriteResult<IdFieldAnnotated, String> writeResult = coll.insert(o);
-        assertThat(writeResult.getSavedId(), equalTo("blah"));
-        assertThat(writeResult.getDbObject().get("id"), nullValue());
+        coll.insert(o);
         IdFieldAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
         assertThat(result.id, equalTo("blah"));
@@ -54,9 +52,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JpaIdFieldAnnotated o = new JpaIdFieldAnnotated();
         o.id = "blah";
         JacksonDBCollection<JpaIdFieldAnnotated, String> coll = createCollFor(o, String.class);
-        WriteResult<JpaIdFieldAnnotated, String> writeResult = coll.insert(o);
-        assertThat(writeResult.getSavedId(), equalTo("blah"));
-        assertThat(writeResult.getDbObject().get("id"), nullValue());
+        coll.insert(o);
         JpaIdFieldAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
         assertThat(result.id, equalTo("blah"));
@@ -72,9 +68,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         GetterSetterAnnotated o = new GetterSetterAnnotated();
         o.setId("blah");
         JacksonDBCollection<GetterSetterAnnotated, String> coll = createCollFor(o, String.class);
-        WriteResult<GetterSetterAnnotated, String> writeResult = coll.insert(o);
-        assertThat(writeResult.getSavedId(), equalTo("blah"));
-        assertThat(writeResult.getDbObject().get("id"), nullValue());
+        coll.insert(o);
         GetterSetterAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
         assertThat(result.getId(), equalTo("blah"));
@@ -98,9 +92,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testCreatorGetterAnnotated() throws Exception {
         CreatorGetterAnnotated o = new CreatorGetterAnnotated("blah");
         JacksonDBCollection<CreatorGetterAnnotated, String> coll = createCollFor(o, String.class);
-        WriteResult<CreatorGetterAnnotated, String> writeResult = coll.insert(o);
-        assertThat(writeResult.getSavedId(), equalTo("blah"));
-        assertThat(writeResult.getDbObject().get("id"), nullValue());
+        coll.insert(o);
         CreatorGetterAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
         assertThat(result.getId(), equalTo("blah"));
@@ -123,14 +115,12 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     @Test
     public void testObjectIdFieldAnnotated() throws Exception {
         ObjectIdFieldAnnotated o = new ObjectIdFieldAnnotated();
+        o.id = new org.bson.types.ObjectId().toString();
         JacksonDBCollection<ObjectIdFieldAnnotated, String> coll = createCollFor(o, String.class);
-        WriteResult<ObjectIdFieldAnnotated, String> writeResult = coll.insert(o);
-        assertThat(writeResult.getDbObject().get("_id"), instanceOf(org.bson.types.ObjectId.class));
-        assertThat(writeResult.getSavedId(), instanceOf(String.class));
-        assertThat(writeResult.getDbObject().get("id"), nullValue());
-        ObjectIdFieldAnnotated result = coll.findOneById(writeResult.getSavedId());
+        coll.insert(o);
+        ObjectIdFieldAnnotated result = coll.findOneById(o.id);
         assertThat(result, notNullValue());
-        assertThat(result.id, equalTo(writeResult.getSavedId()));
+        assertThat(result.id, equalTo(o.id));
     }
 
     public static class ObjectIdFieldAnnotated {
@@ -141,16 +131,12 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
     @Test
     public void testCreatorGetterObjectIdAnnotated() throws Exception {
-        CreatorGetterObjectIdAnnotated o = new CreatorGetterObjectIdAnnotated(null);
+        CreatorGetterObjectIdAnnotated o = new CreatorGetterObjectIdAnnotated(new org.bson.types.ObjectId().toString());
         JacksonDBCollection<CreatorGetterObjectIdAnnotated, String> coll = createCollFor(o, String.class);
-        WriteResult<CreatorGetterObjectIdAnnotated, String> writeResult = coll.insert(o);
-        assertThat(writeResult.getSavedId(), notNullValue());
-        assertThat(writeResult.getSavedId(), instanceOf(String.class));
-        assertThat(writeResult.getDbObject().get("id"), nullValue());
-        assertThat(writeResult.getSavedId(), equalTo(writeResult.getDbObject().get("_id").toString()));
-        CreatorGetterObjectIdAnnotated result = coll.findOneById(writeResult.getSavedId());
+        coll.insert(o);
+        CreatorGetterObjectIdAnnotated result = coll.findOneById(o.id);
         assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo(writeResult.getSavedId()));
+        assertThat(result.getId(), equalTo(o.id));
     }
 
     public static class CreatorGetterObjectIdAnnotated {

@@ -15,7 +15,7 @@
  */
 package net.vz.mongodb.jackson.internal;
 
-import net.vz.mongodb.jackson.DBRef;
+import de.undercouch.bson4jackson.BsonGenerator;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.stream.DBEncoderBsonGenerator;
 import org.codehaus.jackson.JsonGenerator;
@@ -26,38 +26,21 @@ import org.codehaus.jackson.map.SerializerProvider;
 import java.io.IOException;
 
 /**
- * Serialises DBRef objects
- *
- * @author James Roper
- * @since 1.2
+ * Serializer that detects whether we are using a BSON serializer or Object serializer
  */
-public class DBRefSerializer extends MongoSerializer<DBRef> {
-
+public abstract class MongoSerializer<T> extends JsonSerializer<T> {
     @Override
-    public void serialize(DBRef value, DBEncoderBsonGenerator bgen, SerializerProvider provider) throws IOException, JsonProcessingException {
-        if (value == null) {
-            bgen.writeNull();
+    public final void serialize(T value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+        if (jgen instanceof DBEncoderBsonGenerator) {
+            serialize(value, (DBEncoderBsonGenerator) jgen, provider);
+        } else if (jgen instanceof BsonObjectGenerator) {
+            serialize(value, (BsonObjectGenerator) jgen, provider);
         } else {
-            bgen.writeStartObject();
-            bgen.writeFieldName("$ref");
-            bgen.writeString(value.getCollectionName());
-            bgen.writeFieldName("$id");
-            bgen.writeObject(value.getId());
-            bgen.writeEndObject();
+            throw new IllegalArgumentException("Mongo serializer may only be used for generating BSON");
         }
     }
 
-    @Override
-    protected void serialize(DBRef value, BsonObjectGenerator bgen, SerializerProvider provider) throws IOException, JsonProcessingException {
-        if (value == null) {
-            bgen.writeNull();
-        } else {
-            bgen.writeObject(new com.mongodb.DBRef(null, value.getCollectionName(), value.getId()));
-        }
-    }
+    protected abstract void serialize(T value, DBEncoderBsonGenerator bgen, SerializerProvider provider) throws IOException, JsonProcessingException;
 
-    @Override
-    public Class<DBRef> handledType() {
-        return DBRef.class;
-    }
+    protected abstract void serialize(T value, BsonObjectGenerator bgen, SerializerProvider provider) throws IOException, JsonProcessingException;
 }

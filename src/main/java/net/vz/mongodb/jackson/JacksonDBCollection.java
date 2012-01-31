@@ -63,14 +63,12 @@ public class JacksonDBCollection<T, K> {
         USE_STREAM_DESERIALIZATION(true),
 
         /**
-         * Automatically hydrate all DB references.  This is not advised, either declare the objects to be of type
-         * {@link net.vz.mongodb.jackson.DBRef}, and hydrate by calling fetch(), or declare it as the referenced type
-         * and use {@link net.vz.mongodb.jackson.JacksonDBCollection.hydrate()} to hydrate the referenced types.
-         * <p/>
-         * If using this feature, it is strongly recommended that you set {@link Feature.USE_STREAM_DESERIALIZATION} to
-         * false, to avoid potential deadlocks.
+         * Serialise objects directly to the MongoDB stream.  While this performs better than serialising to MongoDB
+         * DBObjects first, it has the disadvantage of not being able to generate IDs before sending objects to the
+         * server, which means WriteResult.getSavedId() getSavedObject() will not work.  Hence it is disabled by
+         * default.
          */
-        AUTO_HYDRATE(false);
+        USE_STREAM_SERIALIZATION(false);
 
         Feature(boolean enabledByDefault) {
             this.enabledByDefault = enabledByDefault;
@@ -123,11 +121,7 @@ public class JacksonDBCollection<T, K> {
         } else {
             this.features = features;
         }
-        DBEncoderFactory encoderFactory = dbCollection.getDBEncoderFactory();
-        // Make sure we don't double wrap
-        if (!(encoderFactory instanceof JacksonEncoderFactory)) {
-            dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(encoderFactory, objectMapper));
-        }
+        dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(objectMapper, this));
     }
 
     /**
@@ -1546,7 +1540,20 @@ public class JacksonDBCollection<T, K> {
         if (object == null) {
             return null;
         }
-        return new JacksonDBObject<T>(object);
+        if (isEnabled(Feature.USE_STREAM_SERIALIZATION)) {
+            return new JacksonDBObject<T>(object);
+        } else {
+            BsonObjectGenerator generator = new BsonObjectGenerator();
+            try {
+                objectMapper.writeValue(generator, object);
+            } catch (JsonMappingException e) {
+                throw new MongoJsonMappingException(e);
+            } catch (IOException e) {
+                // This shouldn't happen
+                throw new MongoException("Unknown error occurred converting BSON to object", e);
+            }
+            return generator.getDBObject();
+        }
     }
 
     DBObject[] convertToDbObjects(T... objects) throws MongoException {

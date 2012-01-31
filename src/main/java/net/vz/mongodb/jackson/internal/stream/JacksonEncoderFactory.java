@@ -15,9 +15,10 @@
  */
 package net.vz.mongodb.jackson.internal.stream;
 
-import com.mongodb.DBCollection;
 import com.mongodb.DBEncoder;
 import com.mongodb.DBEncoderFactory;
+import com.mongodb.DefaultDBEncoder;
+import net.vz.mongodb.jackson.JacksonDBCollection;
 import org.codehaus.jackson.map.ObjectMapper;
 
 /**
@@ -25,15 +26,19 @@ import org.codehaus.jackson.map.ObjectMapper;
  */
 public class JacksonEncoderFactory implements DBEncoderFactory{
 
-    private final DBEncoderFactory defaultEncoderFactory;
     private final ObjectMapper objectMapper;
+    private final JacksonDBCollection<?, ?> collection;
 
-    public JacksonEncoderFactory(DBEncoderFactory defaultEncoderFactory, ObjectMapper objectMapper) {
-        this.defaultEncoderFactory = defaultEncoderFactory;
+    public JacksonEncoderFactory(ObjectMapper objectMapper, JacksonDBCollection<?, ?> collection) {
         this.objectMapper = objectMapper;
+        this.collection = collection;
     }
 
     public DBEncoder create() {
-        return new JacksonDBEncoder(defaultEncoderFactory.create(), objectMapper);
+        if (collection.isEnabled(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION)) {
+           return new JacksonDBEncoder(objectMapper);
+        } else {
+            return DefaultDBEncoder.FACTORY.create();
+        }
     }
 }

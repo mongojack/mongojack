@@ -34,6 +34,7 @@ import java.util.Set;
 public abstract class MongoDBTestBase {
     private static final Random rand = new Random();
     private boolean useStreamParser = true;
+    private boolean useStreamSerialiser = false;
 
     protected Mongo mongo;
     protected DB db;
@@ -91,6 +92,11 @@ public abstract class MongoDBTestBase {
         } else {
             collection.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         }
+        if (useStreamSerialiser) {
+            collection.enable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
+        } else {
+            collection.disable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
+        }
         return collection;
     }
 
@@ -101,10 +107,19 @@ public abstract class MongoDBTestBase {
         } else {
             coll.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         }
+        if (useStreamSerialiser) {
+            coll.enable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
+        } else {
+            coll.disable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
+        }
         return coll;
     }
 
     public void setUseStreamParser(boolean useStreamParser) {
         this.useStreamParser = useStreamParser;
+    }
+
+    public void setUseStreamSerialiser(boolean useStreamSerialiser) {
+        this.useStreamSerialiser = useStreamSerialiser;
     }
 }

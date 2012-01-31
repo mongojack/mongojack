@@ -44,7 +44,7 @@ public class JacksonDBObject<T> extends BasicDBObject {
     @Override
     public Object get(String key) {
         if ("_id".equals(key)) {
-            return "Generated/saved ID retrieval does not work when streaming serialization is enabled";
+            return "Generated _id retrieval not supported when using stream serialization";
         }
         return super.get(key);
     }

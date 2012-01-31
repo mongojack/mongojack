@@ -31,4 +31,10 @@ public class ObjectIdConvertor {
     public static ObjectId convert(de.undercouch.bson4jackson.types.ObjectId objectId) {
         return new ObjectId(objectId.getTime(), objectId.getMachine(), objectId.getInc());
     }
+
+    public static de.undercouch.bson4jackson.types.ObjectId convert(ObjectId objectId) {
+        return new de.undercouch.bson4jackson.types.ObjectId(objectId.getTimeSecond(), objectId.getMachine(),
+                objectId.getInc());
+    }
+
 }

@@ -24,7 +24,6 @@ import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
 
 import java.io.IOException;
-import java.util.Collection;
 
 /**
  * Serializer for object ids, serialises strings or byte arrays to an ObjectId class
