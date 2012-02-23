@@ -85,8 +85,7 @@ public abstract class MongoDBTestBase {
         return getCollection(name.toString());
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType) {
-        JacksonDBCollection<T, K> collection = JacksonDBCollection.wrap(getCollection(), type, keyType);
+    protected <T, K> JacksonDBCollection<T, K> configure(JacksonDBCollection<T, K> collection) {
         if (useStreamParser) {
             collection.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         } else {
@@ -99,20 +98,17 @@ public abstract class MongoDBTestBase {
         }
         return collection;
     }
+    
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType) {
+        return configure(JacksonDBCollection.wrap(getCollection(), type, keyType));
+    }
+
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, Class<?> view) {
+        return configure(JacksonDBCollection.wrap(getCollection(), type, keyType, view));
+    }
 
     protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, String collectionName) {
-        JacksonDBCollection<T, K> coll = JacksonDBCollection.wrap(getCollection(collectionName), type, keyType);
-        if (useStreamParser) {
-            coll.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        } else {
-            coll.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        }
-        if (useStreamSerialiser) {
-            coll.enable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
-        } else {
-            coll.disable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
-        }
-        return coll;
+        return configure(JacksonDBCollection.wrap(getCollection(collectionName), type, keyType));
     }
 
     public void setUseStreamParser(boolean useStreamParser) {

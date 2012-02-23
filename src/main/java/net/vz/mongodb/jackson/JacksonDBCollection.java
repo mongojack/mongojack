@@ -163,7 +163,7 @@ public class JacksonDBCollection<T, K> {
         objectMapper.withModule(MongoJacksonMapperModule.INSTANCE);
         objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
         objectMapper.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
-                (MongoAnnotationIntrospector) objectMapper.getDeserializationConfig().getAnnotationIntrospector()));
+                new MongoAnnotationIntrospector(objectMapper.getDeserializationConfig())));
         return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
                 DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, null);
     }
