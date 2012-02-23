@@ -4,11 +4,12 @@ Changelog
 1.4.0
 -----
 
-_Released TBA_
+_Released Released 2012.02.23_
 
 * Added map/reduce deserialisation support
 * Fixed bug in object deserialisation where ObjectIds were reported as string values
 * Added support for stream serialisation
+* Fixed bug in configuring jackson mappers with views
 
 1.3
 ---
