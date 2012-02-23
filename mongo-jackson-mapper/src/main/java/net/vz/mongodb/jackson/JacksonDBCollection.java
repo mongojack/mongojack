@@ -15,17 +15,15 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.mongodb.*;
 import net.vz.mongodb.jackson.internal.FetchableDBRef;
 import net.vz.mongodb.jackson.internal.util.IdHandler;
 import net.vz.mongodb.jackson.internal.util.IdHandlerFactory;
 import net.vz.mongodb.jackson.internal.JacksonCollectionKey;
-import net.vz.mongodb.jackson.internal.MongoAnnotationIntrospector;
-import net.vz.mongodb.jackson.internal.MongoJacksonHandlerInstantiator;
 import net.vz.mongodb.jackson.internal.MongoJacksonMapperModule;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
@@ -88,9 +86,7 @@ public class JacksonDBCollection<T, K> {
     static {
         // Configure to use the object id annotation introspector
         DEFAULT_OBJECT_MAPPER.registerModule(MongoJacksonMapperModule.INSTANCE);
-        DEFAULT_OBJECT_MAPPER.setSerializationConfig(DEFAULT_OBJECT_MAPPER.getSerializationConfig().withSerializationInclusion(JsonSerialize.Inclusion.NON_NULL));
-        DEFAULT_OBJECT_MAPPER.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
-                new MongoAnnotationIntrospector(DEFAULT_OBJECT_MAPPER.getDeserializationConfig())));
+        DEFAULT_OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     private final DBCollection dbCollection;
@@ -115,7 +111,7 @@ public class JacksonDBCollection<T, K> {
         this.decoderFactory = new JacksonDecoderFactory<T>(this, objectMapper, type);
         // We want to find how we should serialize the ID, in case it is passed to us
         try {
-            this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type.getRawClass(), keyType.getRawClass());
+            this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException("Unable to introspect class", e);
         }
@@ -161,14 +157,7 @@ public class JacksonDBCollection<T, K> {
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(MongoJacksonMapperModule.INSTANCE);
-        objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view)
-            .withSerializationInclusion(JsonSerialize.Inclusion.NON_NULL));
-        objectMapper.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
-                (MongoAnnotationIntrospector) objectMapper.getDeserializationConfig().getAnnotationIntrospector()));
-        return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
-                DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, null);
+        throw new UnsupportedOperationException("Not yet implemented in 2.0");
     }
 
     /**

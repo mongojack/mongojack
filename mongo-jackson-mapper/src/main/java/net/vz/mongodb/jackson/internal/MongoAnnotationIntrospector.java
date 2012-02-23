@@ -15,9 +15,10 @@
  */
 package net.vz.mongodb.jackson.internal;
 
-import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.introspect.*;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import net.vz.mongodb.jackson.DBRef;
 import net.vz.mongodb.jackson.Id;
 import net.vz.mongodb.jackson.ObjectId;
@@ -31,10 +32,10 @@ import java.lang.annotation.Annotation;
  * @since 1.0
  */
 public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
-    private final DeserializationConfig deserializationConfig;
+    private final TypeFactory typeFactory;
 
-    public MongoAnnotationIntrospector(DeserializationConfig deserializationConfig) {
-        this.deserializationConfig = deserializationConfig;
+    public MongoAnnotationIntrospector(TypeFactory typeFactory) {
+        this.typeFactory = typeFactory;
     }
 
     @Override
@@ -46,27 +47,27 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
 
     // Handling of javax.persistence.Id
     @Override
-    public String findGettablePropertyName(AnnotatedMethod am) {
+    public String findSerializationName(AnnotatedMethod am) {
         return findPropertyName(am);
     }
 
     @Override
-    public String findSettablePropertyName(AnnotatedMethod am) {
+    public String findDeserializationName(AnnotatedMethod am) {
         return findPropertyName(am);
     }
 
     @Override
-    public String findDeserializablePropertyName(AnnotatedField af) {
+    public String findDeserializationName(AnnotatedField af) {
         return findPropertyName(af);
     }
 
     @Override
-    public String findSerializablePropertyName(AnnotatedField af) {
+    public String findSerializationName(AnnotatedField af) {
         return findPropertyName(af);
     }
 
     @Override
-    public String findPropertyNameForParam(AnnotatedParameter param) {
+    public String findDeserializationName(AnnotatedParameter param) {
         return findPropertyName(param);
     }
 
@@ -91,15 +92,15 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public Object findDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            return findObjectIdDeserializer(deserializationConfig.getTypeFactory().constructType(am.getGenericType()));
+            return findObjectIdDeserializer(typeFactory.constructType(am.getGenericType()));
         }
         return null;
     }
 
     @Override
-    public Class findContentDeserializer(Annotated am) {
+    public JsonDeserializer findContentDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            JavaType type = deserializationConfig.getTypeFactory().constructType(am.getGenericType());
+            JavaType type = typeFactory.constructType(am.getGenericType());
             if (type.isCollectionLikeType()) {
                 return findObjectIdDeserializer(type.containedType(0));
             } else if (type.isMapLikeType()) {
@@ -109,16 +110,29 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         return null;
     }
 
-    public Class findObjectIdDeserializer(JavaType type) {
+    public JsonDeserializer findObjectIdDeserializer(JavaType type) {
         if (type.getRawClass() == String.class) {
-            return ObjectIdDeserializers.ToStringDeserializer.class;
+            return new ObjectIdDeserializers.ToStringDeserializer();
         } else if (type.getRawClass() == byte[].class) {
-            return ObjectIdDeserializers.ToByteArrayDeserializer.class;
+            return new ObjectIdDeserializers.ToByteArrayDeserializer();
         } else if (type.getRawClass() == DBRef.class) {
-            return DBRefDeserializer.class;
+            JavaType dbRefType;
+            if (type.isContainerType()) {
+                if (type.isCollectionLikeType()) {
+                    dbRefType = type.containedType(0);
+                } else if (type.isMapLikeType()) {
+                    dbRefType = type.containedType(1);
+                } else {
+                    return null;
+                }
+            } else {
+                dbRefType = type;
+            }
+            JsonDeserializer keyDeserializer = findObjectIdDeserializer(dbRefType.containedType(1));
+            return new DBRefDeserializer(dbRefType.containedType(0), dbRefType.containedType(1), keyDeserializer);
         } else if (type.getRawClass() == org.bson.types.ObjectId.class) {
             // Don't know why someone would annotated an ObjectId with @ObjectId, but handle it
-            return ObjectIdDeserializers.ToObjectIdDeserializer.class;
+            return new ObjectIdDeserializers.ToObjectIdDeserializer();
         }
         return null;
     }

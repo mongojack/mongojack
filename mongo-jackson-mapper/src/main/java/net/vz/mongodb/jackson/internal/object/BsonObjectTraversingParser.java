@@ -16,6 +16,8 @@
 package net.vz.mongodb.jackson.internal.object;
 
 import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.base.ParserMinimalBase;
+import com.mongodb.BasicDBObject;
 import net.vz.mongodb.jackson.JacksonDBCollection;
 import net.vz.mongodb.jackson.internal.JacksonDBCollectionProvider;
 import net.vz.mongodb.jackson.internal.util.VersionUtils;
@@ -35,7 +37,7 @@ import java.math.BigInteger;
  * @author James Roper
  * @since 1.0
  */
-public class BsonObjectTraversingParser extends JsonParser implements JacksonDBCollectionProvider {
+public class BsonObjectTraversingParser extends ParserMinimalBase implements JacksonDBCollectionProvider {
 
     private final JacksonDBCollection dbCollection;
 
@@ -85,6 +87,17 @@ public class BsonObjectTraversingParser extends JsonParser implements JacksonDBC
 
     public BsonObjectTraversingParser(JacksonDBCollection dbCollection, BSONObject o) {
         this(dbCollection, o, null);
+    }
+
+    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, Object rootValue) {
+        this(dbCollection, new BasicDBObject("root", rootValue), null);
+        try {
+            nextToken();
+            nextToken();
+            nextToken();
+        } catch (IOException e) {
+            // Ignore
+        }
     }
 
     public BsonObjectTraversingParser(JacksonDBCollection dbCollection, BSONObject o, ObjectCodec codec) {
@@ -368,8 +381,18 @@ public class BsonObjectTraversingParser extends JsonParser implements JacksonDBC
     }
 
     @Override
-    public Object getEmbeddedObject() throws IOException, JsonParseException {
+    public Object getEmbeddedObject() throws IOException {
         return currentNode();
+    }
+
+    @Override
+    protected void _handleEOF() throws JsonParseException {
+        // There is no EOF?
+    }
+
+    @Override
+    public void overrideCurrentName(String name) {
+        // Hmm... do nothing?
     }
 
     /*

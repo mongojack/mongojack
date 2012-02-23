@@ -34,15 +34,16 @@ public class MongoJacksonDeserializers extends SimpleDeserializers {
         addDeserializer(Calendar.class, new CalendarDeserializer());
     }
 
-    public JsonDeserializer<?> findBeanDeserializer(JavaType type, DeserializationConfig config, DeserializerProvider provider, BeanDescription beanDesc, BeanProperty property) throws JsonMappingException {
+    @Override
+    public JsonDeserializer<?> findBeanDeserializer(JavaType type, DeserializationConfig config, BeanDescription beanDesc) throws JsonMappingException {
         if (type.getRawClass() == DBRef.class) {
             if (type.containedTypeCount() != 2) {
-                throw new JsonMappingException("Property " + property + " doesn't declare object and key type");
+                throw new JsonMappingException("Property doesn't declare object and key type");
             }
             JavaType objectType = type.containedType(0);
             JavaType keyType = type.containedType(1);
             return new DBRefDeserializer(objectType, keyType);
         }
-        return super.findBeanDeserializer(type, config, provider, beanDesc, property);
+        return super.findBeanDeserializer(type, config, beanDesc);
     }
 }

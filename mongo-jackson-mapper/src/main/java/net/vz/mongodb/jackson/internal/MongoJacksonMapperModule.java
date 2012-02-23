@@ -41,12 +41,11 @@ public class MongoJacksonMapperModule extends Module {
 
     @Override
     public void setupModule(SetupContext context) {
-        MongoAnnotationIntrospector annotationIntrospector = new MongoAnnotationIntrospector(context.getDeserializationConfig());
+        MongoAnnotationIntrospector annotationIntrospector = new MongoAnnotationIntrospector(context.getTypeFactory());
         context.insertAnnotationIntrospector(annotationIntrospector);
         // Only include non null properties, this makes it possible to use object templates for querying and
         // partial object retrieving
-        context.getSerializationConfig().withSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
-        context.getDeserializationConfig().addHandler(new ServerErrorProblemHandler());
+        context.addDeserializationProblemHandler(new ServerErrorProblemHandler());
         context.addSerializers(new MongoJacksonSerializers());
         context.addDeserializers(new MongoJacksonDeserializers());
     }

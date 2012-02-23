@@ -16,6 +16,7 @@
 package net.vz.mongodb.jackson.internal.stream;
 
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -31,10 +32,10 @@ import java.io.IOException;
  */
 public class ServerErrorProblemHandler extends DeserializationProblemHandler {
     @Override
-    public boolean handleUnknownProperty(DeserializationContext ctxt, JsonDeserializer<?> deserializer,
+    public boolean handleUnknownProperty(DeserializationContext ctxt, JsonParser jsonParser, JsonDeserializer<?> deserializer,
                                          Object beanOrClass, String propertyName) throws IOException, JsonProcessingException {
-        if (ctxt.getParser() instanceof DBDecoderBsonParser) {
-            return ((DBDecoderBsonParser) ctxt.getParser()).handleUnknownProperty(ctxt, deserializer, beanOrClass, propertyName);
+        if (jsonParser instanceof DBDecoderBsonParser) {
+            return ((DBDecoderBsonParser) jsonParser).handleUnknownProperty(ctxt, deserializer, beanOrClass, propertyName);
         }
         return false;
     }

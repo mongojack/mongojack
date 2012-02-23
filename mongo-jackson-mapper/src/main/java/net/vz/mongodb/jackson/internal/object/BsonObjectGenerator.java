@@ -245,7 +245,17 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
-    public void writeTree(JsonNode rootNode) throws IOException {
+    public void writeFieldName(SerializableString name) throws IOException, JsonGenerationException {
+        writeFieldName(name.getValue());
+    }
+
+    @Override
+    public void writeString(SerializableString text) throws IOException, JsonGenerationException {
+        setValue(text.getValue());
+    }
+
+    @Override
+    public void writeTree(TreeNode rootNode) throws IOException, JsonProcessingException {
         throw new UnsupportedClassVersionError("Writing JSON nodes not supported");
     }
 
