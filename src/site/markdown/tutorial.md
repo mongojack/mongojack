@@ -122,10 +122,10 @@ If you're using your data objects for both storage and web views, you might want
     JacksonDBCollection<BlogPost, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, BlogPost.class,
             String.class, DatabaseView.class);
 
-Of course, if you really want to control things and Jackson's annotations aren't enough, the wrap method is also overloaded to accept an `ObjectMapper`.  For convenience, you should add the object ID module in order to get the object id and id annotation mapping features:
+Of course, if you really want to control things and Jackson's annotations aren't enough, the wrap method is also overloaded to accept an `ObjectMapper`.  When doing this, you must make sure to configure the object mapper to use the mongo custom jackson configuration:
 
     ObjectMapper myObjectMapper = ...
-    myObjectMapper.withModule(net.vz.mongodb.jackson.internal.ObjectIdModule.INSTANCE);
+    MongoJacksonMapperModule.configure(myObjectMapper);
     JacksonDBCollection<BlogPost, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, BlogPost.class,
             String.class, myObjectMapper);
 

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.4.1
+-----
+
+* Added convenience method for configuring a custom object mapper
+* Documented the necessary use of custom mongo configuration when supplying a custom object mapper
+
 1.4.0
 -----
 
