@@ -21,8 +21,6 @@ import net.vz.mongodb.jackson.internal.stream.JacksonEncoderFactory;
 import net.vz.mongodb.jackson.internal.util.IdHandler;
 import net.vz.mongodb.jackson.internal.util.IdHandlerFactory;
 import net.vz.mongodb.jackson.internal.JacksonCollectionKey;
-import net.vz.mongodb.jackson.internal.MongoAnnotationIntrospector;
-import net.vz.mongodb.jackson.internal.MongoJacksonHandlerInstantiator;
 import net.vz.mongodb.jackson.internal.MongoJacksonMapperModule;
 import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
 import net.vz.mongodb.jackson.internal.object.BsonObjectTraversingParser;
@@ -81,14 +79,7 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper();
-
-    static {
-        // Configure to use the object id annotation introspector
-        DEFAULT_OBJECT_MAPPER.registerModule(MongoJacksonMapperModule.INSTANCE);
-        DEFAULT_OBJECT_MAPPER.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
-                new MongoAnnotationIntrospector(DEFAULT_OBJECT_MAPPER.getDeserializationConfig())));
-    }
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJacksonMapperModule.configure(new ObjectMapper());
 
     private final DBCollection dbCollection;
     private final JavaType type;
@@ -160,20 +151,24 @@ public class JacksonDBCollection<T, K> {
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.withModule(MongoJacksonMapperModule.INSTANCE);
         objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withView(view));
-        objectMapper.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
-                new MongoAnnotationIntrospector(objectMapper.getDeserializationConfig())));
+        MongoJacksonMapperModule.configure(objectMapper);
         return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
                 DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, null);
     }
 
     /**
-     * Wraps a DB collection in a JacksonDBCollection, using the given object mapper
+     * Wraps a DB collection in a JacksonDBCollection, using the given object mapper.
+     *
+     * JacksonDBCollection requires a specially configured object mapper to work.  It does not automatically configure
+     * the object mapper passed into this method, because the same object mapper might be passed into multiple calls to
+     * this method.  Consequently, it is up to the caller to ensure that the object mapper has been configured for use
+     * by JacksonDBCollection.  This can be done by passing the object mapper to
+     * {@link MongoJacksonMapperModule#configure(org.codehaus.jackson.map.ObjectMapper)}.
      *
      * @param dbCollection The DB collection to wrap
      * @param type         The type of objects to deserialise to
-     * @param objectMapper The ObjectMapper
+     * @param objectMapper The ObjectMapper to configure.
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {

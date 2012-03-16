@@ -18,6 +18,7 @@ package net.vz.mongodb.jackson.internal;
 import net.vz.mongodb.jackson.internal.stream.ServerErrorProblemHandler;
 import org.codehaus.jackson.Version;
 import org.codehaus.jackson.map.Module;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
@@ -28,6 +29,21 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
  */
 public class MongoJacksonMapperModule extends Module {
     public static final Module INSTANCE = new MongoJacksonMapperModule();
+
+    /**
+     * Configure the given object mapper to be used with the Mongo Jackson Mapper.  Please call this method rather than
+     * calling objectMapper.with(MongoJacksonMapperModule.INSTANCE), because Jacksons module system doesn't allow the
+     * mongo jackson mapper to do all the configuration it needs to do.  This method will do that configuration though.
+     *
+     * @param objectMapper The object mapper to configure
+     * @return This object mapper (for chaining)
+     */
+    public static ObjectMapper configure(ObjectMapper objectMapper) {
+        objectMapper.registerModule(INSTANCE);
+        objectMapper.setHandlerInstantiator(new MongoJacksonHandlerInstantiator(
+                new MongoAnnotationIntrospector(objectMapper.getDeserializationConfig())));
+        return objectMapper;
+    }
 
     @Override
     public String getModuleName() {
