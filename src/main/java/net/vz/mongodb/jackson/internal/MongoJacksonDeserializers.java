@@ -16,22 +16,13 @@
 package net.vz.mongodb.jackson.internal;
 
 import net.vz.mongodb.jackson.DBRef;
-import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.BeanDescription;
 import org.codehaus.jackson.map.BeanProperty;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.DeserializerProvider;
-import org.codehaus.jackson.map.Deserializers;
 import org.codehaus.jackson.map.JsonDeserializer;
 import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.KeyDeserializer;
-import org.codehaus.jackson.map.TypeDeserializer;
 import org.codehaus.jackson.map.module.SimpleDeserializers;
-import org.codehaus.jackson.map.type.ArrayType;
-import org.codehaus.jackson.map.type.CollectionLikeType;
-import org.codehaus.jackson.map.type.CollectionType;
-import org.codehaus.jackson.map.type.MapLikeType;
-import org.codehaus.jackson.map.type.MapType;
 import org.codehaus.jackson.type.JavaType;
 
 import java.util.Calendar;
