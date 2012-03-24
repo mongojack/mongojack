@@ -32,15 +32,7 @@ Or using the `DBQuery` builder directly:
             DBQuery.is("author", "jsmith"), 
             DBQuery.size("comments", 3));
 
-Or, if your object contains no primitive types, and you only want basic equals comparison to values other than null, you can pass your object into the query as a template:
-
-    BlogPost query = ...
-    DBCursor<BlogPost> cursor = coll.find(query);
-    if (cursor.hasNext()) {
-        BlogPost firstObject = cursor.next();
-    }
-
-In fact, you can do the same for specifying which fields to return, just pass in a template of your object with any fields you want returned set not to null.  More information about building queries can be found [here](./queries.html).
+More information about building queries can be found [here](./queries.html).
 
 The collection, cursor and write result interfaces are very similar to the standard Java MongoDB driver. Most methods have been copied across, with generic typing added where appropriate, and overloading to use the generic type where sometimes the generic type is not powerful enough, such as for queries and specifying fields for partial objects.
 
