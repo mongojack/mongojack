@@ -17,10 +17,11 @@ package net.vz.mongodb.jackson.internal.util;
 
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
-import com.fasterxml.jackson.databind.ser.BeanSerializer;
+import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
+
 
 /**
- * Place that hacks (using reflection) exist for Jackson, until we get features into jackson
+ * Creates an ID handler
  *
  * @author James Roper
  * @since 1.0
@@ -28,16 +29,17 @@ import com.fasterxml.jackson.databind.ser.BeanSerializer;
 public class IdHandlerFactory {
 
     public static <K> IdHandler<K, ?> getIdHandlerForProperty(ObjectMapper objectMapper, JavaType type) throws JsonMappingException {
-        JsonDeserializer deserializer = objectMapper.findDeserializer(type);
+        JsonDeserializer deserializer = JacksonAccessor.findDeserializer(objectMapper, type);
         JsonDeserializer idDeserializer = null;
         JsonSerializer idSerializer = null;
         
         if (deserializer instanceof BeanDeserializer) {
             idDeserializer = ((BeanDeserializer) deserializer).findProperty("_id").getValueDeserializer();
         }
-        JsonSerializer serializer = objectMapper.findSerializer(type);
-        if (serializer instanceof BeanSerializer) {
-            idSerializer = ((BeanSerializer) serializer).getSerializerForProperty("_id");
+
+        JsonSerializer serializer = JacksonAccessor.findValueSerializer(objectMapper, type);
+        if (serializer instanceof BeanSerializerBase) {
+            idSerializer = JacksonAccessor.findPropertySerializer((BeanSerializerBase) serializer, "_id");
         }
 
         if (idDeserializer != null && idSerializer != null) {
