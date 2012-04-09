@@ -15,11 +15,11 @@
  */
 package net.vz.mongodb.jackson.internal;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import net.vz.mongodb.jackson.DBRef;
+import net.vz.mongodb.jackson.internal.object.BsonObjectGenerator;
+import net.vz.mongodb.jackson.internal.stream.DBEncoderBsonGenerator;
 
 import java.io.IOException;
 
@@ -29,14 +29,28 @@ import java.io.IOException;
  * @author James Roper
  * @since 1.2
  */
-public class DBRefSerializer extends JsonSerializer<DBRef> {
+public class DBRefSerializer extends MongoSerializer<DBRef> {
 
     @Override
-    public void serialize(DBRef value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(DBRef value, DBEncoderBsonGenerator bgen, SerializerProvider provider) throws IOException, JsonProcessingException {
         if (value == null) {
-            jgen.writeNull();
+            bgen.writeNull();
         } else {
-            jgen.writeObject(new com.mongodb.DBRef(null, value.getCollectionName(), value.getId()));
+            bgen.writeStartObject();
+            bgen.writeFieldName("$ref");
+            bgen.writeString(value.getCollectionName());
+            bgen.writeFieldName("$id");
+            bgen.writeObject(value.getId());
+            bgen.writeEndObject();
+        }
+    }
+
+    @Override
+    protected void serialize(DBRef value, BsonObjectGenerator bgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+        if (value == null) {
+            bgen.writeNull();
+        } else {
+            bgen.writeObject(new com.mongodb.DBRef(null, value.getCollectionName(), value.getId()));
         }
     }
 

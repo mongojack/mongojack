@@ -24,6 +24,13 @@ import com.mongodb.BasicDBObject;
  * @since 1.1.2
  */
 public class JacksonDBObject<T> extends BasicDBObject {
+    public JacksonDBObject() {
+    }
+
+    public JacksonDBObject(T object) {
+        this.object = object;
+    }
+
     private T object;
 
     public T getObject() {
@@ -32,5 +39,13 @@ public class JacksonDBObject<T> extends BasicDBObject {
 
     public void setObject(T object) {
         this.object = object;
+    }
+
+    @Override
+    public Object get(String key) {
+        if ("_id".equals(key)) {
+            return "Generated _id retrieval not supported when using stream serialization";
+        }
+        return super.get(key);
     }
 }

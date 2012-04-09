@@ -37,9 +37,9 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
 
     @Test
     public void testQuery() {
-        MockObject o1 = coll.insert(new MockObject("ten", 10)).getSavedObject();
-        MockObject o2 = coll.insert(new MockObject("ten", 100)).getSavedObject();
-        coll.insert(new MockObject("twenty", 20));
+        MockObject o1 = new MockObject("1", "ten", 10);
+        MockObject o2 = new MockObject("2", "ten", 10);
+        coll.insert(o1, o2, new MockObject("twenty", 20));
 
         List<MockObject> results = coll.find(new BasicDBObject("string", "ten")).toArray();
         assertThat(results, hasSize(2));
@@ -48,9 +48,9 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
 
     @Test
     public void testQueryWithJavaObject() {
-        MockObject o1 = coll.insert(new MockObject("ten", 10)).getSavedObject();
-        MockObject o2 = coll.insert(new MockObject("ten", 100)).getSavedObject();
-        coll.insert(new MockObject("twenty", 20));
+        MockObject o1 = new MockObject("1", "ten", 10);
+        MockObject o2 = new MockObject("2", "ten", 10);
+        coll.insert(o1, o2, new MockObject("twenty", 20));
 
         List<MockObject> results = coll.find(new MockObject("ten", null)).toArray();
         assertThat(results, hasSize(2));
@@ -91,7 +91,8 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
     public void testRemove() {
         coll.insert(new MockObject("ten", 10));
         coll.insert(new MockObject("ten", 100));
-        MockObject object = coll.insert(new MockObject("twenty", 20)).getSavedObject();
+        MockObject object = new MockObject("1", "twenty", 20);
+        coll.insert(object);
 
         coll.remove(new BasicDBObject("string", "ten"));
 
@@ -104,7 +105,8 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
     public void testRemoveByJavaObject() {
         coll.insert(new MockObject("ten", 10));
         coll.insert(new MockObject("ten", 100));
-        MockObject object = coll.insert(new MockObject("twenty", 20)).getSavedObject();
+        MockObject object = new MockObject("1", "twenty", 20);
+        coll.insert(object);
 
         coll.remove(new MockObject("ten", null));
 
@@ -117,7 +119,8 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
     public void testRemoveByJavaObjectWithId() {
         coll.insert(new MockObject("id1", "ten", 10));
         coll.insert(new MockObject("id2", "ten", 100));
-        MockObject object = coll.insert(new MockObject("id3", "twenty", 20)).getSavedObject();
+        MockObject object = new MockObject("id3", "twenty", 20);
+        coll.insert(object);
 
         MockObject toRemove = new MockObject("id3", null, null);
 
@@ -132,7 +135,8 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
     public void testRemoveById() {
         coll.insert(new MockObject("id1", "ten", 10));
         coll.insert(new MockObject("id2", "ten", 100));
-        MockObject object = coll.insert(new MockObject("id3", "twenty", 20)).getSavedObject();
+        MockObject object = new MockObject("id3", "twenty", 20);
+        coll.insert(object);
 
         coll.removeById("id3");
 

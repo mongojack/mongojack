@@ -1,6 +1,30 @@
 Changelog
 =========
 
+1.4.1
+-----
+
+* Added convenience method for configuring a custom object mapper
+* Documented the necessary use of custom mongo configuration when supplying a custom object mapper
+
+1.4.0
+-----
+
+_Released Released 2012.02.23_
+
+* Added map/reduce deserialisation support
+* Fixed bug in object deserialisation where ObjectIds were reported as string values
+* Added support for stream serialisation
+* Fixed bug in configuring jackson mappers with views
+
+1.3
+---
+
+_Released 2012.01.22_
+
+* Upgraded to bson4jackson 1.3.0 to fix bug
+* Added elemMatch and where support to DBQuery
+
 1.2.1
 -----
 

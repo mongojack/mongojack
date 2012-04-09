@@ -15,9 +15,10 @@
  */
 package net.vz.mongodb.jackson.internal;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.vz.mongodb.jackson.internal.stream.ServerErrorProblemHandler;
 
 /**
@@ -28,6 +29,20 @@ import net.vz.mongodb.jackson.internal.stream.ServerErrorProblemHandler;
  */
 public class MongoJacksonMapperModule extends Module {
     public static final Module INSTANCE = new MongoJacksonMapperModule();
+
+    /**
+     * Configure the given object mapper to be used with the Mongo Jackson Mapper.  Please call this method rather than
+     * calling objectMapper.with(MongoJacksonMapperModule.INSTANCE), because Jacksons module system doesn't allow the
+     * mongo jackson mapper to do all the configuration it needs to do.  This method will do that configuration though.
+     *
+     * @param objectMapper The object mapper to configure
+     * @return This object mapper (for chaining)
+     */
+    public static ObjectMapper configure(ObjectMapper objectMapper) {
+        objectMapper.registerModule(INSTANCE);
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return objectMapper;
+    }
 
     @Override
     public String getModuleName() {

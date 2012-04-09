@@ -3,12 +3,17 @@ Mapping to POJOs couldn't be easier!
 
 Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON mapper is a perfect mechanism for mapping Java objects to MongoDB documents.  And the best Java JSON mapper is Jackson.  Jackson's parsing/generating interface fits serialising to MongoDBs documents like a glove.  Its plugins, custom creators, serialisers, views, pluggable annotators and so on give this mapping library a massive head start, making it powerful, performant, and robust.
 
-Installation and Additional documentation 
------------------------------------------
+Project documentation
+---------------------
 
-This tools website is online at [VZNet's Github Site](http://vznet.github.com/mongo-jackson-mapper/)
+The official documentation for this project lives [here](http://vznet.github.com/mongo-jackson-mapper/).
 
 Looking specifically for the Maven dependency snippet?  It's [Here](http://vznet.github.com/mongo-jackson-mapper/installation.html).
+
+Mailing lists 
+-------------
+
+The MongoDB Jackson Mapper users mailing list is hosted [here](http://groups.google.com/group/mongo-jackson-mapper).
 
 Quick start
 -----------
@@ -32,16 +37,6 @@ Querying can be done using chained query builder methods on the DBCursor:
     if (cursor.hasNext()) {
         MyObject firstObject = cursor.next();
     }
-
-Or, if your object contains no primitive types, and you only want basic equals comparison to values other than null, you can pass your object into the query as a template:
-
-    MyObject query = ...
-    DBCursor<MyObject> cursor = coll.find(query);
-    if (cursor.hasNext()) {
-        MyObject firstObject = cursor.next();
-    }
-
-In fact, you can do the same for specifying which fields to return, just pass in a template of your object with any fields you want returned set not to null.
 
 The collection, cursor and write result interfaces are very similar to the standard Java MongoDB driver. Most methods have been copied across, with generic typing added where appropriate, and overloading to use the generic type where sometimes the generic type is not powerful enough, such as for queries and specifying fields for partial objects.
 

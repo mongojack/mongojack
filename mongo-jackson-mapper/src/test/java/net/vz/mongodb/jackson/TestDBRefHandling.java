@@ -33,7 +33,8 @@ public class TestDBRefHandling extends MongoDBTestBase {
         JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class);
 
         refColl.insert(new Referenced("hello", 10));
-        String id = coll.insert(new Owner(new DBRef<Referenced, String>("hello", refColl.getName()))).getSavedId();
+        coll.insert(new Owner(new DBRef<Referenced, String>("hello", refColl.getName())));
+        String id = coll.findOne()._id;
 
         Owner saved = coll.findOneById(id);
         assertThat(saved.ref, notNullValue());
@@ -52,8 +53,10 @@ public class TestDBRefHandling extends MongoDBTestBase {
         JacksonDBCollection<ObjectIdOwner, String> coll = getCollection(ObjectIdOwner.class, String.class);
         JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class);
 
-        byte[] refId = refColl.insert(new ObjectIdReferenced(10)).getSavedId();
-        String id = coll.insert(new ObjectIdOwner(new DBRef<ObjectIdReferenced, byte[]>(refId, refColl.getName()))).getSavedId();
+        byte[] refId = new org.bson.types.ObjectId().toByteArray();
+        refColl.insert(new ObjectIdReferenced(refId, 10));
+        coll.insert(new ObjectIdOwner(new DBRef<ObjectIdReferenced, byte[]>(refId, refColl.getName())));
+        String id = coll.findOne()._id;
 
         ObjectIdOwner saved = coll.findOneById(id);
         assertThat(saved.ref, notNullValue());
@@ -73,7 +76,8 @@ public class TestDBRefHandling extends MongoDBTestBase {
         JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class, "referenced");
 
         refColl.insert(new Referenced("hello", 10));
-        String id = coll.insert(new Owner(new DBRef<Referenced, String>("hello", Referenced.class))).getSavedId();
+        coll.insert(new Owner(new DBRef<Referenced, String>("hello", Referenced.class)));
+        String id = coll.findOne()._id;
 
         Owner saved = coll.findOneById(id);
         assertThat(saved.ref, notNullValue());
@@ -129,7 +133,8 @@ public class TestDBRefHandling extends MongoDBTestBase {
     }
 
     public static class ObjectIdReferenced {
-        public ObjectIdReferenced(int i) {
+        public ObjectIdReferenced(byte[] id, int i) {
+            this._id = id;
             this.i = i;
         }
 
@@ -206,8 +211,10 @@ public class TestDBRefHandling extends MongoDBTestBase {
         JacksonDBCollection<ObjectIdCollectionOwner, String> coll = getCollection(ObjectIdCollectionOwner.class, String.class);
         JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class, "referenced");
 
-        byte[] refId1 = refColl.insert(new ObjectIdReferenced(10)).getSavedId();
-        byte[] refId2 = refColl.insert(new ObjectIdReferenced(20)).getSavedId();
+        byte[] refId1 = new org.bson.types.ObjectId().toByteArray();
+        refColl.insert(new ObjectIdReferenced(refId1, 10));
+        byte[] refId2 = new org.bson.types.ObjectId().toByteArray();
+        refColl.insert(new ObjectIdReferenced(refId2, 20));
 
         ObjectIdCollectionOwner owner = new ObjectIdCollectionOwner();
         owner.list = Arrays.asList(new DBRef<ObjectIdReferenced, byte[]>(refId1, refColl.getName()), new DBRef<ObjectIdReferenced, byte[]>(refId2, refColl.getName()));

@@ -202,4 +202,11 @@
         </plugins>
     </reporting>
 
+    <mailingLists>
+        <mailingList>
+            <name>MongoDB Jackson Mapper Users</name>
+            <post>mongo-jackson-mapper@googlegroups.com</post>
+            <archive>http://groups.google.com/group/mongo-jackson-mapper</archive>
+        </mailingList>
+    </mailingLists>
 </project>

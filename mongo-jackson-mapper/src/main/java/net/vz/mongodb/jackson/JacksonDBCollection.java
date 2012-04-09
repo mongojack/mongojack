@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.*;
 import net.vz.mongodb.jackson.internal.FetchableDBRef;
+import net.vz.mongodb.jackson.internal.stream.JacksonEncoderFactory;
 import net.vz.mongodb.jackson.internal.util.IdHandler;
 import net.vz.mongodb.jackson.internal.util.IdHandlerFactory;
 import net.vz.mongodb.jackson.internal.JacksonCollectionKey;
@@ -61,14 +62,12 @@ public class JacksonDBCollection<T, K> {
         USE_STREAM_DESERIALIZATION(true),
 
         /**
-         * Automatically hydrate all DB references.  This is not advised, either declare the objects to be of type
-         * {@link net.vz.mongodb.jackson.DBRef}, and hydrate by calling fetch(), or declare it as the referenced type
-         * and use {@link net.vz.mongodb.jackson.JacksonDBCollection.hydrate()} to hydrate the referenced types.
-         * <p/>
-         * If using this feature, it is strongly recommended that you set {@link Feature.USE_STREAM_DESERIALIZATION} to
-         * false, to avoid potential deadlocks.
+         * Serialise objects directly to the MongoDB stream.  While this performs better than serialising to MongoDB
+         * DBObjects first, it has the disadvantage of not being able to generate IDs before sending objects to the
+         * server, which means WriteResult.getSavedId() getSavedObject() will not work.  Hence it is disabled by
+         * default.
          */
-        AUTO_HYDRATE(false);
+        USE_STREAM_SERIALIZATION(false);
 
         Feature(boolean enabledByDefault) {
             this.enabledByDefault = enabledByDefault;
@@ -81,13 +80,7 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper();
-
-    static {
-        // Configure to use the object id annotation introspector
-        DEFAULT_OBJECT_MAPPER.registerModule(MongoJacksonMapperModule.INSTANCE);
-        DEFAULT_OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    }
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJacksonMapperModule.configure(new ObjectMapper());
 
     private final DBCollection dbCollection;
     private final JavaType type;
@@ -120,6 +113,7 @@ public class JacksonDBCollection<T, K> {
         } else {
             this.features = features;
         }
+        dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(objectMapper, this));
     }
 
     /**
@@ -161,11 +155,17 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Wraps a DB collection in a JacksonDBCollection, using the given object mapper
+     * Wraps a DB collection in a JacksonDBCollection, using the given object mapper.
+     *
+     * JacksonDBCollection requires a specially configured object mapper to work.  It does not automatically configure
+     * the object mapper passed into this method, because the same object mapper might be passed into multiple calls to
+     * this method.  Consequently, it is up to the caller to ensure that the object mapper has been configured for use
+     * by JacksonDBCollection.  This can be done by passing the object mapper to
+     * {@link MongoJacksonMapperModule#configure(org.codehaus.jackson.map.ObjectMapper)}.
      *
      * @param dbCollection The DB collection to wrap
      * @param type         The type of objects to deserialise to
-     * @param objectMapper The ObjectMapper
+     * @param objectMapper The ObjectMapper to configure.
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
@@ -356,43 +356,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return update(convertToDbObject(query), convertToDbObject(object), upsert, multi, concern);
-    }
-
-    /**
-     * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param object  object with which to update <tt>q</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @param encoder the DBEncoder to use
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.update(serializeFields(query), object, upsert, multi, concern, encoder));
-    }
-
-    /**
-     * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param object  object with which to update <tt>q</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @param encoder the DBEncoder to use
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return update(convertToDbObject(query), convertToDbObject(object), upsert, multi, concern, encoder);
+        return update(convertToBasicDbObject(query), convertToBasicDbObject(object), upsert, multi, concern);
     }
 
     /**
@@ -566,19 +530,6 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Removes objects from the database collection.
-     *
-     * @param query   the object that documents to be removed must match
-     * @param concern WriteConcern for this operation
-     * @param encoder the DBEncoder to use
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> remove(DBObject query, WriteConcern concern, DBEncoder encoder) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(serializeFields(query), concern, encoder));
-    }
-
-    /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
      *
      * @param query the query that documents to be removed must match
@@ -686,18 +637,6 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Forces creation of an index on a set of fields, if one does not already exist.
-     *
-     * @param keys    The keys to index
-     * @param options The index options
-     * @param encoder the DBEncoder to use
-     * @throws MongoException If an error occurred
-     */
-    public void createIndex(DBObject keys, DBObject options, DBEncoder encoder) throws MongoException {
-        dbCollection.createIndex(keys, options, encoder);
-    }
-
-    /**
      * Creates an ascending index on a field with default options, if one does not already exist.
      *
      * @param name name of field to index on
@@ -786,7 +725,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public DBCursor<T> find(T query) throws MongoException {
-        return new DBCursor<T>(this, dbCollection.find(convertToDbObject(query)));
+        return new DBCursor<T>(this, dbCollection.find(convertToBasicDbObject(query)));
     }
 
     /**
@@ -829,7 +768,7 @@ public class JacksonDBCollection<T, K> {
      * @return a cursor to iterate over results
      */
     public final DBCursor<T> find(T query, T keys) {
-        return new DBCursor<T>(this, dbCollection.find(convertToDbObject(query), convertToDbObject(keys)));
+        return new DBCursor<T>(this, dbCollection.find(convertToBasicDbObject(query), convertToBasicDbObject(keys)));
     }
 
 
@@ -883,7 +822,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public T findOneById(K id, T fields) throws MongoException {
-        return findOneById(id, convertToDbObject(fields));
+        return findOneById(id, convertToBasicDbObject(fields));
     }
 
     /**
@@ -1164,7 +1103,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public long getCount(T query, T fields, long limit, long skip) throws MongoException {
-        return dbCollection.getCount(convertToDbObject(query), convertToDbObject(fields), limit, skip);
+        return dbCollection.getCount(convertToBasicDbObject(query), convertToBasicDbObject(fields), limit, skip);
     }
 
     /**
@@ -1267,7 +1206,8 @@ public class JacksonDBCollection<T, K> {
      * @return The output
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(String map, String reduce, String outputTarget, DBObject query) throws MongoException {
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce, String outputTarget, DBObject query) throws MongoException {
         return mapReduce(new MapReduceCommand(dbCollection, map, reduce, outputTarget, MapReduceCommand.OutputType.REPLACE, serializeFields(query)));
     }
 
@@ -1288,7 +1228,8 @@ public class JacksonDBCollection<T, K> {
      * @return The output
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType, DBObject query)
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType, DBObject query)
             throws MongoException {
         return mapReduce(new MapReduceCommand(dbCollection, map, reduce, outputTarget, outputType, serializeFields(query)));
     }
@@ -1300,7 +1241,8 @@ public class JacksonDBCollection<T, K> {
      * @return The results
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(MapReduceCommand command) throws MongoException {
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(MapReduceCommand command) throws MongoException {
         return dbCollection.mapReduce(command);
     }
 
@@ -1311,8 +1253,21 @@ public class JacksonDBCollection<T, K> {
      * @return The output
      * @throws MongoException If an error occurred
      */
-    public MapReduceOutput mapReduce(DBObject command) throws MongoException {
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(DBObject command) throws MongoException {
         return dbCollection.mapReduce(command);
+    }
+
+    /**
+     * Performs a map reduce operation
+     *
+     * @param command The command to execute
+     * @return The output
+     * @throws MongoException If an error occurred
+     */
+    public <S, L> MapReduceOutput<S, L> mapReduce(MapReduce.MapReduceCommand<S, L> command) throws MongoException {
+        return new MapReduceOutput<S, L>(this, dbCollection.mapReduce(command.build(this)), command.getResultType(),
+                command.getKeyType());
     }
 
     /**
@@ -1557,7 +1512,7 @@ public class JacksonDBCollection<T, K> {
         return idHandler.fromDbId(object);
     }
 
-    DBObject convertToDbObject(T object) throws MongoException {
+    DBObject convertToBasicDbObject(T object) throws MongoException {
         if (object == null) {
             return null;
         }
@@ -1573,8 +1528,27 @@ public class JacksonDBCollection<T, K> {
         return generator.getDBObject();
     }
 
+    DBObject convertToDbObject(T object) throws MongoException {
+        if (object == null) {
+            return null;
+        }
+        if (isEnabled(Feature.USE_STREAM_SERIALIZATION)) {
+            return new JacksonDBObject<T>(object);
+        } else {
+            BsonObjectGenerator generator = new BsonObjectGenerator();
+            try {
+                objectMapper.writeValue(generator, object);
+            } catch (JsonMappingException e) {
+                throw new MongoJsonMappingException(e);
+            } catch (IOException e) {
+                // This shouldn't happen
+                throw new MongoException("Unknown error occurred converting BSON to object", e);
+            }
+            return generator.getDBObject();
+        }
+    }
+
     DBObject[] convertToDbObjects(T... objects) throws MongoException {
-        // Yay for generic array creation
         DBObject[] results = new DBObject[objects.length];
         for (int i = 0; i < objects.length; i++) {
             results[i] = convertToDbObject(objects[i]);
@@ -1590,7 +1564,24 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), type);
+            return (T) objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), type);
+        } catch (JsonMappingException e) {
+            throw new MongoJsonMappingException(e);
+        } catch (IOException e) {
+            // This shouldn't happen
+            throw new MongoException("Unknown error occurred converting BSON to object", e);
+        }
+    }
+
+    <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz) throws MongoException {
+        if (dbObject == null) {
+            return null;
+        }
+        if (dbObject instanceof JacksonDBObject) {
+            return (S) ((JacksonDBObject) dbObject).getObject();
+        }
+        try {
+            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
@@ -1614,5 +1605,9 @@ public class JacksonDBCollection<T, K> {
 
     Object serializeField(Object value) {
         return SerializationUtils.serializeField(objectMapper, value);
+    }
+
+    ObjectMapper getObjectMapper() {
+        return objectMapper;
     }
 }
