@@ -16,7 +16,6 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.*;
-import net.vz.mongodb.jackson.internal.util.SerializationUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -41,11 +41,11 @@ public class JacksonAccessor {
                 null, objectMapper.getDeserializationConfig());
     }
 
-    public static JsonSerializer findPropertySerializer(BeanSerializerBase serializer, String propertyName) {
+    public static BeanPropertyWriter findPropertyWriter(BeanSerializerBase serializer, String propertyName) {
         BeanPropertyWriter[] props = get(serializer, beanSerializerBaseProps, BeanPropertyWriter[].class);
         for (BeanPropertyWriter prop : props) {
             if (propertyName.equals(prop.getName())) {
-                return prop.getSerializer();
+                return prop;
             }
         }
         return null;
@@ -55,9 +55,13 @@ public class JacksonAccessor {
         return get(objectMapper, objectMapperSerializerFactory, SerializerFactory.class);
     }
 
-    public static JsonSerializer findValueSerializer(ObjectMapper objectMapper, JavaType javaType) {
+    public static SerializerProvider getSerializerProvider(ObjectMapper objectMapper) {
         DefaultSerializerProvider serializerProvider = (DefaultSerializerProvider) objectMapper.getSerializerProvider();
-        serializerProvider = serializerProvider.createInstance(objectMapper.getSerializationConfig(), getSerializerFactory(objectMapper));
+        return serializerProvider.createInstance(objectMapper.getSerializationConfig(), getSerializerFactory(objectMapper));
+    }
+
+    public static JsonSerializer findValueSerializer(ObjectMapper objectMapper, JavaType javaType) {
+        SerializerProvider serializerProvider = getSerializerProvider(objectMapper);
         try {
             return serializerProvider.findValueSerializer(javaType, null);
         } catch (JsonMappingException e) {

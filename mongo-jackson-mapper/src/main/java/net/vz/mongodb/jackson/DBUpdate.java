@@ -15,9 +15,14 @@
  */
 package net.vz.mongodb.jackson;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import net.vz.mongodb.jackson.internal.update.ComplexUpdateOperationValue;
+import net.vz.mongodb.jackson.internal.update.MultiUpdateOperationValue;
+import net.vz.mongodb.jackson.internal.update.SingleUpdateOperationValue;
+import net.vz.mongodb.jackson.internal.update.UpdateOperationValue;
 import net.vz.mongodb.jackson.internal.util.SerializationUtils;
 
 import java.util.*;
@@ -256,7 +261,7 @@ public class DBUpdate {
      * The builder
      */
     public static class Builder {
-        private final BasicDBObject update = new BasicDBObject();
+        private final Map<String, Map<String, UpdateOperationValue>> update = new HashMap<String, Map<String, UpdateOperationValue>>();
 
         /**
          * Increment the given field atomically by one
@@ -276,7 +281,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder inc(String field, int by) {
-            return addOperation("$inc", field, by);
+            return addOperation("$inc", field, new SingleUpdateOperationValue(false, false, by));
         }
 
         /**
@@ -287,7 +292,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder set(String field, Object value) {
-            return addOperation("$set", field, value);
+            return addOperation("$set", field, new SingleUpdateOperationValue(false, true, value));
         }
 
         /**
@@ -297,7 +302,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder unset(String field) {
-            return addOperation("$unset", field, 1);
+            return addOperation("$unset", field, new SingleUpdateOperationValue(false, false, 1));
         }
 
         /**
@@ -308,7 +313,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder push(String field, Object value) {
-            return addOperation("$push", field, value);
+            return addOperation("$push", field, new SingleUpdateOperationValue(true, true, value));
         }
 
         /**
@@ -319,7 +324,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pushAll(String field, Object... values) {
-            return addOperation("$pushAll", field, values);
+            return addOperation("$pushAll", field, new MultiUpdateOperationValue(true, true, values));
         }
 
         /**
@@ -330,7 +335,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pushAll(String field, List<?> values) {
-            return addOperation("$pushAll", field, values);
+            return addOperation("$pushAll", field, new MultiUpdateOperationValue(true, true, values));
         }
 
         /**
@@ -341,7 +346,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder addToSet(String field, Object value) {
-            return addOperation("$addToSet", field, value);
+            return addOperation("$addToSet", field, new SingleUpdateOperationValue(true, true, value));
         }
 
         /**
@@ -352,7 +357,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder addToSet(String field, Object... values) {
-            return addOperation("$addToSet", field, new BasicDBObject("$each", values));
+            return addOperation("$addToSet", field, new MultiUpdateOperationValue(true, true, values));
         }
 
         /**
@@ -363,7 +368,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder addToSet(String field, List<?> values) {
-            return addOperation("$addToSet", field, new BasicDBObject("$each", values));
+            return addOperation("$addToSet", field, new MultiUpdateOperationValue(true, true, values));
         }
 
         /**
@@ -373,7 +378,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder popFirst(String field) {
-            return addOperation("$pop", field, -1);
+            return addOperation("$pop", field, new SingleUpdateOperationValue(true, false, -1));
         }
 
         /**
@@ -383,7 +388,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder popLast(String field) {
-            return addOperation("$pop", field, 1);
+            return addOperation("$pop", field, new SingleUpdateOperationValue(true, false, 1));
         }
 
         /**
@@ -394,7 +399,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pull(String field, Object value) {
-            return addOperation("$pull", field, value);
+            return addOperation("$pull", field, new SingleUpdateOperationValue(true, true, value));
         }
 
         /**
@@ -405,7 +410,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pullAll(String field, Object... values) {
-            return addOperation("$pullAll", field, values);
+            return addOperation("$pullAll", field, new MultiUpdateOperationValue(true, true, values));
         }
 
         /**
@@ -416,7 +421,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pullAll(String field, List<?> values) {
-            return addOperation("$pullAll", field, values);
+            return addOperation("$pullAll", field, new MultiUpdateOperationValue(true, true, values));
         }
 
         /**
@@ -427,7 +432,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder rename(String oldFieldName, String newFieldName) {
-            return addOperation("$rename", oldFieldName, newFieldName);
+            return addOperation("$rename", oldFieldName, new SingleUpdateOperationValue(false, false, newFieldName));
         }
 
         /**
@@ -439,7 +444,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder bit(String field, String operation, int value) {
-            return addOperation("$bit", field, new BasicDBObject(operation, value));
+            return addOperation("$bit", field, new ComplexUpdateOperationValue(new BasicDBObject(operation, value)));
         }
 
         /**
@@ -453,7 +458,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder bit(String field, String operation1, int value1, String operation2, int value2) {
-            return addOperation("$bit", field, new BasicDBObject(operation1, value1).append(operation2, value2));
+            return addOperation("$bit", field, new ComplexUpdateOperationValue(new BasicDBObject(operation1, value1).append(operation2, value2)));
         }
 
         /**
@@ -479,15 +484,17 @@ public class DBUpdate {
         }
 
         /**
-         * Set a raw value, without a special modifier
+         * Add a raw operation.  This may be useful in case of MongoDB adding new features that aren't yet available
+         * through this interface, or if something has been left out.  Note that no serialisation will be attempted of
+         * the values.
          *
+         * @param op    The operation
          * @param field The field to set the value on
          * @param value The value to set
          * @return this object
          */
-        public Builder setRaw(String field, Object value) {
-            update.append(field, value);
-            return this;
+        public Builder addRawOperation(String op, String field, Object value) {
+            return addOperation(op, field, new SingleUpdateOperationValue(false, false, value));
         }
 
         /**
@@ -498,16 +505,14 @@ public class DBUpdate {
          * @param value    The value to modify it with.
          * @return this object
          */
-        public Builder addOperation(String modifier, String field, Object value) {
-            if (update.containsField(modifier)) {
-                Object object = update.get(modifier);
-                if (object instanceof DBObject) {
-                    ((DBObject) object).put(field, value);
-                } else {
-                    throw new IllegalStateException("Current value for modifier " + modifier + " is not a DBObject: " + object);
-                }
+        public Builder addOperation(String modifier, String field, UpdateOperationValue value) {
+            if (update.containsKey(modifier)) {
+                Map<String, UpdateOperationValue> existing = update.get(modifier);
+                existing.put(field, value);
             } else {
-                update.append(modifier, new BasicDBObject(field, value));
+                Map<String, UpdateOperationValue> newMap = new HashMap<String, UpdateOperationValue>();
+                newMap.put(field, value);
+                update.put(modifier, newMap);
             }
             return this;
         }
@@ -518,9 +523,8 @@ public class DBUpdate {
          * @param objectMapper The object mapper to use to serialise values
          * @return The object
          */
-        public DBObject serialiseAndGet(ObjectMapper objectMapper) {
-            return SerializationUtils.serializeFields(objectMapper, update);
+        public DBObject serialiseAndGet(ObjectMapper objectMapper, JavaType javaType) {
+            return SerializationUtils.serializeDBUpdate(update, objectMapper, javaType);
         }
-
     }
 }

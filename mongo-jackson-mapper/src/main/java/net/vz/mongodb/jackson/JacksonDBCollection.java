@@ -161,7 +161,7 @@ public class JacksonDBCollection<T, K> {
      * the object mapper passed into this method, because the same object mapper might be passed into multiple calls to
      * this method.  Consequently, it is up to the caller to ensure that the object mapper has been configured for use
      * by JacksonDBCollection.  This can be done by passing the object mapper to
-     * {@link MongoJacksonMapperModule#configure(org.codehaus.jackson.map.ObjectMapper)}.
+     * {@link MongoJacksonMapperModule#configure(com.fasterxml.jackson.databind.ObjectMapper)}.
      *
      * @param dbCollection The DB collection to wrap
      * @param type         The type of objects to deserialise to
@@ -339,7 +339,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return this.update(query, update.serialiseAndGet(objectMapper), upsert, multi, concern);
+        return this.update(query, update.serialiseAndGet(objectMapper, type), upsert, multi, concern);
     }
 
     /**
@@ -388,7 +388,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update, boolean upsert, boolean multi) throws MongoException {
-        return this.update(query, update.serialiseAndGet(objectMapper), upsert, multi);
+        return this.update(query, update.serialiseAndGet(objectMapper, type), upsert, multi);
     }
 
     /**
@@ -428,7 +428,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update) throws MongoException {
-        return this.update(query, update.serialiseAndGet(objectMapper));
+        return this.update(query, update.serialiseAndGet(objectMapper, type));
     }
 
 
@@ -465,7 +465,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> updateById(K id, DBUpdate.Builder update) throws MongoException {
-        return this.update(createIdQuery(id), update.serialiseAndGet(objectMapper));
+        return this.update(createIdQuery(id), update.serialiseAndGet(objectMapper, type));
     }
 
     /**
@@ -489,7 +489,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public WriteResult<T, K> updateMulti(DBObject query, DBUpdate.Builder update) throws MongoException {
-        return this.updateMulti(query, update.serialiseAndGet(objectMapper));
+        return this.updateMulti(query, update.serialiseAndGet(objectMapper, type));
     }
 
     /**

@@ -18,6 +18,8 @@ package net.vz.mongodb.jackson;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.mongodb.MongoException;
 
+import java.io.IOException;
+
 /**
  * Exception used to indicate a problem occurred when converting the MongoDB objects to Jackson
  *
@@ -37,4 +39,9 @@ public class MongoJsonMappingException extends MongoException {
     public MongoJsonMappingException(String msg, JsonMappingException e) {
         super(msg, e);
     }
+
+    public MongoJsonMappingException(String msg, IOException e) {
+        super(msg, e);
+    }
+
 }
