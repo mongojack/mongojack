@@ -36,7 +36,7 @@ public class JacksonEncoderFactory implements DBEncoderFactory{
 
     public DBEncoder create() {
         if (collection.isEnabled(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION)) {
-           return new JacksonDBEncoder(objectMapper);
+           return new JacksonDBEncoder(objectMapper, DefaultDBEncoder.FACTORY.create());
         } else {
             return DefaultDBEncoder.FACTORY.create();
         }

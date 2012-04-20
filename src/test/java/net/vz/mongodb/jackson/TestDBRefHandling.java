@@ -15,11 +15,9 @@
  */
 package net.vz.mongodb.jackson;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -91,6 +89,17 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo("hello"));
         assertThat(ref.i, equalTo(10));
+    }
+
+    @Test
+    public void testDBUpdateWithDbRef() {
+        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class, String.class);
+        coll.insert(new Owner());
+        String id = coll.findOne()._id;
+
+        coll.updateById(id, DBUpdate.set("ref", new DBRef<Referenced, String>("hello", Referenced.class)));
+        assertThat(coll.findOneById(id).ref, notNullValue());
+        assertThat(coll.findOneById(id).ref.getId(), equalTo("hello"));
     }
 
     public static class Owner {

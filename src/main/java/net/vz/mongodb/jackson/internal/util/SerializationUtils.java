@@ -63,7 +63,6 @@ public class SerializationUtils {
         types.add(Pattern.class);
         // Native types that we support
         types.add(ObjectId.class);
-        types.add(DBRef.class);
         BASIC_TYPES = types;
     }
 

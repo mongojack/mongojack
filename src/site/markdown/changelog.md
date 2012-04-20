@@ -1,8 +1,17 @@
 Changelog
 =========
 
+1.4.2
+-----
+
+_Released 2012.04.20_
+
+* Fixed bug when using DBRefs in update statements.
+
 1.4.1
 -----
+
+_Released 2012.03.17_
 
 * Added convenience method for configuring a custom object mapper
 * Documented the necessary use of custom mongo configuration when supplying a custom object mapper
@@ -10,7 +19,7 @@ Changelog
 1.4.0
 -----
 
-_Released Released 2012.02.23_
+_Released 2012.02.23_
 
 * Added map/reduce deserialisation support
 * Fixed bug in object deserialisation where ObjectIds were reported as string values
