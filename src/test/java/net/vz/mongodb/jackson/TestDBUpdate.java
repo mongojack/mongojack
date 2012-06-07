@@ -132,6 +132,15 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
+    public void testAddToSetListWithUpsert() throws Exception {
+        coll.update(new BasicDBObject("_id", "blah"), DBUpdate.addToSet("simpleList", Arrays.asList("hello", "world")), true, false);
+        MockObject inserted = coll.findOneById("blah");
+        assertThat(inserted.simpleList, hasSize(2));
+        assertThat(inserted.simpleList, hasItem("hello"));
+        assertThat(inserted.simpleList, hasItem("world"));
+    }
+
+    @Test
     public void testAddToSetVarArgs() throws Exception {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
