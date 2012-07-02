@@ -108,14 +108,25 @@ public class WriteResult<T, K> {
      *
      * @return The saved IDs
      */
-    public K[] getSavedIds() {
+
+    @SuppressWarnings("unchecked") 
+    public Iterable<K> getSavedIds() {
         if (dbObjects.length > 0 && dbObjects[0] instanceof JacksonDBObject) {
             throw new UnsupportedOperationException("Generated _id retrieval not supported when using stream serialization");
         }
-        K[] ids = (K[]) new Object[dbObjects.length];
+        /*
+        K[] ids = (K[]) new Object[dbObjects.length]; this cast isn't possible?!?!
         for (int i = 0; i < dbObjects.length; i++) {
             ids[i] = jacksonDBCollection.convertFromDbId(dbObjects[i].get("_id"));
         }
+        return ids;
+        */
+
+        List<K> ids = new ArrayList<K>();
+        for (int i = 0; i < dbObjects.length; i++) {
+            ids.add((K) jacksonDBCollection.convertFromDbId(dbObjects[i].get("_id")));
+        }
+
         return ids;
     }
 
