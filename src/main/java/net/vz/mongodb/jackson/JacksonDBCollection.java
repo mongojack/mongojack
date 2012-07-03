@@ -1593,11 +1593,10 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    @SuppressWarnings({"unchecked"})
-    T[] convertFromDbObjects(DBObject... dbObjects) throws MongoException {
-        T[] results = (T[]) new Object[dbObjects.length];
+    List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
+    	final List<T> results = new ArrayList<T>();
         for (int i = 0; i < dbObjects.length; i++) {
-            results[i] = convertFromDbObject(dbObjects[i]);
+            results.add(convertFromDbObject(dbObjects[i]));
         }
         return results;
     }
