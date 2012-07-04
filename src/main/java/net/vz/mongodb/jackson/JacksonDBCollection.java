@@ -16,6 +16,7 @@
 package net.vz.mongodb.jackson;
 
 import com.mongodb.*;
+
 import net.vz.mongodb.jackson.internal.FetchableDBRef;
 import net.vz.mongodb.jackson.internal.stream.JacksonEncoderFactory;
 import net.vz.mongodb.jackson.internal.util.IdHandler;
@@ -580,6 +581,22 @@ public class JacksonDBCollection<T, K> {
     public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert) {
         return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, update, returnNew, upsert));
     }
+    
+    /**
+     * Finds the first document in the query and updates it.
+     *
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param remove    if true, document found will be removed
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
+     * @return the object
+     */
+    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, update.serialiseAndGet(objectMapper), returnNew, upsert));
+    }
 
 
     /**
@@ -594,6 +611,19 @@ public class JacksonDBCollection<T, K> {
     public T findAndModify(DBObject query, DBObject sort, DBObject update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
+    
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, remove=false, returnNew=false, upsert=false
+     *
+     * @param query  The query
+     * @param sort   The sort
+     * @param update The update to apply
+     * @return the old object
+     */
+    public T findAndModify(DBObject query, DBObject sort, DBUpdate.Builder update) {
+        return findAndModify(query, null, sort, false, update, false, false);
+    }
 
     /**
      * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
@@ -606,6 +636,18 @@ public class JacksonDBCollection<T, K> {
     public T findAndModify(DBObject query, DBObject update) {
         return findAndModify(query, null, null, false, update, false, false);
     }
+    
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
+     * 
+     * @param query
+     * @param update
+     * @return
+     */
+    public T findAndModify(DBObject query, DBUpdate.Builder update){
+    	return findAndModify(query, null, null, false, update, false, false);
+    }
 
     /**
      * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
@@ -615,7 +657,7 @@ public class JacksonDBCollection<T, K> {
      * @return the removed object
      */
     public T findAndRemove(DBObject query) {
-        return findAndModify(query, null, null, true, null, false, false);
+        return findAndModify(query, null, null, true, new BasicDBObject(), false, false); // Alibi DBObject due ambiguous method call
     }
 
     /**
@@ -1594,7 +1636,7 @@ public class JacksonDBCollection<T, K> {
     }
 
     List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
-    	final List<T> results = new ArrayList<T>();
+    	final List<T> results = new ArrayList<T>(dbObjects.length);
         for (int i = 0; i < dbObjects.length; i++) {
             results.add(convertFromDbObject(dbObjects[i]));
         }
