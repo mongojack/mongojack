@@ -41,4 +41,20 @@ public class TestWriteResult extends MongoDBTestBase {
         MockObject o = new MockObject("blah", "ten", 10);
         assertThat(coll.insert(o).getSavedObject(), equalTo(o));
     }
+    
+    @Test
+    public void testGetSavedIds(){
+    	final WriteResult<MockObject, String> result = coll.insert(new MockObject("A", "a", 1), new MockObject("B", "b", 2));
+    	assertThat(result.getSavedIds().get(0), equalTo("A"));
+    	assertThat(result.getSavedIds().get(1), equalTo("B"));
+    }
+
+    @Test
+    public void testGetSavedObjects(){
+    	final MockObject a = new MockObject("A", "a", 1);
+    	final MockObject b = new MockObject("B", "b", 2);
+    	final WriteResult<MockObject, String> result = coll.insert(a, b);
+    	assertThat(result.getSavedObjects().get(0), equalTo(a));
+    	assertThat(result.getSavedObjects().get(1), equalTo(b));
+    }    
 }

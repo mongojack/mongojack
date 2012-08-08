@@ -15,6 +15,9 @@
  */
 package net.vz.mongodb.jackson;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.mongodb.CommandResult;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
@@ -37,7 +40,7 @@ public class WriteResult<T, K> {
     private final JacksonDBCollection<T, K> jacksonDBCollection;
     private final DBObject[] dbObjects;
     private final com.mongodb.WriteResult writeResult;
-    private T[] objects;
+    private List<T> objects;
 
     protected WriteResult(JacksonDBCollection<T, K> jacksonDBCollection, com.mongodb.WriteResult writeResult, DBObject... dbObjects) {
         this.jacksonDBCollection = jacksonDBCollection;
@@ -58,7 +61,7 @@ public class WriteResult<T, K> {
         if (dbObjects.length == 0) {
             throw new MongoException("No objects to return");
         }
-        return getSavedObjects()[0];
+        return getSavedObjects().get(0);
     }
 
     /**
@@ -72,7 +75,7 @@ public class WriteResult<T, K> {
      *
      * @return The saved objects
      */
-    public T[] getSavedObjects() {
+    public List<T> getSavedObjects() {
         // Lazily generate the object, in case it's not needed.
         if (objects == null) {
             if (dbObjects.length > 0) {
@@ -108,14 +111,17 @@ public class WriteResult<T, K> {
      *
      * @return The saved IDs
      */
-    public K[] getSavedIds() {
+ 
+    public List<K> getSavedIds() {
         if (dbObjects.length > 0 && dbObjects[0] instanceof JacksonDBObject) {
             throw new UnsupportedOperationException("Generated _id retrieval not supported when using stream serialization");
         }
-        K[] ids = (K[]) new Object[dbObjects.length];
+
+        List<K> ids = new ArrayList<K>();
         for (int i = 0; i < dbObjects.length; i++) {
-            ids[i] = jacksonDBCollection.convertFromDbId(dbObjects[i].get("_id"));
+            ids.add((K) jacksonDBCollection.convertFromDbId(dbObjects[i].get("_id")));
         }
+
         return ids;
     }
 

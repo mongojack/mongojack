@@ -144,5 +144,23 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         assertThat(remaining, Matchers.hasSize(2));
         assertThat(remaining, not(contains(object)));
     }
+    
+    @Test
+    public void testFindAndModifyWithBuilder(){
+    	coll.insert(new MockObject("id1", "ten", 10));
+    	coll.insert(new MockObject("id2", "ten", 10));
+    	
+    	MockObject result1 = coll.findAndModify(DBQuery.is("_id", "id1"), null, null, false, DBUpdate.set("integer", 20).set("string", "twenty"), true, false);
+    	assertThat(result1.integer, equalTo(20));
+    	assertThat(result1.string, equalTo("twenty"));
+    	
+    	MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null, null, false, DBUpdate.set("integer", 30).set("string", "thirty"), true, false);
+    	assertThat(result2.integer, equalTo(30));
+    	assertThat(result2.string, equalTo("thirty"));
+    	
+    	coll.removeById("id1");
+    	coll.removeById("id2");
+    	
+    }
 
 }
