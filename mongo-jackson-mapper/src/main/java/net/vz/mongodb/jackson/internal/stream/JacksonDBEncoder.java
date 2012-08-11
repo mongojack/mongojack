@@ -41,11 +41,11 @@ public class JacksonDBEncoder implements DBEncoder {
 
     public int writeObject(OutputBuffer buf, BSONObject object) {
         if (object instanceof JacksonDBObject) {
-            Object actualObject = ((JacksonDBObject) object).getObject();
+            JacksonDBObject<?> jacksonDbObject = (JacksonDBObject<?>) object;
             OutputBufferOutputStream stream = new OutputBufferOutputStream(buf);
             BsonGenerator generator = new DBEncoderBsonGenerator(JsonGenerator.Feature.collectDefaults(), stream);
             try {
-                objectMapper.writeValue(generator, actualObject);
+                objectMapper.writerWithView(jacksonDbObject.getView()).writeValue(generator, jacksonDbObject.getObject());
                 // The generator buffers everything so that it can write the number of bytes to the stream
                 generator.close();
             } catch (JsonMappingException e) {

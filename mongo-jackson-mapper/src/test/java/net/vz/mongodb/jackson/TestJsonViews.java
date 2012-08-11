@@ -15,16 +15,15 @@
  */
 package net.vz.mongodb.jackson;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
-@Ignore
+import org.junit.Before;
+import org.junit.Test;
+
+import com.fasterxml.jackson.annotation.JsonView;
+
 public class TestJsonViews extends MongoDBTestBase {
 
     private JacksonDBCollection<ObjectWithView, String> coll;
