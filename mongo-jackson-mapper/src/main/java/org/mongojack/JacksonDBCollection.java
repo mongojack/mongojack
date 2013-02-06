@@ -51,8 +51,8 @@ public class JacksonDBCollection<T, K> {
 
     public enum Feature {
         /**
-         * Deserialise objects directly from the MongoDB stream.  This is the default, as it performs the best.  If set
-         * to false, then it uses the MongoDB driver to deserialise objects to DBObjects, and then traverses those
+         * Deserialize objects directly from the MongoDB stream.  This is the default, as it performs the best.  If set
+         * to false, then it uses the MongoDB driver to deserialize objects to DBObjects, and then traverses those
          * objects to do the Jackson parsing.  This may be desirable, for example, when auto hydrating of objects is
          * enabled, because in order to hydrate objects, a second connection needs to be made to MongoDB, which has the
          * potential to deadlock when the connection pool gets exhausted when using stream deserialization.  Using
@@ -62,7 +62,7 @@ public class JacksonDBCollection<T, K> {
         USE_STREAM_DESERIALIZATION(true),
 
         /**
-         * Serialise objects directly to the MongoDB stream.  While this performs better than serialising to MongoDB
+         * Serialize objects directly to the MongoDB stream.  While this performs better than serializing to MongoDB
          * DBObjects first, it has the disadvantage of not being able to generate IDs before sending objects to the
          * server, which means WriteResult.getSavedId() getSavedObject() will not work.  Hence it is disabled by
          * default.
@@ -86,6 +86,7 @@ public class JacksonDBCollection<T, K> {
     private final JavaType type;
     private final JavaType keyType;
     private final ObjectMapper objectMapper;
+    private final Class<?> view;
     private final IdHandler<K, Object> idHandler;
     private final JacksonDecoderFactory<T> decoderFactory;
     private final Map<Feature, Boolean> features;
@@ -96,11 +97,12 @@ public class JacksonDBCollection<T, K> {
     private final Map<JacksonCollectionKey, JacksonDBCollection> referencedCollectionCache = new ConcurrentHashMap<JacksonCollectionKey, JacksonDBCollection>();
 
     protected JacksonDBCollection(DBCollection dbCollection, JavaType type, JavaType keyType, ObjectMapper objectMapper,
-                                  Map<Feature, Boolean> features) {
+                                  Class<?> view, Map<Feature, Boolean> features) {
         this.dbCollection = dbCollection;
         this.type = type;
         this.keyType = keyType;
         this.objectMapper = objectMapper;
+        this.view = view;
         this.decoderFactory = new JacksonDecoderFactory<T>(this, objectMapper, type);
         // We want to find how we should serialize the ID, in case it is passed to us
         try {
@@ -120,38 +122,41 @@ public class JacksonDBCollection<T, K> {
      * Wraps a DB collection in a JacksonDBCollection
      *
      * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialise to
+     * @param type         The type of objects to deserialize to
      * @return The wrapped collection
      */
     public static <T> JacksonDBCollection<T, Object> wrap(DBCollection dbCollection, Class<T> type) {
         return new JacksonDBCollection<T, Object>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
-                DEFAULT_OBJECT_MAPPER.constructType(Object.class), DEFAULT_OBJECT_MAPPER, null);
+                DEFAULT_OBJECT_MAPPER.constructType(Object.class), DEFAULT_OBJECT_MAPPER, null, null);
     }
 
     /**
      * Wraps a DB collection in a JacksonDBCollection
      *
      * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialise to
+     * @param type         The type of objects to deserialize to
      * @param keyType      The type of the objects key
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType) {
         return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
-                DEFAULT_OBJECT_MAPPER.constructType(keyType), DEFAULT_OBJECT_MAPPER, null);
+                DEFAULT_OBJECT_MAPPER.constructType(keyType), DEFAULT_OBJECT_MAPPER, null, null);
     }
 
     /**
      * Wraps a DB collection in a JacksonDBCollection
      *
      * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialise to
+     * @param type         The type of objects to deserialize to
      * @param keyType      The type of the objects key
-     * @param view         The JSON view to use for serialisation
+     * @param view         The JSON view to use for serialization
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
-        throw new UnsupportedOperationException("Not yet implemented in 2.0");
+      ObjectMapper objectMapper = new ObjectMapper();
+      MongoJacksonMapperModule.configure(objectMapper);
+      return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
+              DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, view, null);
     }
 
     /**
@@ -164,13 +169,13 @@ public class JacksonDBCollection<T, K> {
      * {@link MongoJacksonMapperModule#configure(com.fasterxml.jackson.databind.ObjectMapper)}.
      *
      * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialise to
+     * @param type         The type of objects to deserialize to
      * @param objectMapper The ObjectMapper to configure.
      * @return The wrapped collection
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
         return new JacksonDBCollection<T, K>(dbCollection, objectMapper.constructType(type),
-                objectMapper.constructType(keyType), objectMapper, null);
+                objectMapper.constructType(keyType), objectMapper, null, null);
     }
 
     /**
@@ -1167,7 +1172,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException If an error occurred
      */
     public JacksonDBCollection<T, K> rename(String newName, boolean dropTarget) throws MongoException {
-        return new JacksonDBCollection<T, K>(dbCollection.rename(newName, dropTarget), type, keyType, objectMapper, features);
+        return new JacksonDBCollection<T, K>(dbCollection.rename(newName, dropTarget), type, keyType, objectMapper, null, features);
     }
 
     /**
@@ -1526,7 +1531,7 @@ public class JacksonDBCollection<T, K> {
         JacksonDBCollection<T, K> collection = referencedCollectionCache.get(collectionKey);
         if (collection == null) {
             collection = new JacksonDBCollection<T, K>(getDB().getCollection(collectionKey.getName()),
-                    collectionKey.getType(), collectionKey.getKeyType(), objectMapper, features);
+                    collectionKey.getType(), collectionKey.getKeyType(), objectMapper, null, features);
             referencedCollectionCache.put(collectionKey, collection);
         }
         return collection;
@@ -1574,11 +1579,11 @@ public class JacksonDBCollection<T, K> {
             return null;
         }
         if (isEnabled(Feature.USE_STREAM_SERIALIZATION)) {
-            return new JacksonDBObject<T>(object);
+            return new JacksonDBObject<T>(object, view);
         } else {
             BsonObjectGenerator generator = new BsonObjectGenerator();
             try {
-                objectMapper.writeValue(generator, object);
+                objectMapper.writerWithView(view).writeValue(generator, object);
             } catch (JsonMappingException e) {
                 throw new MongoJsonMappingException(e);
             } catch (IOException e) {

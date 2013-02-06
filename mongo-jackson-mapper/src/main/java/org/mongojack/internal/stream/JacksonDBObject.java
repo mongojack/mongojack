@@ -24,14 +24,18 @@ import com.mongodb.BasicDBObject;
  * @since 1.1.2
  */
 public class JacksonDBObject<T> extends BasicDBObject {
+
+    private T object;
+
+    private Class<?> view;
+  
     public JacksonDBObject() {
     }
 
-    public JacksonDBObject(T object) {
+    public JacksonDBObject(T object, Class<?> view) {
         this.object = object;
+        this.view = view;
     }
-
-    private T object;
 
     public T getObject() {
         return object;
@@ -39,6 +43,14 @@ public class JacksonDBObject<T> extends BasicDBObject {
 
     public void setObject(T object) {
         this.object = object;
+    }
+    
+    public Class<?> getView() {
+      return view;
+    }
+
+    public void setView(Class<?> view) {
+      this.view = view;
     }
 
     @Override
