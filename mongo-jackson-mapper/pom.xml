@@ -1,0 +1,61 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.mongojack</groupId>
+        <artifactId>mongojack-parent</artifactId>
+        <version>2.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.mongojack</groupId>
+    <artifactId>mongojack</artifactId>
+    <packaging>jar</packaging>
+
+    <name>MongoDB Jackson POJO Mapper</name>
+    <description>Maps Mongo BSON objects to Jackson annotated POJOs</description>
+    <url>https://github.com/vznet/mongo-jackson-mapper</url>
+    <organization>
+        <name>VZ Netzwerke</name>
+        <url>http://vz.net</url>
+    </organization>
+    <inceptionYear>2011</inceptionYear>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.undercouch</groupId>
+            <artifactId>bson4jackson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit-dep</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-library</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
