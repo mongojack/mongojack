@@ -1,0 +1,24 @@
+-classpath
+'/Users/jroper/src/mongo-jackson-mapper/target/classes:/Users/jroper/src/mongo-jackson-mapper/mongojack/target/classes:/Users/jroper/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.1.3/jackson-core-2.1.3.jar:/Users/jroper/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.1.3/jackson-databind-2.1.3.jar:/Users/jroper/.m2/repository/de/undercouch/bson4jackson/2.1.0/bson4jackson-2.1.0.jar:/Users/jroper/.m2/repository/javax/persistence/persistence-api/1.0.2/persistence-api-1.0.2.jar:/Users/jroper/.m2/repository/org/mongodb/mongo-java-driver/2.9.1/mongo-java-driver-2.9.1.jar:/Users/jroper/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.1.2/jackson-annotations-2.1.2.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/Users/jroper/src/mongo-jackson-mapper/mongojack/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2011-2013 <a href="http://vz.net">VZ Netzwerke</a>. All Rights Reserved.'
+-charset
+'UTF-8'
+-d
+'/Users/jroper/src/mongo-jackson-mapper/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'MongoJack Parent 2.0-SNAPSHOT API'
+-linkoffline
+'http://download.oracle.com/javase/1.5.0/docs/api' '/Users/jroper/src/mongo-jackson-mapper/target/javadoc-bundle-options'
+-use
+-version
+-windowtitle
+'MongoJack Parent 2.0-SNAPSHOT API'
