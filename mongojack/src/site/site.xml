@@ -4,12 +4,8 @@
          name="MongoDB Jackson Mapper">
     <bannerLeft>
         <name>MongoDB Jackson Mapper</name>
-        <href>http://vznet.github.com/mongo-jackson-mapper</href>
+        <href>http://mongojack.org</href>
     </bannerLeft>
-    <bannerRight>
-        <src>./images/vznet.png</src>
-        <href>http://developer.vz.net</href>
-    </bannerRight>
     <body>
         <links>
             <item name="Apache" href="http://www.apache.org/"/>

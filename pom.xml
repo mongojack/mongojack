@@ -14,7 +14,7 @@
 
     <name>MongoJack Parent</name>
     <description>Maps MongoDB objects to POJOs using Jackson</description>
-    <url>https://github.com/vznet/mongo-jackson-mapper</url>
+    <url>http://mongojack.org</url>
     <organization>
         <name>VZ Netzwerke</name>
         <url>http://vz.net</url>
@@ -199,21 +199,21 @@
     </profiles>
 
     <scm>
-        <url>https://github.com/vznet/mongo-jackson-mapper</url>
-        <connection>scm:git://github.com/vznet/mongo-jackson-mapper.git</connection>
-        <developerConnection>scm:git:git@github.com:vznet/mongo-jackson-mapper.git</developerConnection>
+        <url>https://github.com/jroper/mongojack</url>
+        <connection>scm:git://github.com/jroper/mongojack.git</connection>
+        <developerConnection>scm:git:git@github.com:jroper/mongojack.git</developerConnection>
     </scm>
 
     <distributionManagement>
         <site>
             <id>github-project-site</id>
-            <url>gitsite:git@github.com/vznet/mongo-jackson-mapper.git</url>
+            <url>gitsite:git@github.com/jroper/mongojack.git</url>
         </site>
     </distributionManagement>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/vznet/mongo-jackson-mapper/issues/</url>
+        <url>https://github.com/jroper/mongojack/issues/</url>
     </issueManagement>
 
     <reporting>
