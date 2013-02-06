@@ -12,7 +12,7 @@
     <version>2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>MongoDB Jackson POJO Mapper</name>
+    <name>MongoJack Parent</name>
     <description>Maps MongoDB objects to POJOs using Jackson</description>
     <url>https://github.com/vznet/mongo-jackson-mapper</url>
     <organization>
@@ -22,7 +22,7 @@
     <inceptionYear>2011</inceptionYear>
 
     <modules>
-        <module>mongo-jackson-mapper</module>
+        <module>mongojack</module>
     </modules>
 
     <dependencyManagement>

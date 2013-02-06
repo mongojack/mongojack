@@ -11,7 +11,7 @@
     <artifactId>mongojack</artifactId>
     <packaging>jar</packaging>
 
-    <name>MongoDB Jackson POJO Mapper</name>
+    <name>MongoJack</name>
     <description>Maps Mongo BSON objects to Jackson annotated POJOs</description>
     <url>https://github.com/vznet/mongo-jackson-mapper</url>
     <organization>
