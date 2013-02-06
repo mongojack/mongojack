@@ -6,6 +6,9 @@
         <name>MongoJack</name>
         <href>http://mongojack.org</href>
     </bannerLeft>
+    <bannerRight>
+        <src>images/mongodb-leaf.png</src>
+    </bannerRight>
     <body>
         <links>
             <item name="Apache" href="http://www.apache.org/"/>
