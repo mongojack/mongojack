@@ -4,13 +4,13 @@ Installation
 If you're using maven, simply add the following dependency to your project:
 
     <dependency>
-        <groupId>net.vz.mongodb.jackson</groupId>
-        <artifactId>mongo-jackson-mapper</artifactId>
+        <groupId>org.mongojack</groupId>
+        <artifactId>mongojack</artifactId>
         <version>${siteProjectVersion}</version>
     </dependency>
 
 You can download the dependency directly from here:
 
-http://repo1.maven.org/maven2/net/vz/mongodb/jackson/mongo-jackson-mapper/${siteProjectVersion}/mongo-jackson-mapper-${siteProjectVersion}.jar
+http://repo1.maven.org/maven2/org/mongojack/mongojack/${siteProjectVersion}/mongojack-${siteProjectVersion}.jar
 
-Source code can be obtained from the [GitHub project](https://github.com/vznet/mongo-jackson-mapper).
+Source code can be obtained from the [GitHub project](https://github.com/jroper/mongojack).
