@@ -8,7 +8,7 @@ Project documentation
 
 The official documentation for this project lives [here](http://mongojack.org).
 
-Looking specifically for the Maven dependency snippet?  It's [Here](http://vznet.github.com/mongo-jackson-mapper/installation.html).
+Looking specifically for the Maven dependency snippet?  It's [here](http://mongojack.org/installation.html).
 
 Mailing lists 
 -------------
