@@ -18,13 +18,14 @@ package org.mongojack.internal.stream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.mongojack.JacksonDBCollection;
+import org.mongojack.internal.JacksonDBCollectionProvider;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import org.mongojack.JacksonDBCollection;
-import org.mongojack.internal.JacksonDBCollectionProvider;
 
 import de.undercouch.bson4jackson.BsonParser;
 import de.undercouch.bson4jackson.types.ObjectId;
@@ -48,6 +49,13 @@ public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollecti
     }
 
     @Override
+    public String getText() throws IOException, JsonParseException {
+        if (JsonToken.VALUE_EMBEDDED_OBJECT == getCurrentToken())
+            return null;
+        return super.getText();
+    }
+
+    @Override
     public Object getEmbeddedObject() throws IOException, JsonParseException {
         Object object = super.getEmbeddedObject();
         if (object instanceof ObjectId) {
@@ -58,12 +66,12 @@ public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollecti
     }
 
     public boolean handleUnknownProperty(DeserializationContext ctxt, JsonDeserializer<?> deserializer,
-                                         Object beanOrClass, String propertyName) throws IOException {
+            Object beanOrClass, String propertyName) throws IOException {
         if (propertyName.startsWith("$") || propertyName.equals("code")) {
             // It's a special server response
             JsonToken token = getCurrentToken();
             if (token == JsonToken.FIELD_NAME) {
-                 token = nextToken();
+                token = nextToken();
             }
             if (token == JsonToken.START_ARRAY || token == JsonToken.START_OBJECT) {
                 // The server shouldn't be returning arrays or objects as the response, skip all children
