@@ -21,19 +21,22 @@ import com.mongodb.Mongo;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.mongojack.JacksonDBCollection;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
 /**
- * Base class for unit tests that run against MongoDB.  Assumes there is a MongoDB instance listening on the default
+ * Base class for unit tests that run against MongoDB. Assumes there is a MongoDB instance listening on the default
  * port on localhost, and that we can do whatever we want to a database called "unittest".
  */
 @RunWith(MongoDBTestCaseRunner.class)
 public abstract class MongoDBTestBase {
     private static final Random rand = new Random();
+    private static final String dbHostKey = "MONGOJACK_TESTDB_HOST";
+    private static final Map<String, String> environment = System.getenv();
+
     private boolean useStreamParser = true;
     private boolean useStreamSerialiser = false;
 
@@ -43,8 +46,13 @@ public abstract class MongoDBTestBase {
 
     @Before
     public void connectToDb() throws Exception {
-        mongo = new Mongo();
-        db = mongo.getDB("unittest");
+        String testDbHost = "localhost";
+        if (environment.containsKey(dbHostKey)) {
+            testDbHost = environment.get(dbHostKey);
+        }
+
+        mongo = new Mongo(testDbHost);
+        db = mongo.getDB("mongojack-unittest");
         collections = new HashSet<String>();
     }
 
@@ -68,7 +76,7 @@ public abstract class MongoDBTestBase {
     }
 
     /**
-     * Get a collection with a random name.  Should grant some degree of isolation from tests running in parallel.
+     * Get a collection with a random name. Should grant some degree of isolation from tests running in parallel.
      *
      * @return The collection
      */
@@ -99,7 +107,7 @@ public abstract class MongoDBTestBase {
         }
         return collection;
     }
-    
+
     protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType) {
         return configure(JacksonDBCollection.wrap(getCollection(), type, keyType));
     }
