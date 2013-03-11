@@ -14,8 +14,7 @@
 
     <name>MongoJack</name>
     <description>Maps MongoDB objects to POJOs using Jackson</description>
-    <url>https://github.com/devbliss/mongojack</url>
-    <!-- url>http://mongojack.org</url -->
+    <url>http://mongojack.org</url>
     <organization>
         <name>VZ Netzwerke</name>
         <url>http://vz.net</url>
