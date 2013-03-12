@@ -15,17 +15,18 @@
  */
 package org.mongojack;
 
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.Mongo;
 
 /**
  * Base class for unit tests that run against MongoDB. Assumes there is a MongoDB instance listening on the default
@@ -52,7 +53,7 @@ public abstract class MongoDBTestBase {
         }
 
         mongo = new Mongo(testDbHost);
-        db = mongo.getDB("mongojack-unittest");
+        db = mongo.getDB("unittest");
         collections = new HashSet<String>();
     }
 
