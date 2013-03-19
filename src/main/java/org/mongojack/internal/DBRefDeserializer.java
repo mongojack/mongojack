@@ -99,7 +99,10 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
             JacksonDBCollection<T, K> refColl = coll.getReferenceCollection(collectionName, type, keyType);
             return new FetchableDBRef<T, K>(id, refColl);
         } else {
-            throw ctxt.instantiationException(DBRef.class, "DBRef can only be deserialised by this deserializer if parser implements " + JacksonDBCollectionProvider.class.getName());
+            throw ctxt.instantiationException(DBRef.class,
+                    "DBRef can only be deserialised by this deserializer if parser implements " +
+                            JacksonDBCollectionProvider.class.getName() +
+                            " parser is actually " + jp.getClass().getName());
         }
     }
 }
