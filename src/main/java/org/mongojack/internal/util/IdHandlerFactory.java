@@ -17,6 +17,7 @@ package org.mongojack.internal.util;
 
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
+import com.fasterxml.jackson.databind.deser.SettableBeanProperty;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 
@@ -35,7 +36,10 @@ public class IdHandlerFactory {
         JsonSerializer idSerializer = null;
         
         if (deserializer instanceof BeanDeserializer) {
-            idDeserializer = ((BeanDeserializer) deserializer).findProperty("_id").getValueDeserializer();
+            SettableBeanProperty property = ((BeanDeserializer) deserializer).findProperty("_id");
+            if (property != null) {
+                idDeserializer = property.getValueDeserializer();
+            }
         }
 
         JsonSerializer serializer = JacksonAccessor.findValueSerializer(objectMapper, type);
