@@ -18,6 +18,7 @@ package org.mongojack.internal.stream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mongojack.JacksonDBCollection;
 import org.mongojack.internal.JacksonDBCollectionProvider;
 
@@ -41,11 +42,13 @@ public class DBDecoderBsonParser extends BsonParser implements JacksonDBCollecti
     private final JacksonDBObject<?> dbObject;
     private final JacksonDBCollection dbCollection;
 
-    public DBDecoderBsonParser(IOContext ctxt, int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject, JacksonDBCollection dbCollection) {
+    public DBDecoderBsonParser(IOContext ctxt, int jsonFeatures, InputStream in, JacksonDBObject<?> dbObject,
+                               JacksonDBCollection dbCollection, ObjectMapper objectMapper) {
         // Honor document length must be true
         super(ctxt, jsonFeatures, Feature.HONOR_DOCUMENT_LENGTH.getMask(), in);
         this.dbObject = dbObject;
         this.dbCollection = dbCollection;
+        setCodec(objectMapper);
     }
 
     @Override

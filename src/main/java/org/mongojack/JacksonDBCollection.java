@@ -1610,7 +1610,7 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return (T) objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), type);
+            return (T) objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject, objectMapper), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
@@ -1627,7 +1627,7 @@ public class JacksonDBCollection<T, K> {
             return (S) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject), clazz);
+            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject, objectMapper), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {

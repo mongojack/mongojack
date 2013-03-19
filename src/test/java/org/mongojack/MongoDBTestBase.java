@@ -15,6 +15,7 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
@@ -110,6 +111,10 @@ public abstract class MongoDBTestBase {
 
     protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, String collectionName) {
         return configure(JacksonDBCollection.wrap(getCollection(collectionName), type, keyType));
+    }
+
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, ObjectMapper mapper) {
+        return configure(JacksonDBCollection.wrap(getCollection(), type, keyType, mapper));
     }
 
     public void setUseStreamParser(boolean useStreamParser) {

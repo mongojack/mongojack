@@ -51,7 +51,7 @@ public class IdHandlerFactory {
         }
 
         if (idDeserializer != null && idSerializer != null) {
-            return new IdHandler.JacksonIdHandler(idSerializer, idDeserializer);
+            return new IdHandler.JacksonIdHandler(idSerializer, idDeserializer, objectMapper);
         } else {
             return new IdHandler.NoopIdHandler<K>();
         }

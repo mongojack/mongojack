@@ -17,6 +17,7 @@ package org.mongojack.internal.util;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoException;
 import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.object.BsonObjectTraversingParser;
@@ -60,10 +61,12 @@ public interface IdHandler<K, D> {
     public static class JacksonIdHandler<K, D> implements IdHandler<K, D> {
         private final JsonSerializer<K> jsonSerializer;
         private final JsonDeserializer<K> jsonDeserializer;
+        private final ObjectMapper objectMapper;
 
-        public JacksonIdHandler(JsonSerializer<K> jsonSerializer, JsonDeserializer<K> jsonDeserializer) {
+        public JacksonIdHandler(JsonSerializer<K> jsonSerializer, JsonDeserializer<K> jsonDeserializer, ObjectMapper objectMapper) {
             this.jsonSerializer = jsonSerializer;
             this.jsonDeserializer = jsonDeserializer;
+            this.objectMapper = objectMapper;
         }
 
         /**
@@ -74,7 +77,7 @@ public interface IdHandler<K, D> {
          */
         public K fromDbId(D dbId) {
             try {
-                return jsonDeserializer.deserialize(new BsonObjectTraversingParser(null, dbId), null);
+                return jsonDeserializer.deserialize(new BsonObjectTraversingParser(null, dbId, objectMapper), null);
             } catch (IOException e) {
                 throw new MongoException("Error deserializing ID", e);
             }

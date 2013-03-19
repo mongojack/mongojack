@@ -84,12 +84,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     /* Life-cycle
     /**********************************************************
      */
-
-    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, BSONObject o) {
-        this(dbCollection, o, null);
-    }
-
-    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, Object rootValue) {
+    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, Object rootValue, ObjectCodec codec) {
         this(dbCollection, new BasicDBObject("root", rootValue), null);
         try {
             nextToken();
