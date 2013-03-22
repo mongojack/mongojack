@@ -17,3 +17,7 @@ code {
     background: none;
     line-height: 1.2;
 }
+
+div #bannerRight {
+    margin-right: 50px;
+}
