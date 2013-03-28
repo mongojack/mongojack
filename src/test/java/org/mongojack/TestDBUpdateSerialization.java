@@ -23,10 +23,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongojack.DBQuery;
-import org.mongojack.DBUpdate;
-import org.mongojack.JacksonDBCollection;
-import org.mongojack.ObjectId;
 
 import java.io.IOException;
 import java.util.*;
@@ -111,11 +107,11 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     @Ignore("Ignored until JACKSON-829 is fixed")
     public void testMapValueCustomSerializer() {
         MockObject o = new MockObject();
-        o.map = new HashMap<String, String>();
-        o.map.put("blah", "blah");
+        o.customMap = new HashMap<String, String>();
+        o.customMap.put("blah", "blah");
         coll.save(o);
-        coll.updateById("id", DBUpdate.set("map.blah", "foo"));
-        assertThat(coll.findOneById("id").map.get("blah"), equalTo("bar"));
+        coll.updateById("id", DBUpdate.set("customMap.blah", "foo"));
+        assertThat(coll.findOneById("id").customMap.get("blah"), equalTo("bar"));
     }
 
     @Test
@@ -136,6 +132,16 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         assertThat(coll.findOneById("id").objectIds.get(0), equalTo(objectId));
     }
 
+    @Test
+    public void testSimpleMap() {
+        MockObject o = new MockObject();
+        coll.save(o);
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("foo", "bar");
+        coll.updateById("id", DBUpdate.set("map", map));
+        assertThat(coll.findOneById("id").map, equalTo(map));
+    }
+
     public static class MockObject {
         public String _id = "id";
         @JsonSerialize(using = FooToBarSerializer.class)
@@ -144,8 +150,9 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         public List<String> list;
         public MockObject child;
         public List<MockObject> childList;
-        @JsonSerialize(contentUsing = FooToBarSerializer.class)
         public Map<String, String> map;
+        @JsonSerialize(contentUsing = FooToBarSerializer.class)
+        public Map<String, String> customMap;
         @ObjectId
         public String objectId;
         @ObjectId
