@@ -42,7 +42,7 @@ public class IdHandlerFactory {
             }
         }
 
-        JsonSerializer serializer = JacksonAccessor.findValueSerializer(objectMapper,
+        JsonSerializer serializer = JacksonAccessor.findValueSerializer(
                 JacksonAccessor.getSerializerProvider(objectMapper), type);
         if (serializer instanceof BeanSerializerBase) {
             BeanPropertyWriter writer = JacksonAccessor.findPropertyWriter((BeanSerializerBase) serializer, "_id");

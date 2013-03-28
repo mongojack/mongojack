@@ -113,112 +113,6 @@ public class SerializationUtils {
      * @param value        The value to serialize
      * @return The serialized field.  May return the same object if no serialization was necessary.
      */
-    public static Object serializeField(ObjectMapper objectMapper, JavaType parentType, String name, Object value) {
-        if (value == null) {
-            // return as is
-            return value;
-        } else if (value instanceof DBObject) {
-            // todo Maybe should be passing the parent type and name and stuff....
-            return serializeFields(objectMapper, (DBObject) value);
-        } else if (value instanceof Collection) {
-            Collection<?> coll = (Collection<?>) value;
-            List<Object> copy = null;
-            int position = 0;
-            for (Object item : coll) {
-                Object returned = serializeField(objectMapper, parentType, name, item);
-                if (returned != item) {
-                    if (copy == null) {
-                        copy = new ArrayList<Object>(coll);
-                    }
-                    copy.set(position, returned);
-                }
-                position++;
-            }
-            if (copy != null) {
-                return copy;
-            } else {
-                return coll;
-            }
-        } else if (value.getClass().isArray()) {
-            if (BASIC_TYPES.contains(value.getClass().getComponentType())) {
-                return value;
-            }
-            Object[] array = (Object[]) value;
-            Object[] copy = null;
-            for (int i = 0; i < array.length; i++) {
-                Object returned = serializeField(objectMapper, parentType, name, array[i]);
-                if (returned != array[i]) {
-                    if (copy == null) {
-                        copy = new Object[array.length];
-                        System.arraycopy(array, 0, copy, 0, array.length);
-                    }
-                    copy[i] = returned;
-                }
-            }
-            if (copy != null) {
-                return copy;
-            } else {
-                return array;
-            }
-        }
-        // It's not a collection, try finding a serializer
-        JsonSerializer serializer = findSerializer(objectMapper, parentType, name);
-        if (serializer != null) {
-            BsonObjectGenerator gen = new BsonObjectGenerator();
-            try {
-                serializer.serialize(value, gen, JacksonAccessor.getSerializerProvider(objectMapper));
-            } catch (JsonMappingException e) {
-                throw new MongoJsonMappingException("Error serialising query field " + name, e);
-            } catch (IOException e) {
-                throw new MongoException("Unknown IOException while serialising query field " + name, e);
-            }
-            return gen.getValue();
-        } else if (BASIC_TYPES.contains(value.getClass())) {
-            // Return as is
-            return value;
-        } else {
-            // We don't know what it is, serialise it
-            BsonObjectGenerator generator = new BsonObjectGenerator();
-            try {
-                objectMapper.writeValue(generator, value);
-            } catch (JsonMappingException e) {
-                throw new MongoJsonMappingException(e);
-            } catch (IOException e) {
-                throw new RuntimeException("Somehow got an IOException writing to memory", e);
-            }
-            return generator.getValue();
-        }
-    }
-
-    public static JsonSerializer findSerializer(ObjectMapper objectMapper, JavaType type, String name) {
-        // Split the name into its 
-        // Find the name of the current property, strip off anything starting in $
-        String prop = "$";
-        while (!prop.startsWith("$")) {
-            String[] split = name.split("\\.", 2);
-            prop = split[0];
-            if (split.length == 1) {
-                name = null;
-                break;
-            } else {
-                name = split[1];
-            }
-        }
-
-
-        // Get the serializer provider
-        SerializerProvider provider = objectMapper.getSerializerProvider();
-        // Find the serialiser for the given field name
-        return null;
-    }
-
-    /**
-     * Serialize the given field
-     *
-     * @param objectMapper The object mapper to serialize it with
-     * @param value        The value to serialize
-     * @return The serialized field.  May return the same object if no serialization was necessary.
-     */
     public static Object serializeField(ObjectMapper objectMapper, Object value) {
         if (value == null || BASIC_TYPES.contains(value.getClass())) {
             // Return as is
@@ -289,7 +183,7 @@ public class SerializationUtils {
                 Object value;
                 if (field.getValue().requiresSerialization()) {
                     JsonSerializer serializer = findUpdateSerializer(field.getValue().isTargetCollection(),
-                            field.getKey(), objectMapper, serializerProvider, javaType);
+                            field.getKey(), serializerProvider, javaType);
                     if (serializer != null) {
                         value = serializeUpdateField(field.getValue(), serializer, serializerProvider, op.getKey(),
                                 field.getKey());
@@ -313,8 +207,7 @@ public class SerializationUtils {
     }
 
     private static Object serializeUpdateField(UpdateOperationValue value, JsonSerializer serializer,
-                                               SerializerProvider serializerProvider,
-                                               String op, String field) {
+                                               SerializerProvider serializerProvider, String op, String field) {
         if (value instanceof MultiUpdateOperationValue) {
             List<Object> results = new ArrayList<Object>();
             for (Object item : ((MultiUpdateOperationValue) value).getValues()) {
@@ -326,8 +219,8 @@ public class SerializationUtils {
         }
     }
 
-    private static Object serializeUpdateField(Object value, JsonSerializer serializer, SerializerProvider serializerProvider,
-                                               String op, String field) {
+    private static Object serializeUpdateField(Object value, JsonSerializer serializer,
+                                               SerializerProvider serializerProvider, String op, String field) {
         BsonObjectGenerator objectGenerator = new BsonObjectGenerator();
         try {
             serializer.serialize(value, objectGenerator, serializerProvider);
@@ -339,9 +232,8 @@ public class SerializationUtils {
     }
 
     private static JsonSerializer<?> findUpdateSerializer(boolean targetIsCollection, String fieldPath,
-                                                          ObjectMapper objectMapper, SerializerProvider serializerProvider,
-                                                          JavaType javaType) {
-        JsonSerializer serializer = JacksonAccessor.findValueSerializer(objectMapper, serializerProvider, javaType);
+                                                          SerializerProvider serializerProvider, JavaType javaType) {
+        JsonSerializer serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
         if (serializer instanceof BeanSerializerBase) {
             JsonSerializer<?> fieldSerializer = serializer;
             // Iterate through the components of the field name
@@ -359,7 +251,7 @@ public class SerializationUtils {
                             // Work it out
                             JavaType contentType = ((ContainerSerializer) fieldSerializer).getContentType();
                             if (contentType != null) {
-                                contentSerializer = JacksonAccessor.findValueSerializer(objectMapper, serializerProvider, contentType);
+                                contentSerializer = JacksonAccessor.findValueSerializer(serializerProvider, contentType);
                             }
                         }
                         fieldSerializer = contentSerializer;
@@ -373,7 +265,7 @@ public class SerializationUtils {
                         fieldSerializer = writer.getSerializer();
                         if (fieldSerializer == null) {
                             // Do a generic lookup
-                            fieldSerializer = JacksonAccessor.findValueSerializer(objectMapper, serializerProvider, writer.getType());
+                            fieldSerializer = JacksonAccessor.findValueSerializer(serializerProvider, writer.getType());
                         }
                     } else {
                         // Give up

@@ -60,7 +60,7 @@ public class JacksonAccessor {
         return serializerProvider.createInstance(objectMapper.getSerializationConfig(), getSerializerFactory(objectMapper));
     }
 
-    public static JsonSerializer findValueSerializer(ObjectMapper objectMapper, SerializerProvider serializerProvider, JavaType javaType) {
+    public static JsonSerializer findValueSerializer(SerializerProvider serializerProvider, JavaType javaType) {
         try {
             return serializerProvider.findValueSerializer(javaType, null);
         } catch (JsonMappingException e) {
