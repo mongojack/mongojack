@@ -31,9 +31,9 @@
     <custom>
         <fluidoSkin>
             <gitHub>
-                <projectId>jroper/mongojack</projectId>
+                <projectId>devbliss/mongojack</projectId>
                 <ribbonOrientation>right</ribbonOrientation>
-                <ribbonColor>darkblue</ribbonColor>
+                <ribbonColor>red</ribbonColor>
             </gitHub>
         </fluidoSkin>
     </custom>
