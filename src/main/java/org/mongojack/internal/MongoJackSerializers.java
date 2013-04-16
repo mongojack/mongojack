@@ -22,13 +22,13 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Serializers for Mongo Jackson Mapper
+ * Serializers for MongoJack
  *
  * @author James Roper
  * @since 1.2
  */
-public class MongoJacksonSerializers extends SimpleSerializers {
-    public MongoJacksonSerializers() {
+public class MongoJackSerializers extends SimpleSerializers {
+    public MongoJackSerializers() {
         addSerializer(new DBRefSerializer());
         addSerializer(ObjectId.class, new ObjectIdSerializer());
         addSerializer(Date.class, new DateSerializer());

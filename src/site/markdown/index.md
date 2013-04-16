@@ -6,7 +6,7 @@ Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON m
 Quick start
 -----------
 
-This is what using the mapper looks like:
+This is what using MongoJack looks like:
 
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(dbCollection, MyObject.class,
             String.class);

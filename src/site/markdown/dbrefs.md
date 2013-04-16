@@ -1,12 +1,12 @@
 Database References
 ===================
 
-The [MongoDB documentation](http://www.mongodb.org/display/DOCS/Database+References) for database references recommends against using database references, because it is usually simpler to just use direct/manual references.  The author of this documentation is of the same opinion.  However, the Mongo Jackson Mapper does support this convention of storage.
+The [MongoDB documentation](http://www.mongodb.org/display/DOCS/Database+References) for database references recommends against using database references, because it is usually simpler to just use direct/manual references.  The author of this documentation is of the same opinion.  However, MongoJack does support this convention of storage.
 
 Declaring
 ---------
 
-A field can be declared to be a DBRef by using the type `net.vz.mongodb.jackson.DBRef`. For example:
+A field can be declared to be a DBRef by using the type `org.mongojack.DBRef`. For example:
 
     public class User {
         @Id
@@ -23,7 +23,7 @@ Constructing the type can be done using a constructor:
 
     DBRef berlinRef = new DBRef<City, String>("Berlin", "cities");
 
-The first argument is the id of the referenced document, and the second is the name of the collection the document lives in.  An alternative method for constructing DBRefs may be used, by annotating the referenced class with a `net.vz.mongodb.jackson.MongoCollection` annotation, which describes the name of the collection the type belongs to:
+The first argument is the id of the referenced document, and the second is the name of the collection the document lives in.  An alternative method for constructing DBRefs may be used, by annotating the referenced class with a `org.mongojack.MongoCollection` annotation, which describes the name of the collection the type belongs to:
 
     @MongoCollection(name = "cities")
     public class City {
@@ -52,7 +52,7 @@ The fetch method may only be used for DBRefs that have been returned by a `Jacks
 Collections of DBRefs
 ---------------------
 
-You may use DBRefs in a collection or as values for a `Map`.  A common problem in object database mappers is the n+1 selects problem, where you want to get a collection of documents associated with another document, so you need to do one query to get the parent document, and then n queries to get each referenced document.  The mongo jackson mapper provides a means of avoiding this by supplying a `fetch()` method on `JacksonDBCollection`:
+You may use DBRefs in a collection or as values for a `Map`.  A common problem in object database mappers is the n+1 selects problem, where you want to get a collection of documents associated with another document, so you need to do one query to get the parent document, and then n queries to get each referenced document.  MongoJack provides a means of avoiding this by supplying a `fetch()` method on `JacksonDBCollection`:
 
     public class BlogPost {
         @Id

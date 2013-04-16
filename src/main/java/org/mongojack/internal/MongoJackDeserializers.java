@@ -23,13 +23,13 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Deserializers for Mongo Jackson Mapper
+ * Deserializers for MongoJack
  *
  * @author James Roper
  * @since 1.2
  */
-public class MongoJacksonDeserializers extends SimpleDeserializers {
-    public MongoJacksonDeserializers() {
+public class MongoJackDeserializers extends SimpleDeserializers {
+    public MongoJackDeserializers() {
         addDeserializer(Date.class, new DateDeserializer());
         addDeserializer(Calendar.class, new CalendarDeserializer());
     }

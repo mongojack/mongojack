@@ -68,6 +68,14 @@ public class JacksonAccessor {
         }
     }
 
+    public static JsonSerializer findValueSerializer(SerializerProvider serializerProvider, Class clazz) {
+        try {
+            return serializerProvider.findValueSerializer(clazz, null);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static final Method objectMapperCreateDeserializationContext;
     private static final Method objectMapperFindRootDeserializer;
     private static final Field beanSerializerBaseProps;

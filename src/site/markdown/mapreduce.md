@@ -1,12 +1,12 @@
 Map/reduce
 ==========
 
-The Mongo Jackson Mapper supports deserialisation of map/reduce results into POJOs.  If you don't understand map/reduce, this is not the guide for you.  A good place to start would be in the [MongoDB documentation](http://www.mongodb.org/display/DOCS/MapReduce).
+MongoJack supports deserialisation of map/reduce results into POJOs.  If you don't understand map/reduce, this is not the guide for you.  A good place to start would be in the [MongoDB documentation](http://www.mongodb.org/display/DOCS/MapReduce).
 
 Output objects
 --------------
 
-The output of a map reduce command always produces an object with two keys.  One is ``_id``, this is the key that was emitted by the map function, and the other is ``value``, this is the reduced value for that key.  The Mongo Jackson Mapper expects you to provide a class that contains these two properties, with the correct types to deserialise to.  For example:
+The output of a map reduce command always produces an object with two keys.  One is ``_id``, this is the key that was emitted by the map function, and the other is ``value``, this is the reduced value for that key.  MongoJack expects you to provide a class that contains these two properties, with the correct types to deserialise to.  For example:
 
     public class UserComments {
         @Id

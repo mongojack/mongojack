@@ -19,9 +19,9 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.util.VersionUtil;
 
 /**
- * Looks up the version of the Mongo Jackson Mapper
+ * Looks up the version of the MongoJack
  */
 public class VersionUtils {
     public static final Version VERSION = VersionUtil.mavenVersionFor(VersionUtils.class.getClassLoader(),
-            "net.vz.jackson.mongodb", "mongo-jackson-mapper");
+            "org.mongojack", "mongojack");
 }

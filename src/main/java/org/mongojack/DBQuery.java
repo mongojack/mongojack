@@ -19,6 +19,10 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.QueryOperators;
 import org.bson.BSONObject;
+import org.mongojack.internal.query.CollectionQueryCondition;
+import org.mongojack.internal.query.CompoundQueryCondition;
+import org.mongojack.internal.query.SimpleQueryCondition;
+import org.mongojack.internal.query.QueryCondition;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -279,11 +283,6 @@ public class DBQuery {
     }
 
     public static abstract class AbstractBuilder<Q extends AbstractBuilder> {
-        protected final DBObject query;
-
-        protected AbstractBuilder(DBObject query) {
-            this.query = query;
-        }
 
         /**
          * The field is equal to the given value
@@ -293,7 +292,7 @@ public class DBQuery {
          * @return the query
          */
         public Q is(String field, Object value) {
-            return put(field, null, value);
+            return put(field, new SimpleQueryCondition(value));
         }
 
         /**
@@ -304,7 +303,7 @@ public class DBQuery {
          * @return the query
          */
         public Q lessThan(String field, Object value) {
-            return put(field, QueryOperators.LT, value);
+            return put(field, QueryOperators.LT, new SimpleQueryCondition(value));
         }
 
         /**
@@ -315,7 +314,7 @@ public class DBQuery {
          * @return the query
          */
         public Q lessThanEquals(String field, Object value) {
-            return put(field, QueryOperators.LTE, value);
+            return put(field, QueryOperators.LTE, new SimpleQueryCondition(value));
         }
 
 
@@ -327,7 +326,7 @@ public class DBQuery {
          * @return the query
          */
         public Q greaterThan(String field, Object value) {
-            return put(field, QueryOperators.GT, value);
+            return put(field, QueryOperators.GT, new SimpleQueryCondition(value));
         }
 
         /**
@@ -338,7 +337,7 @@ public class DBQuery {
          * @return the query
          */
         public Q greaterThanEquals(String field, Object value) {
-            return put(field, QueryOperators.GTE, value);
+            return put(field, QueryOperators.GTE, new SimpleQueryCondition(value));
         }
 
         /**
@@ -349,7 +348,7 @@ public class DBQuery {
          * @return the query
          */
         public Q notEquals(String field, Object value) {
-            return put(field, QueryOperators.NE, value);
+            return put(field, QueryOperators.NE, new SimpleQueryCondition(value));
         }
 
         /**
@@ -360,7 +359,7 @@ public class DBQuery {
          * @return the query
          */
         public Q in(String field, Object... values) {
-            return put(field, QueryOperators.IN, values);
+            return put(field, QueryOperators.IN, Arrays.asList(values));
         }
 
         /**
@@ -382,7 +381,7 @@ public class DBQuery {
          * @return the query
          */
         public Q notIn(String field, Object... values) {
-            return put(field, QueryOperators.NIN, values);
+            return put(field, QueryOperators.NIN, Arrays.asList(values));
         }
 
         /**
@@ -405,7 +404,9 @@ public class DBQuery {
          * @return the query
          */
         public Q mod(String field, Number mod, Number value) {
-            return put(field, QueryOperators.MOD, Arrays.asList(mod, value));
+            return put(field, QueryOperators.MOD, new CollectionQueryCondition(
+                    Arrays.<QueryCondition>asList(new SimpleQueryCondition(mod, false), new SimpleQueryCondition(value)),
+                    false));
         }
 
         /**
@@ -427,7 +428,7 @@ public class DBQuery {
          * @return the query
          */
         public Q all(String field, Object... values) {
-            return put(field, QueryOperators.ALL, values);
+            return put(field, QueryOperators.ALL, Arrays.asList(values));
         }
 
         /**
@@ -438,7 +439,7 @@ public class DBQuery {
          * @return the query
          */
         public Q size(String field, int size) {
-            return put(field, QueryOperators.SIZE, size);
+            return put(field, QueryOperators.SIZE, new SimpleQueryCondition(size, false));
         }
 
         /**
@@ -448,7 +449,7 @@ public class DBQuery {
          * @return the query
          */
         public Q exists(String field) {
-            return put(field, QueryOperators.EXISTS, true);
+            return put(field, QueryOperators.EXISTS, new SimpleQueryCondition(true, false));
         }
 
         /**
@@ -458,7 +459,7 @@ public class DBQuery {
          * @return the query
          */
         public Q notExists(String field) {
-            return put(field, QueryOperators.EXISTS, false);
+            return put(field, QueryOperators.EXISTS, new SimpleQueryCondition(false, false));
         }
 
         /**
@@ -499,7 +500,7 @@ public class DBQuery {
          * @return the query
          */
         public Q regex(String field, Pattern regex) {
-            return put(field, null, regex);
+            return put(field, new SimpleQueryCondition(regex, false));
         }
 
         /**
@@ -510,7 +511,7 @@ public class DBQuery {
          * @return the query
          */
         public Q elemMatch(String field, Query query) {
-            return put(field, "$elemMatch", query);
+            return put(field, "$elemMatch", new CompoundQueryCondition(query));
         }
 
         /**
@@ -520,88 +521,72 @@ public class DBQuery {
          * @return the query
          */
         public Q where(String code) {
-            return put("$where", null, code);
+            return put("$where", new SimpleQueryCondition(code, false));
         }
 
-        protected Q put(String field, String op, Object value) {
-            if (op == null) {
-                query.put(field, value);
-            } else {
-                DBObject operand;
-                Object saved = query.get(field);
-                if (!(saved instanceof DBObject)) {
-                    operand = new BasicDBObject();
-                    query.put(field, operand);
-                } else {
-                    operand = (DBObject) saved;
-                }
-                operand.put(op, value);
+        protected abstract Q put(String op, QueryCondition value);
+
+        protected abstract Q put(String field, String op, QueryCondition value);
+
+        protected Q put(String field, String op, Collection<?> values) {
+            List<QueryCondition> conditions = new ArrayList<QueryCondition>();
+            for (Object value: values) {
+                conditions.add(new SimpleQueryCondition(value));
             }
-            return (Q) this;
+            return put(field, op, new CollectionQueryCondition(conditions, true));
         }
 
-        protected Q putGroup(String op, Object... expressions) {
-            List<Object> saved = (List) query.get(op);
-            if (saved == null) {
-                saved = new ArrayList<Object>();
-                query.put(op, saved);
-            }
-            saved.addAll(Arrays.asList(expressions));
-            return (Q) this;
-        }
+        protected abstract Q putGroup(String op, Query... expressions);
     }
 
     /**
      * This is a query builder that is also a valid query that can be passed to MongoDB
      */
-    public static class Query extends AbstractBuilder<Query> implements DBObject {
+    public static class Query extends AbstractBuilder<Query> {
 
-        private Query() {
-            super(new BasicDBObject());
+        protected final Map<String, QueryCondition> query = new LinkedHashMap<String, QueryCondition>();
+
+        private Query() {}
+
+        public Set<Map.Entry<String, QueryCondition>> conditions() {
+            return query.entrySet();
         }
 
-        public void markAsPartialObject() {
-            query.markAsPartialObject();
+        protected Query put(String op, QueryCondition value) {
+            query.put(op, value);
+            return this;
         }
 
-        public boolean isPartialObject() {
-            return query.isPartialObject();
+        protected Query put(String field, String op, QueryCondition value) {
+            Query subQuery;
+            QueryCondition saved = query.get(field);
+            if (!(saved instanceof CompoundQueryCondition)) {
+                subQuery = new Query();
+                query.put(field, new CompoundQueryCondition(subQuery));
+            } else {
+                subQuery = ((CompoundQueryCondition) saved).getQuery();
+            }
+            subQuery.put(op, value);
+            return this;
         }
 
-        public Object put(String key, Object v) {
-            return query.put(key, v);
-        }
-
-        public void putAll(BSONObject o) {
-            query.putAll(o);
-        }
-
-        public void putAll(Map m) {
-            query.putAll(m);
-        }
-
-        public Object get(String key) {
-            return query.get(key);
-        }
-
-        public Map toMap() {
-            return query.toMap();
-        }
-
-        public Object removeField(String key) {
-            return query.removeField(key);
-        }
-
-        public boolean containsKey(String s) {
-            return query.containsKey(s);
-        }
-
-        public boolean containsField(String s) {
-            return query.containsField(s);
-        }
-
-        public Set<String> keySet() {
-            return query.keySet();
+        protected Query putGroup(String op, Query... expressions) {
+            CollectionQueryCondition condition;
+            QueryCondition existing = query.get(op);
+            if (existing == null) {
+                condition = new CollectionQueryCondition();
+                query.put(op, condition);
+            } else if (existing instanceof CollectionQueryCondition) {
+                condition = (CollectionQueryCondition) existing;
+            } else {
+                throw new IllegalStateException("Expecting collection for " + op);
+            }
+            List<QueryCondition> conditions = new ArrayList<QueryCondition>();
+            for (Query query : expressions) {
+                conditions.add(new CompoundQueryCondition(query));
+            }
+            condition.addAll(conditions);
+            return this;
         }
     }
 }

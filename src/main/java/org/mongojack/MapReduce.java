@@ -84,7 +84,7 @@ public class MapReduce {
 
         private ReadPreference readPreference;
         private String outputDB;
-        private DBObject query;
+        private DBQuery.Query query;
         private String finalize;
         private DBObject sort;
         private int limit;
@@ -129,7 +129,7 @@ public class MapReduce {
          * @param query The query
          * @return this command
          */
-        public MapReduceCommand<T, K> setQuery(DBObject query) {
+        public MapReduceCommand<T, K> setQuery(DBQuery.Query query) {
             this.query = query;
             return this;
         }
@@ -203,7 +203,7 @@ public class MapReduce {
         com.mongodb.MapReduceCommand build(JacksonDBCollection<?, ?> collection) {
             DBObject query = null;
             if (this.query != null) {
-                query = collection.serializeFields(this.query);
+                query = collection.serializeQuery(this.query);
             }
             com.mongodb.MapReduceCommand command = new com.mongodb.MapReduceCommand(collection.getDbCollection(), map,
                     reduce, this.collection, outputType.getDriverType(), query);

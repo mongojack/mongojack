@@ -27,13 +27,13 @@ import org.mongojack.internal.stream.ServerErrorProblemHandler;
  * @author James Roper
  * @since 1.0
  */
-public class MongoJacksonMapperModule extends Module {
-    public static final Module INSTANCE = new MongoJacksonMapperModule();
+public class MongoJackModule extends Module {
+    public static final Module INSTANCE = new MongoJackModule();
 
     /**
-     * Configure the given object mapper to be used with the Mongo Jackson Mapper.  Please call this method rather than
-     * calling objectMapper.with(MongoJacksonMapperModule.INSTANCE), because Jacksons module system doesn't allow the
-     * mongo jackson mapper to do all the configuration it needs to do.  This method will do that configuration though.
+     * Configure the given object mapper to be used with MongoJack.  Please call this method rather than
+     * calling objectMapper.with(MongoJacksonMapperModule.INSTANCE), because Jacksons module system doesn't allow
+     * MongoJack to do all the configuration it needs to do.  This method will do that configuration though.
      *
      * @param objectMapper The object mapper to configure
      * @return This object mapper (for chaining)
@@ -61,7 +61,7 @@ public class MongoJacksonMapperModule extends Module {
         // Only include non null properties, this makes it possible to use object templates for querying and
         // partial object retrieving
         context.addDeserializationProblemHandler(new ServerErrorProblemHandler());
-        context.addSerializers(new MongoJacksonSerializers());
-        context.addDeserializers(new MongoJacksonDeserializers());
+        context.addSerializers(new MongoJackSerializers());
+        context.addDeserializers(new MongoJackDeserializers());
     }
 }

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.0.0
+-----
+
+* Proper update and query serialization support.
+* Renamed to MongoJack.
+
 1.4.2
 -----
 

@@ -16,6 +16,10 @@
 package org.mongojack;
 
 import com.mongodb.*;
+import org.mongojack.internal.query.CollectionQueryCondition;
+import org.mongojack.internal.query.CompoundQueryCondition;
+import org.mongojack.internal.query.QueryCondition;
+import org.mongojack.internal.util.SerializationUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -60,7 +64,6 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     private boolean executed;
 
     public DBCursor(JacksonDBCollection<T, ?> jacksonDBCollection, com.mongodb.DBCursor cursor) {
-        super(cursor.getQuery());
         this.jacksonDBCollection = jacksonDBCollection;
         this.cursor = cursor;
         if (jacksonDBCollection.isEnabled(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION)) {
@@ -516,19 +519,40 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
         }
     }
 
-    @Override
-    protected DBCursor<T> put(String field, String op, Object value) {
+    protected DBCursor<T> put(String op, QueryCondition value) {
         checkExecuted();
-        return super.put(field, op, jacksonDBCollection.serializeField(value));
+        cursor.getQuery().put(op, jacksonDBCollection.serializeQueryCondition(op, value));
+        return this;
     }
 
-    @Override
-    protected DBCursor<T> putGroup(String op, Object... expressions) {
+    protected DBCursor<T> put(String field, String op, QueryCondition value) {
         checkExecuted();
-        Object[] serialized = new Object[expressions.length];
-        for (int i = 0; i < expressions.length; i++) {
-            serialized[i] = jacksonDBCollection.serializeField(expressions[i]);
+        DBObject subQuery;
+        Object saved = cursor.getQuery().get(field);
+        if (!(saved instanceof DBObject)) {
+            subQuery = new BasicDBObject();
+            cursor.getQuery().put(field, subQuery);
+        } else {
+            subQuery = (DBObject) saved;
         }
-        return super.putGroup(op, serialized);
+        subQuery.put(op, jacksonDBCollection.serializeQueryCondition(field, value));
+        return this;
+    }
+
+    protected DBCursor<T> putGroup(String op, DBQuery.Query... expressions) {
+        checkExecuted();
+        List<DBObject> conditions = new ArrayList<DBObject>();
+        Object existing = cursor.getQuery().get(op);
+        if (existing == null) {
+            cursor.getQuery().put(op, conditions);
+        } else if (existing instanceof List) {
+            conditions.addAll((List) existing);
+        } else {
+            throw new IllegalStateException("Expecting collection for " + op);
+        }
+        for (DBQuery.Query query : expressions) {
+            conditions.add(jacksonDBCollection.serializeQuery(query));
+        }
+        return this;
     }
 }

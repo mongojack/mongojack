@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mongodb.DBObject;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongojack.internal.MongoJacksonMapperModule;
+import org.mongojack.internal.MongoJackModule;
 
 import java.io.IOException;
 
@@ -88,7 +88,7 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(module);
-        MongoJacksonMapperModule.configure(objectMapper);
+        MongoJackModule.configure(objectMapper);
         return objectMapper;
     }
 

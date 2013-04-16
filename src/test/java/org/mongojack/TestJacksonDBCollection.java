@@ -50,17 +50,6 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
     }
 
     @Test
-    public void testQueryWithJavaObject() {
-        MockObject o1 = new MockObject("1", "ten", 10);
-        MockObject o2 = new MockObject("2", "ten", 10);
-        coll.insert(o1, o2, new MockObject("twenty", 20));
-
-        List<MockObject> results = coll.find(new MockObject("ten", null)).toArray();
-        assertThat(results, hasSize(2));
-        assertThat(results, contains(o1, o2));
-    }
-
-    @Test
     public void testQueryWithLimitedKeys() {
         coll.insert(new MockObject("ten", 10));
         coll.insert(new MockObject("ten", 100));
@@ -75,20 +64,6 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         assertThat(results.get(1).string, equalTo("ten"));
     }
 
-    @Test
-    public void testQueryWithLimitedKeysFromJavaObject() {
-        coll.insert(new MockObject("ten", 10));
-        coll.insert(new MockObject("ten", 100));
-        coll.insert(new MockObject("twenty", 20));
-
-        List<MockObject> results = coll.find(new MockObject("ten", null),
-                new MockObject("something not null", null)).toArray();
-        assertThat(results, hasSize(2));
-        assertThat(results.get(0).integer, nullValue());
-        assertThat(results.get(0).string, equalTo("ten"));
-        assertThat(results.get(1).integer, nullValue());
-        assertThat(results.get(1).string, equalTo("ten"));
-    }
 
     @Test
     public void testRemove() {
@@ -102,36 +77,6 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         List<MockObject> remaining = coll.find().toArray();
         assertThat(remaining, Matchers.hasSize(1));
         assertThat(remaining, contains(object));
-    }
-
-    @Test
-    public void testRemoveByJavaObject() {
-        coll.insert(new MockObject("ten", 10));
-        coll.insert(new MockObject("ten", 100));
-        MockObject object = new MockObject("1", "twenty", 20);
-        coll.insert(object);
-
-        coll.remove(new MockObject("ten", null));
-
-        List<MockObject> remaining = coll.find().toArray();
-        assertThat(remaining, Matchers.hasSize(1));
-        assertThat(remaining, contains(object));
-    }
-
-    @Test
-    public void testRemoveByJavaObjectWithId() {
-        coll.insert(new MockObject("id1", "ten", 10));
-        coll.insert(new MockObject("id2", "ten", 100));
-        MockObject object = new MockObject("id3", "twenty", 20);
-        coll.insert(object);
-
-        MockObject toRemove = new MockObject("id3", null, null);
-
-        coll.remove(toRemove);
-
-        List<MockObject> remaining = coll.find().toArray();
-        assertThat(remaining, Matchers.hasSize(2));
-        assertThat(remaining, not(contains(object)));
     }
 
     @Test

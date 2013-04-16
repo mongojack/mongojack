@@ -21,11 +21,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.*;
 
 import org.mongojack.internal.FetchableDBRef;
+import org.mongojack.internal.MongoJackModule;
+import org.mongojack.internal.query.QueryCondition;
 import org.mongojack.internal.stream.JacksonEncoderFactory;
 import org.mongojack.internal.util.IdHandler;
 import org.mongojack.internal.util.IdHandlerFactory;
 import org.mongojack.internal.JacksonCollectionKey;
-import org.mongojack.internal.MongoJacksonMapperModule;
 import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.object.BsonObjectTraversingParser;
 import org.mongojack.internal.stream.JacksonDBObject;
@@ -80,7 +81,7 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJacksonMapperModule.configure(new ObjectMapper());
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule.configure(new ObjectMapper());
 
     private final DBCollection dbCollection;
     private final JavaType type;
@@ -154,7 +155,7 @@ public class JacksonDBCollection<T, K> {
      */
     public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
       ObjectMapper objectMapper = new ObjectMapper();
-      MongoJacksonMapperModule.configure(objectMapper);
+      MongoJackModule.configure(objectMapper);
       return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
               DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, view, null);
     }
@@ -166,7 +167,7 @@ public class JacksonDBCollection<T, K> {
      * the object mapper passed into this method, because the same object mapper might be passed into multiple calls to
      * this method.  Consequently, it is up to the caller to ensure that the object mapper has been configured for use
      * by JacksonDBCollection.  This can be done by passing the object mapper to
-     * {@link MongoJacksonMapperModule#configure(com.fasterxml.jackson.databind.ObjectMapper)}.
+     * {@link org.mongojack.internal.MongoJackModule#configure(com.fasterxml.jackson.databind.ObjectMapper)}.
      *
      * @param dbCollection The DB collection to wrap
      * @param type         The type of objects to deserialize to
@@ -343,8 +344,9 @@ public class JacksonDBCollection<T, K> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return this.update(query, update.serialiseAndGet(objectMapper, type), upsert, multi, concern);
+    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(serializeQuery(query),
+                update.serialiseAndGet(objectMapper, type), upsert, multi, concern));
     }
 
     /**
@@ -360,8 +362,9 @@ public class JacksonDBCollection<T, K> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return update(convertToBasicDbObject(query), convertToBasicDbObject(object), upsert, multi, concern);
+    public WriteResult<T, K> update(DBQuery.Query query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(serializeQuery(query),
+                convertToBasicDbObject(object), upsert, multi, concern));
     }
 
     /**
@@ -392,8 +395,8 @@ public class JacksonDBCollection<T, K> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update, boolean upsert, boolean multi) throws MongoException {
-        return this.update(query, update.serialiseAndGet(objectMapper, type), upsert, multi);
+    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, boolean multi) throws MongoException {
+        return this.update(query, update, upsert, multi, getWriteConcern());
     }
 
     /**
@@ -407,7 +410,7 @@ public class JacksonDBCollection<T, K> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> update(T query, T object, boolean upsert, boolean multi)
+    public WriteResult<T, K> update(DBQuery.Query query, T object, boolean upsert, boolean multi)
             throws MongoException {
         return update(query, object, upsert, multi, getWriteConcern());
     }
@@ -432,8 +435,8 @@ public class JacksonDBCollection<T, K> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> update(DBObject query, DBUpdate.Builder update) throws MongoException {
-        return this.update(query, update.serialiseAndGet(objectMapper, type));
+    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update) throws MongoException {
+        return this.update(query, update, false, false);
     }
 
 
@@ -445,7 +448,7 @@ public class JacksonDBCollection<T, K> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> update(T query, T object) throws MongoException {
+    public WriteResult<T, K> update(DBQuery.Query query, T object) throws MongoException {
         return update(query, object, false, false);
     }
 
@@ -493,8 +496,8 @@ public class JacksonDBCollection<T, K> {
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> updateMulti(DBObject query, DBUpdate.Builder update) throws MongoException {
-        return this.updateMulti(query, update.serialiseAndGet(objectMapper, type));
+    public WriteResult<T, K> updateMulti(DBQuery.Query query, DBUpdate.Builder update) throws MongoException {
+        return update(query, update, false, true);
     }
 
     /**
@@ -505,7 +508,7 @@ public class JacksonDBCollection<T, K> {
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> updateMulti(T query, T object) throws MongoException {
+    public WriteResult<T, K> updateMulti(DBQuery.Query query, T object) throws MongoException {
         return update(query, object, false, true);
     }
 
@@ -525,13 +528,13 @@ public class JacksonDBCollection<T, K> {
     /**
      * Removes objects from the database collection.
      *
-     * @param object  the object that documents to be removed must match
+     * @param query  the query
      * @param concern WriteConcern for this operation
      * @return The result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> remove(T object, WriteConcern concern) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(convertToDbObject(object), concern));
+    public WriteResult<T, K> remove(DBQuery.Query query, WriteConcern concern) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(serializeQuery(query), concern));
     }
 
     /**
@@ -548,12 +551,12 @@ public class JacksonDBCollection<T, K> {
     /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
      *
-     * @param object the object that documents to be removed must match
+     * @param query the query
      * @return The write result
      * @throws MongoException If an error occurred
      */
-    public WriteResult<T, K> remove(T object) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(convertToDbObject(object)));
+    public WriteResult<T, K> remove(DBQuery.Query query) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(serializeQuery(query)));
     }
 
     /**
@@ -582,7 +585,23 @@ public class JacksonDBCollection<T, K> {
     public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert) {
         return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, update, returnNew, upsert));
     }
-    
+
+    /**
+     * Finds the first document in the query and updates it.
+     *
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param remove    if true, document found will be removed
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
+     * @return the object
+     */
+    public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort, boolean remove, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(serializeQuery(query), fields, sort, remove, update.serialiseAndGet(objectMapper, type), returnNew, upsert));
+    }
+
     /**
      * Finds the first document in the query and updates it.
      *
@@ -628,6 +647,19 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, remove=false, returnNew=false, upsert=false
+     *
+     * @param query  The query
+     * @param sort   The sort
+     * @param update The update to apply
+     * @return the old object
+     */
+    public T findAndModify(DBQuery.Query query, DBObject sort, DBUpdate.Builder update) {
+        return findAndModify(query, null, sort, false, update, false, false);
+    }
+
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
      *
      * @param query  The query
@@ -652,6 +684,18 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
+     *
+     * @param query
+     * @param update
+     * @return
+     */
+    public T findAndModify(DBQuery.Query query, DBUpdate.Builder update){
+        return findAndModify(query, null, null, false, update, false, false);
+    }
+
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, sort=null, remove=true, returnNew=false, upsert=false
      *
      * @param query The query
@@ -659,6 +703,17 @@ public class JacksonDBCollection<T, K> {
      */
     public T findAndRemove(DBObject query) {
         return findAndModify(query, null, null, true, new BasicDBObject(), false, false); // Alibi DBObject due ambiguous method call
+    }
+
+    /**
+     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, sort=null, remove=true, returnNew=false, upsert=false
+     *
+     * @param query The query
+     * @return the removed object
+     */
+    public T findAndRemove(DBQuery.Query query) {
+        return findAndModify(serializeQuery(query), null, null, true, new BasicDBObject(), false, false); // Alibi DBObject due ambiguous method call
     }
 
     /**
@@ -770,8 +825,8 @@ public class JacksonDBCollection<T, K> {
      * @return an iterator over the results
      * @throws MongoException If an error occurred
      */
-    public org.mongojack.DBCursor<T> find(T query) throws MongoException {
-        return new org.mongojack.DBCursor<T>(this, dbCollection.find(convertToBasicDbObject(query)));
+    public org.mongojack.DBCursor<T> find(DBQuery.Query query) throws MongoException {
+        return new org.mongojack.DBCursor<T>(this, dbCollection.find(serializeQuery(query)));
     }
 
     /**
@@ -813,8 +868,8 @@ public class JacksonDBCollection<T, K> {
      * @param keys  fields to return
      * @return a cursor to iterate over results
      */
-    public final org.mongojack.DBCursor<T> find(T query, T keys) {
-        return new org.mongojack.DBCursor<T>(this, dbCollection.find(convertToBasicDbObject(query), convertToBasicDbObject(keys)));
+    public final org.mongojack.DBCursor<T> find(DBQuery.Query query, DBObject keys) {
+        return new org.mongojack.DBCursor<T>(this, dbCollection.find(serializeQuery(query), keys));
     }
 
 
@@ -889,7 +944,7 @@ public class JacksonDBCollection<T, K> {
      * @return the object found, or <code>null</code> if no such object exists
      * @throws MongoException If an error occurred
      */
-    public T findOne(T query) throws MongoException {
+    public T findOne(DBQuery.Query query) throws MongoException {
         return findOne(query, null);
     }
 
@@ -911,7 +966,7 @@ public class JacksonDBCollection<T, K> {
      * @param fields an object for which every non null field will be returned
      * @return the object found, or <code>null</code> if no such object exists
      */
-    public T findOne(T query, T fields) {
+    public T findOne(DBQuery.Query query, DBObject fields) {
         return findOne(query, fields, getReadPreference());
     }
 
@@ -940,7 +995,7 @@ public class JacksonDBCollection<T, K> {
      * @param readPref The read preferences
      * @return the object found, or <code>null</code> if no such object exists
      */
-    public T findOne(T query, T fields, ReadPreference readPref) {
+    public T findOne(DBQuery.Query query, DBObject fields, ReadPreference readPref) {
         org.mongojack.DBCursor<T> cursor = find(query, fields).setReadPreference(readPref);
         if (cursor.hasNext()) {
             return cursor.next();
@@ -1094,7 +1149,7 @@ public class JacksonDBCollection<T, K> {
      * @return The count
      * @throws MongoException If an error occurred
      */
-    public long getCount(T query) throws MongoException {
+    public long getCount(DBQuery.Query query) throws MongoException {
         return getCount(query, null);
     }
 
@@ -1118,7 +1173,7 @@ public class JacksonDBCollection<T, K> {
      * @return The count
      * @throws MongoException If an error occurred
      */
-    public long getCount(T query, T fields) throws MongoException {
+    public long getCount(DBQuery.Query query, DBObject fields) throws MongoException {
         return getCount(query, fields, 0, 0);
     }
 
@@ -1148,8 +1203,8 @@ public class JacksonDBCollection<T, K> {
      * @return number of documents that match query and fields
      * @throws MongoException If an error occurred
      */
-    public long getCount(T query, T fields, long limit, long skip) throws MongoException {
-        return dbCollection.getCount(convertToBasicDbObject(query), convertToBasicDbObject(fields), limit, skip);
+    public long getCount(DBQuery.Query query, DBObject fields, long limit, long skip) throws MongoException {
+        return dbCollection.getCount(serializeQuery(query), fields, limit, skip);
     }
 
     /**
@@ -1648,8 +1703,12 @@ public class JacksonDBCollection<T, K> {
         return SerializationUtils.serializeFields(objectMapper, value);
     }
 
-    Object serializeField(Object value) {
-        return SerializationUtils.serializeField(objectMapper, value);
+    DBObject serializeQuery(DBQuery.Query query) {
+        return SerializationUtils.serializeQuery(objectMapper, type, query);
+    }
+
+    Object serializeQueryCondition(String key, QueryCondition condition) {
+        return SerializationUtils.serializeQueryCondition(objectMapper, type, key, condition);
     }
 
     ObjectMapper getObjectMapper() {
