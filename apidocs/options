@@ -15,10 +15,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'MongoJack 2.0.0-RC4 API'
+'MongoJack 2.0.0-RC5 API'
 -linkoffline
 'http://download.oracle.com/javase/6/docs/api' '/Users/jroper/src/mongo-jackson-mapper/target/checkout/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'MongoJack 2.0.0-RC4 API'
+'MongoJack 2.0.0-RC5 API'

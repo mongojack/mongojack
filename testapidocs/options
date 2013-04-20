@@ -15,7 +15,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'MongoJack 2.0.0-RC4 Test API'
+'MongoJack 2.0.0-RC5 Test API'
 -link
 '../apidocs'
 -linkoffline
@@ -23,4 +23,4 @@
 -use
 -version
 -windowtitle
-'MongoJack 2.0.0-RC4 Test API'
+'MongoJack 2.0.0-RC5 Test API'
