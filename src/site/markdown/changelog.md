@@ -6,6 +6,8 @@ Changelog
 
 * Proper update and query serialization support.
 * Renamed to MongoJack.
+* Added a DBSort helper utility.
+* Added a DBProjection helper utility.
 
 1.4.2
 -----

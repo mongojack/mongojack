@@ -46,6 +46,15 @@ import java.util.regex.Pattern;
 public class DBQuery {
 
     /**
+     * Create an empty query
+     *
+     * @return The empty query
+     */
+    public static Query empty() {
+        return new Query();
+    }
+
+    /**
      * The field is equal to the given value
      *
      * @param field The field to compare
