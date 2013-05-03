@@ -44,6 +44,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated classes.  It provides a very thin wrapper
  * over an existing DBCollection.
  *
+ * A JacksonDBCollection is threadsafe, with a few caveats:
+ *
+ *   If you pass your own ObjectMapper to it, it is not thread safe to reconfigure that ObjectMapper at all after creating it.
+ *   The setWritePreference and a few other methods on JacksonDBCollection should not be called from multiple threads
+ *
  * @author James Roper
  * @since 1.0
  */
