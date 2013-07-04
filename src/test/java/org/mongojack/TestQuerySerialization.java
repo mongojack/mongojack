@@ -63,6 +63,18 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertThat(coll.find().and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 4)).toArray(), hasSize(1));
         assertThat(coll.find().and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 9)).toArray(), hasSize(0));
     }
+    
+    @Test
+    public void testAll() {
+        MockObject o = new MockObject();
+        MockObject o1 = new MockObject();
+        o1.id = new org.bson.types.ObjectId().toString();
+        o.items = Arrays.asList(o1);
+        coll.save(o);
+        
+        // Ensure that the serializer actually worked
+        assertThat(coll.find().all("items", o1).toArray(), hasSize(1));
+    }
 
     @Test
     public void testList() {
