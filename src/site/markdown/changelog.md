@@ -1,6 +1,10 @@
 Changelog
 =========
 
+unversioned
+-----------
+* updated mongo-java-driver, jackson-databind, bson4jackson and junit to newer versions (by benmccann) 
+
 2.0.0
 -----
 
