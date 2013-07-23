@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * An iterator over database results.
+ * This class is not threadsafe and is intended to be used from a single thread or synchronized.
  * Doing a <code>find()</code> query on a collection returns a
  * <code>DBCursor</code> thus
  * <p/>
