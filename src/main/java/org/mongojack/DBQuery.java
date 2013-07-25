@@ -426,7 +426,7 @@ public class DBQuery {
          * @return the query
          */
         public Q all(String field, Collection<?> values) {
-            return put(field, QueryOperators.ALL, values);
+            return put(field, QueryOperators.ALL, new SimpleQueryCondition(values));
         }
 
         /**
@@ -437,7 +437,7 @@ public class DBQuery {
          * @return the query
          */
         public Q all(String field, Object... values) {
-            return put(field, QueryOperators.ALL, Arrays.asList(values));
+            return all (field, Arrays.asList(values));
         }
 
         /**
