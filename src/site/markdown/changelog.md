@@ -4,6 +4,9 @@ Changelog
 unversioned
 -----------
 * updated mongo-java-driver, jackson-databind, bson4jackson and junit to newer versions (by benmccann) 
+* Fixed bug in query serialization for DBQuery.all (by saadmufti)
+* Added some notes about thread-safety (by benmccann)
+* Updated pom.xml to build osgi bundle (by m-bs-jmeyer)
 
 2.0.0
 -----
