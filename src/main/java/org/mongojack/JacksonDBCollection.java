@@ -603,6 +603,38 @@ public class JacksonDBCollection<T, K> {
      * @param upsert    do upsert (insert if document not present)
      * @return the object
      */
+    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, T update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, convertToBasicDbObject(update), returnNew, upsert));
+    }
+
+    /**
+     * Finds the first document in the query and updates it.
+     *
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param remove    if true, document found will be removed
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
+     * @return the object
+     */
+    public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort, boolean remove, T update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(serializeQuery(query), fields, sort, remove, convertToBasicDbObject(update), returnNew, upsert));
+    }
+
+    /**
+     * Finds the first document in the query and updates it.
+     *
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param remove    if true, document found will be removed
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
+     * @return the object
+     */
     public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort, boolean remove, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
         return convertFromDbObject(dbCollection.findAndModify(serializeQuery(query), fields, sort, remove, update.serialiseAndGet(objectMapper, type), returnNew, upsert));
     }
