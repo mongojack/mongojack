@@ -127,7 +127,7 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         assertThat(result2.string, equalTo("thirty"));
 
         coll.removeById("id1");
-       	coll.removeById("id2");
+        coll.removeById("id2");
     }
 
 }
