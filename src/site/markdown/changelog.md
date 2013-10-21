@@ -3,6 +3,7 @@ Changelog
 
 unversioned
 -----------
+* upgrade mongo-java-driver to 2.11.3 and jackson to 2.2.3 (by benmccann)
 * adding parameterized findAndModify (by truthspirit)
 * updated mongo-java-driver, jackson-databind, bson4jackson and junit to newer versions (by benmccann) 
 * Fixed bug in query serialization for DBQuery.all (by saadmufti)
