@@ -140,7 +140,8 @@ public class SerializationUtils {
                 return simple.getValue();
             } else {
                 if (!key.startsWith("$")) {
-                    serializer = findQuerySerializer(false, key, serializerProvider, serializer);
+                    //serializer = findQuerySerializer(false, key, serializerProvider, serializer);
+                	serializer = null;
                 }
                 return serializeQueryField(simple.getValue(), serializer, serializerProvider, key);
             }
