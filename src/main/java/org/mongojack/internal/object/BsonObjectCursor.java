@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,28 +16,28 @@
  */
 package org.mongojack.internal.object;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.core.JsonToken;
-import com.mongodb.DBRef;
-import org.bson.BSONObject;
-import org.bson.types.ObjectId;
-
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.bson.BSONObject;
+import org.bson.types.ObjectId;
+
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
+import com.mongodb.DBRef;
+
 /**
  * Helper class for MongoDbObjectJsonParser
- *
+ * 
  * @author James Roper
  * @since 1.0
  */
 abstract class BsonObjectCursor extends JsonStreamContext {
     /**
-     * Parent cursor of this cursor, if any; null for root
-     * cursors.
+     * Parent cursor of this cursor, if any; null for root cursors.
      */
     private final BsonObjectCursor parent;
 
@@ -73,21 +74,25 @@ abstract class BsonObjectCursor extends JsonStreamContext {
     }
 
     /**
-     * Method called to create a new context for iterating all
-     * contents of the currentFieldName structured value (JSON array or object)
-     *
+     * Method called to create a new context for iterating all contents of the
+     * currentFieldName structured value (JSON array or object)
+     * 
      * @return A cursor for the children
      */
     public final BsonObjectCursor iterateChildren() {
         Object n = currentNode();
-        if (n == null) throw new IllegalStateException("No current node");
-        if (n instanceof Iterable) { // false since we have already returned START_ARRAY
+        if (n == null) {
+            throw new IllegalStateException("No current node");
+        }
+        if (n instanceof Iterable) { // false since we have already returned
+                                     // START_ARRAY
             return new ArrayCursor((Iterable) n, this);
         }
         if (n instanceof BSONObject) {
             return new ObjectCursor((BSONObject) n, this);
         }
-        throw new IllegalStateException("Current node of type " + n.getClass().getName());
+        throw new IllegalStateException("Current node of type "
+                + n.getClass().getName());
     }
 
     /**
@@ -132,8 +137,7 @@ abstract class BsonObjectCursor extends JsonStreamContext {
     /**
      * Cursor used for traversing non-empty JSON Object nodes
      */
-    protected final static class ObjectCursor
-            extends BsonObjectCursor {
+    protected final static class ObjectCursor extends BsonObjectCursor {
         Iterator<String> fields;
         BSONObject object;
         String currentFieldName;
@@ -143,7 +147,7 @@ abstract class BsonObjectCursor extends JsonStreamContext {
         public ObjectCursor(BSONObject object, BsonObjectCursor p) {
             super(JsonStreamContext.TYPE_OBJECT, p);
             this.object = object;
-            this.fields = object.keySet().iterator();
+            fields = object.keySet().iterator();
             needField = true;
         }
 
@@ -175,7 +179,8 @@ abstract class BsonObjectCursor extends JsonStreamContext {
 
         @Override
         public Object currentNode() {
-            return (currentFieldName == null) ? null : object.get(currentFieldName);
+            return (currentFieldName == null) ? null : object
+                    .get(currentFieldName);
         }
 
     }
@@ -188,7 +193,8 @@ abstract class BsonObjectCursor extends JsonStreamContext {
         } else if (o instanceof BSONObject) {
             return JsonToken.START_OBJECT;
         } else if (o instanceof Number) {
-            if (o instanceof Double || o instanceof Float || o instanceof BigDecimal) {
+            if (o instanceof Double || o instanceof Float
+                    || o instanceof BigDecimal) {
                 return JsonToken.VALUE_NUMBER_FLOAT;
             } else {
                 return JsonToken.VALUE_NUMBER_INT;
@@ -210,7 +216,8 @@ abstract class BsonObjectCursor extends JsonStreamContext {
         } else if (o instanceof byte[]) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else {
-            throw new IllegalStateException("Don't know how to parse type: " + o.getClass());
+            throw new IllegalStateException("Don't know how to parse type: "
+                    + o.getClass());
         }
     }
 }

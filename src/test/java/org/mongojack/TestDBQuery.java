@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +16,18 @@
  */
 package org.mongojack;
 
-import com.mongodb.MongoException;
-import org.mongojack.mock.MockEmbeddedObject;
-import org.mongojack.mock.MockObject;
-import org.junit.Before;
-import org.junit.Test;
-import org.mongojack.DBCursor;
-import org.mongojack.DBQuery;
-import org.mongojack.JacksonDBCollection;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
+import org.junit.Before;
+import org.junit.Test;
+import org.mongojack.mock.MockEmbeddedObject;
+import org.mongojack.mock.MockObject;
+
+import com.mongodb.MongoException;
 
 public class TestDBQuery extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
@@ -71,7 +70,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testGreaterThanEqPositive() throws Exception {
         MockObject mockObject = insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().greaterThanEquals("integer", 10);
+        DBCursor<MockObject> cursor = coll.find().greaterThanEquals("integer",
+                10);
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -79,7 +79,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testGreaterThanEqNegative() throws Exception {
         insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().greaterThanEquals("integer", 11);
+        DBCursor<MockObject> cursor = coll.find().greaterThanEquals("integer",
+                11);
         assertThat(cursor.hasNext(), equalTo(false));
     }
 
@@ -139,7 +140,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testInCollectionPositive() throws Exception {
         MockObject mockObject = insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().in("integer", Arrays.asList(9, 10, 11));
+        DBCursor<MockObject> cursor = coll.find().in("integer",
+                Arrays.asList(9, 10, 11));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -214,7 +216,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testRegexPositive() throws Exception {
         MockObject mockObject = insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().regex("string", Pattern.compile("h.llo"));
+        DBCursor<MockObject> cursor = coll.find().regex("string",
+                Pattern.compile("h.llo"));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -222,14 +225,16 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testRegexNegative() throws Exception {
         insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().regex("string", Pattern.compile("hllo"));
+        DBCursor<MockObject> cursor = coll.find().regex("string",
+                Pattern.compile("hllo"));
         assertThat(cursor.hasNext(), equalTo(false));
     }
 
     @Test
     public void testOrPositive() throws Exception {
         MockObject mockObject = insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().or(DBQuery.is("integer", 9), DBQuery.greaterThan("integer", 9),
+        DBCursor<MockObject> cursor = coll.find().or(DBQuery.is("integer", 9),
+                DBQuery.greaterThan("integer", 9),
                 DBQuery.lessThan("integer", 9));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
@@ -238,14 +243,17 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testOrNegative() throws Exception {
         insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().or(DBQuery.is("integer", 9), DBQuery.lessThan("integer", 9));
+        DBCursor<MockObject> cursor = coll.find().or(DBQuery.is("integer", 9),
+                DBQuery.lessThan("integer", 9));
         assertThat(cursor.hasNext(), equalTo(false));
     }
 
     @Test
     public void testAndPositive() throws Exception {
         MockObject mockObject = insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().and(DBQuery.greaterThan("integer", 9), DBQuery.lessThan("integer", 11));
+        DBCursor<MockObject> cursor = coll.find().and(
+                DBQuery.greaterThan("integer", 9),
+                DBQuery.lessThan("integer", 11));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -253,15 +261,18 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testAndNegative() throws Exception {
         insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().and(DBQuery.greaterThan("integer", 9), DBQuery.is("string", "blah"),
-                DBQuery.lessThan("integer", 11));
+        DBCursor<MockObject> cursor = coll.find().and(
+                DBQuery.greaterThan("integer", 9),
+                DBQuery.is("string", "blah"), DBQuery.lessThan("integer", 11));
         assertThat(cursor.hasNext(), equalTo(false));
     }
 
     @Test
     public void testNorPositive() throws Exception {
         MockObject mockObject = insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().nor(DBQuery.lessThan("integer", 9), DBQuery.greaterThan("integer", 11));
+        DBCursor<MockObject> cursor = coll.find().nor(
+                DBQuery.lessThan("integer", 9),
+                DBQuery.greaterThan("integer", 11));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -269,7 +280,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testNorNegative() throws Exception {
         insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().and(DBQuery.lessThan("integer", 9), DBQuery.is("string", "hello"),
+        DBCursor<MockObject> cursor = coll.find().and(
+                DBQuery.lessThan("integer", 9), DBQuery.is("string", "hello"),
                 DBQuery.greaterThan("integer", 11));
         assertThat(cursor.hasNext(), equalTo(false));
     }
@@ -300,7 +312,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testAllNegative() throws Exception {
         insertMockObject();
-        DBCursor<MockObject> cursor = coll.find().all("simpleList", "a", "banana", "b");
+        DBCursor<MockObject> cursor = coll.find().all("simpleList", "a",
+                "banana", "b");
         assertThat(cursor.hasNext(), equalTo(false));
     }
 
@@ -339,7 +352,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testSerializationFromDBCursor() throws Exception {
         MockObject mockObject = insertMockObjectWithEmbedded();
-        DBCursor<MockObject> cursor = coll.find().is("object", mockObject.object);
+        DBCursor<MockObject> cursor = coll.find().is("object",
+                mockObject.object);
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -347,7 +361,8 @@ public class TestDBQuery extends MongoDBTestBase {
     @Test
     public void testSerializationFromInFind() throws Exception {
         MockObject mockObject = insertMockObjectWithEmbedded();
-        DBCursor<MockObject> cursor = coll.find(DBQuery.in("object", mockObject.object));
+        DBCursor<MockObject> cursor = coll.find(DBQuery.in("object",
+                mockObject.object));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(mockObject));
     }
@@ -385,7 +400,8 @@ public class TestDBQuery extends MongoDBTestBase {
         MockEmbeddedObject embeddedObject2 = new MockEmbeddedObject();
         embeddedObject2.value = "bar";
         embeddedObject2.list = Arrays.asList("d", "e");
-        mockObject.complexList = Arrays.asList(embeddedObject1, embeddedObject2);
+        mockObject.complexList = Arrays
+                .asList(embeddedObject1, embeddedObject2);
         coll.insert(mockObject);
         return mockObject;
     }

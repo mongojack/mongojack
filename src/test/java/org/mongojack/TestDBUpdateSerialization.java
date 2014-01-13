@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,21 +16,25 @@
  */
 package org.mongojack;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.assertThat;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.*;
-
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
 
 public class TestDBUpdateSerialization extends MongoDBTestBase {
 
@@ -60,8 +65,10 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     @Ignore("Ignored until JACKSON-829 is fixed")
     public void testListSetCustomSerializer() {
         coll.save(new MockObject());
-        coll.updateById("id", DBUpdate.set("list", Arrays.asList("some", "foo")));
-        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("some", "bar")));
+        coll.updateById("id",
+                DBUpdate.set("list", Arrays.asList("some", "foo")));
+        assertThat(coll.findOneById("id").list,
+                equalTo(Arrays.asList("some", "bar")));
     }
 
     @Test
@@ -77,7 +84,8 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     public void testListMultiValueCustomSerializer() {
         coll.save(new MockObject());
         coll.updateById("id", DBUpdate.pushAll("list", "some", "foo"));
-        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("some", "bar")));
+        assertThat(coll.findOneById("id").list,
+                equalTo(Arrays.asList("some", "bar")));
     }
 
     @Test
@@ -98,9 +106,12 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         c2.simple = "two";
         o.childList = Arrays.asList(c1, c2);
         coll.save(o);
-        coll.update(DBQuery.is("childList.simple", "one"), DBUpdate.set("childList.$.simple", "foo"));
-        assertThat(coll.findOneById("id").childList.get(0).simple, equalTo("bar"));
-        assertThat(coll.findOneById("id").childList.get(1).simple, equalTo("two"));
+        coll.update(DBQuery.is("childList.simple", "one"),
+                DBUpdate.set("childList.$.simple", "foo"));
+        assertThat(coll.findOneById("id").childList.get(0).simple,
+                equalTo("bar"));
+        assertThat(coll.findOneById("id").childList.get(1).simple,
+                equalTo("two"));
     }
 
     @Test
@@ -161,7 +172,9 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
 
     public static class FooToBarSerializer extends JsonSerializer<String> {
         @Override
-        public void serialize(String value, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonProcessingException {
+        public void serialize(String value, JsonGenerator jgen,
+                SerializerProvider provider) throws IOException,
+                JsonProcessingException {
             if ("foo".equals(value)) {
                 jgen.writeString("bar");
             } else {

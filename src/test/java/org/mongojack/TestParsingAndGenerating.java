@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,19 +28,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 import org.mongojack.mock.MockEmbeddedObject;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectIntId;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
-import org.mongojack.DBCursor;
-import org.mongojack.JacksonDBCollection;
 
 /**
  * Test for parser and generator
@@ -243,7 +241,8 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         MockObjectIntId object = new MockObjectIntId();
         object._id = 123456;
 
-        JacksonDBCollection<MockObjectIntId, Integer> coll = getCollectionAs(MockObjectIntId.class, Integer.class);
+        JacksonDBCollection<MockObjectIntId, Integer> coll = getCollectionAs(
+                MockObjectIntId.class, Integer.class);
 
         coll.insert(object);
         MockObjectIntId result = coll.findOne();
@@ -252,10 +251,10 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
 
     @Test(expected = MongoException.class)
     public void testParseErrors() {
-        DBCursor<MockObject> cursor = coll.find(new BasicDBObject("integer", new BasicDBObject("$thisisinvalid", "true")));
+        DBCursor<MockObject> cursor = coll.find(new BasicDBObject("integer",
+                new BasicDBObject("$thisisinvalid", "true")));
         cursor.hasNext();
     }
-
 
     @Test
     public void testByteArray() throws Exception {
@@ -263,7 +262,8 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object._id = "id";
         object.bytes = new byte[] {1, 2, 3, 4, 5};
 
-        JacksonDBCollection<ObjectWithByteArray, String> coll = getCollectionAs(ObjectWithByteArray.class, String.class);
+        JacksonDBCollection<ObjectWithByteArray, String> coll = getCollectionAs(
+                ObjectWithByteArray.class, String.class);
         coll.insert(object);
 
         ObjectWithByteArray result = coll.findOne();
@@ -279,7 +279,8 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         public byte[] bytes;
     }
 
-    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type, Class<K> keyType) {
+    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type,
+            Class<K> keyType) {
         return getCollection(type, keyType, coll.getName());
     }
 }

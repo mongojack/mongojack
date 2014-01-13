@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,45 +16,55 @@
  */
 package org.mongojack;
 
-import com.mongodb.*;
-import org.mongojack.internal.query.CollectionQueryCondition;
-import org.mongojack.internal.query.CompoundQueryCondition;
-import org.mongojack.internal.query.QueryCondition;
-import org.mongojack.internal.util.SerializationUtils;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.mongojack.internal.query.QueryCondition;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBDecoderFactory;
+import com.mongodb.DBObject;
+import com.mongodb.MongoException;
+import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
+
 /**
- * An iterator over database results.
- * This class is not threadsafe and is intended to be used from a single thread or synchronized.
- * Doing a <code>find()</code> query on a collection returns a
+ * An iterator over database results. This class is not threadsafe and is
+ * intended to be used from a single thread or synchronized. Doing a <code>find()</code> query on a collection returns a
  * <code>DBCursor</code> thus
  * <p/>
- * <blockquote><pre>
+ * <blockquote>
+ * 
+ * <pre>
  * DBCursor cursor = collection.find( query );
  * if( cursor.hasNext() )
  *     T obj = cursor.next();
- * </pre></blockquote>
+ * </pre>
+ * 
+ * </blockquote>
  * <p/>
- * <p><b>Warning:</b> Calling <code>toArray</code> or <code>length</code> on
- * a DBCursor will irrevocably turn it into an array.  This
- * means that, if the cursor was iterating over ten million results
- * (which it was lazily fetching from the database), suddenly there will
- * be a ten-million element array in memory.  Before converting to an array,
- * make sure that there are a reasonable number of results using
- * <code>skip()</code> and <code>limit()</code>.
- * <p>For example, to get an array of the 1000-1100th elements of a cursor, use
+ * <p>
+ * <b>Warning:</b> Calling <code>toArray</code> or <code>length</code> on a DBCursor will irrevocably turn it into an
+ * array. This means that, if the cursor was iterating over ten million results (which it was lazily fetching from the
+ * database), suddenly there will be a ten-million element array in memory. Before converting to an array, make sure
+ * that there are a reasonable number of results using <code>skip()</code> and <code>limit()</code>.
+ * <p>
+ * For example, to get an array of the 1000-1100th elements of a cursor, use
  * <p/>
- * <blockquote><pre>
- * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
- * </pre></blockquote>
- *
+ * <blockquote>
+ * 
+ * <pre>
+ * List&lt;DBObject&gt; obj = collection.find(query).skip(1000).limit(100).toArray();
+ * </pre>
+ * 
+ * </blockquote>
+ * 
  * @author James Roper
  * @since 1.0
  */
-public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements Iterator<T>, Iterable<T> {
+public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
+        Iterator<T>, Iterable<T> {
     private final com.mongodb.DBCursor cursor;
     private final JacksonDBCollection<T, ?> jacksonDBCollection;
 
@@ -64,19 +75,21 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     // Flag to indicate that the query has been executed
     private boolean executed;
 
-    public DBCursor(JacksonDBCollection<T, ?> jacksonDBCollection, com.mongodb.DBCursor cursor) {
+    public DBCursor(JacksonDBCollection<T, ?> jacksonDBCollection,
+            com.mongodb.DBCursor cursor) {
         this.jacksonDBCollection = jacksonDBCollection;
         this.cursor = cursor;
-        if (jacksonDBCollection.isEnabled(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION)) {
-            this.cursor.setDecoderFactory(jacksonDBCollection.getDecoderFactory());
+        if (jacksonDBCollection
+                .isEnabled(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION)) {
+            this.cursor.setDecoderFactory(jacksonDBCollection
+                    .getDecoderFactory());
         }
     }
 
     /**
-     * Creates a copy of an existing database cursor.
-     * The new cursor is an iterator, even if the original
-     * was an array.
-     *
+     * Creates a copy of an existing database cursor. The new cursor is an
+     * iterator, even if the original was an array.
+     * 
      * @return the new cursor
      */
     public DBCursor<T> copy() {
@@ -84,13 +97,13 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * creates a copy of this cursor object that can be iterated.
-     * Note:
-     * - you can iterate the DBCursor itself without calling this method
-     * - no actual data is getting copied.
-     *
+     * creates a copy of this cursor object that can be iterated. Note: - you
+     * can iterate the DBCursor itself without calling this method - no actual
+     * data is getting copied.
+     * 
      * @return The iterator
      */
+    @Override
     public Iterator<T> iterator() {
         return this.copy();
     }
@@ -98,10 +111,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     // ---- query modifiers --------
 
     /**
-     * Sorts this cursor'string elements.
-     * This method must be called before getting any object from the cursor.
-     *
-     * @param orderBy the fields by which to sort
+     * Sorts this cursor'string elements. This method must be called before
+     * getting any object from the cursor.
+     * 
+     * @param orderBy
+     *            the fields by which to sort
      * @return a cursor pointing to the first element of the sorted results
      */
     public DBCursor<T> sort(DBObject orderBy) {
@@ -110,12 +124,13 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * adds a special operator like $maxScan or $returnKey
-     * e.g. addSpecial( "$returnKey" , 1 )
-     * e.g. addSpecial( "$maxScan" , 100 )
-     *
-     * @param name The name
-     * @param o    The object
+     * adds a special operator like $maxScan or $returnKey e.g. addSpecial(
+     * "$returnKey" , 1 ) e.g. addSpecial( "$maxScan" , 100 )
+     * 
+     * @param name
+     *            The name
+     * @param o
+     *            The object
      * @return This object
      */
     public DBCursor<T> addSpecial(String name, Object o) {
@@ -124,9 +139,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Informs the database of indexed fields of the collection in order to improve performance.
-     *
-     * @param indexKeys a <code>DBObject</code> with fields and direction
+     * Informs the database of indexed fields of the collection in order to
+     * improve performance.
+     * 
+     * @param indexKeys
+     *            a <code>DBObject</code> with fields and direction
      * @return same DBCursor for chaining operations
      */
     public DBCursor<T> hint(DBObject indexKeys) {
@@ -135,9 +152,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Informs the database of an indexed field of the collection in order to improve performance.
-     *
-     * @param indexName the name of an index
+     * Informs the database of an indexed field of the collection in order to
+     * improve performance.
+     * 
+     * @param indexName
+     *            the name of an index
      * @return same JacksonDBCursor<T>t for chaining operations
      */
     public DBCursor<T> hint(String indexName) {
@@ -148,11 +167,12 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     /**
      * Use snapshot mode for the query. Snapshot mode assures no duplicates are
      * returned, or objects missed, which were present at both the start and end
-     * of the query'string execution (if an object is new during the query, or deleted
-     * during the query, it may or may not be returned, even with snapshot mode).
-     * Note that short query responses (less than 1MB) are always effectively snapshotted.
-     * Currently, snapshot mode may not be used with sorting or explicit hints.
-     *
+     * of the query'string execution (if an object is new during the query, or
+     * deleted during the query, it may or may not be returned, even with
+     * snapshot mode). Note that short query responses (less than 1MB) are
+     * always effectively snapshotted. Currently, snapshot mode may not be used
+     * with sorting or explicit hints.
+     * 
      * @return same JacksonDBCursor<T> for chaining operations
      */
     public DBCursor<T> snapshot() {
@@ -161,14 +181,13 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Returns an object containing basic information about the
-     * execution of the query that created this cursor
-     * This creates a <code>DBObject</code> with the key/value pairs:
-     * "cursor" : cursor type
-     * "nScanned" : number of records examined by the database for this query
-     * "n" : the number of records that the database returned
-     * "millis" : how long it took the database to execute the query
-     *
+     * Returns an object containing basic information about the execution of the
+     * query that created this cursor This creates a <code>DBObject</code> with
+     * the key/value pairs: "cursor" : cursor type "nScanned" : number of
+     * records examined by the database for this query "n" : the number of
+     * records that the database returned "millis" : how long it took the
+     * database to execute the query
+     * 
      * @return a <code>DBObject</code>
      */
     public DBObject explain() {
@@ -176,11 +195,12 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Limits the number of elements returned.
-     * Note: parameter <tt>n</tt> should be positive, although a negative value is supported for legacy reason.
+     * Limits the number of elements returned. Note: parameter <tt>n</tt> should
+     * be positive, although a negative value is supported for legacy reason.
      * Passing a negative value will call {@link DBCursor <T>#batchSize(int)} which is the preferred method.
-     *
-     * @param n the number of elements to return
+     * 
+     * @param n
+     *            the number of elements to return
      * @return a cursor to iterate the results
      */
     public DBCursor<T> limit(int n) {
@@ -189,19 +209,23 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Limits the number of elements returned in one batch.
-     * A cursor typically fetches a batch of result objects and store them locally.
+     * Limits the number of elements returned in one batch. A cursor typically
+     * fetches a batch of result objects and store them locally.
      * <p/>
-     * If <tt>batchSize</tt> is positive, it represents the size of each batch of objects retrieved.
-     * It can be adjusted to optimize performance and limit data transfer.
+     * If <tt>batchSize</tt> is positive, it represents the size of each batch of objects retrieved. It can be adjusted
+     * to optimize performance and limit data transfer.
      * <p/>
-     * If <tt>batchSize</tt> is negative, it will limit of number objects returned, that fit within the max batch size limit (usually 4MB), and cursor will be closed.
-     * For example if <tt>batchSize</tt> is -10, then the server will return a maximum of 10 documents and as many as can fit in 4MB, then close the cursor.
-     * Note that this feature is different from limit() in that documents must fit within a maximum size, and it removes the need to send a request to close the cursor server-side.
+     * If <tt>batchSize</tt> is negative, it will limit of number objects returned, that fit within the max batch size
+     * limit (usually 4MB), and cursor will be closed. For example if <tt>batchSize</tt> is -10, then the server will
+     * return a maximum of 10 documents and as many as can fit in 4MB, then close the cursor. Note that this feature is
+     * different from limit() in that documents must fit within a maximum size, and it removes the need to send a
+     * request to close the cursor server-side.
      * <p/>
-     * The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next batch retrieval.
-     *
-     * @param n the number of elements to return in a batch
+     * The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next
+     * batch retrieval.
+     * 
+     * @param n
+     *            the number of elements to return in a batch
      * @return This object
      */
     public DBCursor<T> batchSize(int n) {
@@ -211,10 +235,12 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Discards a given number of elements at the beginning of the cursor.
-     *
-     * @param n the number of elements to skip
+     * 
+     * @param n
+     *            the number of elements to skip
      * @return a cursor pointing to the new first element of the results
-     * @throws RuntimeException if the cursor has started to be iterated through
+     * @throws RuntimeException
+     *             if the cursor has started to be iterated through
      */
     public DBCursor<T> skip(int n) {
         cursor.skip(n);
@@ -223,7 +249,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * gets the cursor id.
-     *
+     * 
      * @return the cursor id, or 0 if there is no active cursor.
      */
     public long getCursorId() {
@@ -239,8 +265,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * adds a query option - see Bytes.QUERYOPTION_* for simpleList
-     *
-     * @param option The option
+     * 
+     * @param option
+     *            The option
      * @return This object
      */
     public DBCursor<T> addOption(int option) {
@@ -250,8 +277,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * sets the query option - see Bytes.QUERYOPTION_* for simpleList
-     *
-     * @param options The options
+     * 
+     * @param options
+     *            The options
      * @return This object
      */
     public DBCursor<T> setOptions(int options) {
@@ -261,7 +289,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * resets the query options
-     *
+     * 
      * @return This object
      */
     public DBCursor<T> resetOptions() {
@@ -271,7 +299,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * gets the query options
-     *
+     * 
      * @return The options
      */
     public int getOptions() {
@@ -279,8 +307,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * gets the number of times, so far, that the cursor retrieved a batch from the database
-     *
+     * gets the number of times, so far, that the cursor retrieved a batch from
+     * the database
+     * 
      * @return The number of get mores
      */
     public int numGetMores() {
@@ -289,7 +318,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * gets a simpleList containing the number of items received in each batch
-     *
+     * 
      * @return The sizes of each batch
      */
     public List<Integer> getSizes() {
@@ -298,7 +327,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Returns the number of objects through which the cursor has iterated.
-     *
+     * 
      * @return the number of objects seen
      */
     public int numSeen() {
@@ -309,10 +338,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Checks if there is another object available
-     *
+     * 
      * @return true if there is another object available
      * @throws MongoException
      */
+    @Override
     public boolean hasNext() throws MongoException {
         executed();
         return cursor.hasNext();
@@ -320,10 +350,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
-     *
+     * 
      * @return the next element
      * @throws MongoException
      */
+    @Override
     public T next() throws MongoException {
         executed();
         current = jacksonDBCollection.convertFromDbObject(cursor.next());
@@ -332,7 +363,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Returns the element the cursor is at.
-     *
+     * 
      * @return the next element
      */
     public T curr() {
@@ -344,6 +375,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     /**
      * Not implemented.
      */
+    @Override
     public void remove() {
         cursor.remove();
     }
@@ -351,9 +383,10 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     /**
      * pulls back all items into an array and returns the number of objects.
      * Note: this can be resource intensive
-     *
+     * 
      * @return the number of elements in the array
-     * @throws MongoException Ig as error occurred
+     * @throws MongoException
+     *             Ig as error occurred
      * @see #count()
      * @see #size()
      */
@@ -364,9 +397,10 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Converts this cursor to an array.
-     *
+     * 
      * @return an array of elements
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public List<T> toArray() throws MongoException {
         executed();
@@ -375,10 +409,12 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Converts this cursor to an array.
-     *
-     * @param max the maximum number of objects to return
+     * 
+     * @param max
+     *            the maximum number of objects to return
      * @return an array of objects
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public List<T> toArray(int max) throws MongoException {
         executed();
@@ -392,9 +428,8 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * for testing only!
-     * Iterates cursor and counts objects
-     *
+     * for testing only! Iterates cursor and counts objects
+     * 
      * @return num objects
      * @see #count()
      */
@@ -404,9 +439,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Counts the number of objects matching the query
-     * This does not take limit/skip into consideration
-     *
+     * Counts the number of objects matching the query This does not take
+     * limit/skip into consideration
+     * 
      * @return the number of objects
      * @throws MongoException
      * @see #size()
@@ -417,9 +452,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Counts the number of objects matching the query
-     * this does take limit/skip into consideration
-     *
+     * Counts the number of objects matching the query this does take limit/skip
+     * into consideration
+     * 
      * @return the number of objects
      * @throws MongoException
      * @see #count()
@@ -429,10 +464,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
         return cursor.size();
     }
 
-
     /**
      * gets the fields to be returned
-     *
+     * 
      * @return The keys wanted
      */
     public DBObject getKeysWanted() {
@@ -441,7 +475,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * gets the query
-     *
+     * 
      * @return The query
      */
     public DBObject getQuery() {
@@ -450,7 +484,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * gets the collection
-     *
+     * 
      * @return The collection
      */
     public JacksonDBCollection getCollection() {
@@ -458,10 +492,10 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Gets the Server Address of the server that data is pulled from.
-     * Note that this information is not available if no data has been retrieved yet.
+     * Gets the Server Address of the server that data is pulled from. Note that
+     * this information is not available if no data has been retrieved yet.
      * Availability is specific to underlying implementation and may vary.
-     *
+     * 
      * @return The server address
      */
     public ServerAddress getServerAddress() {
@@ -469,11 +503,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Sets the read preference for this cursor.
-     * See the * documentation for {@link ReadPreference}
-     * for more information.
-     *
-     * @param preference Read Preference to use
+     * Sets the read preference for this cursor. See the * documentation for {@link ReadPreference} for more
+     * information.
+     * 
+     * @param preference
+     *            Read Preference to use
      * @return This object
      */
     public DBCursor<T> setReadPreference(ReadPreference preference) {
@@ -483,7 +517,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     /**
      * Gets the default read preference
-     *
+     * 
      * @return The read preference
      */
     public ReadPreference getReadPreference() {
@@ -500,10 +534,11 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * Get the underlying MongoDB cursor.  Note, if this is an iterator cursor, calling next() on the underlying cursor
-     * will cause this iterator to also progress forward, however, curr() will still return the last object that was
-     * loaded by this cursor, not the underlying cursor.
-     *
+     * Get the underlying MongoDB cursor. Note, if this is an iterator cursor,
+     * calling next() on the underlying cursor will cause this iterator to also
+     * progress forward, however, curr() will still return the last object that
+     * was loaded by this cursor, not the underlying cursor.
+     * 
      * @return The underlying MongoDB cursor
      */
     public com.mongodb.DBCursor getCursor() {
@@ -516,16 +551,20 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
 
     private void checkExecuted() {
         if (executed) {
-            throw new MongoException("Cannot modify query after it's been executed");
+            throw new MongoException(
+                    "Cannot modify query after it's been executed");
         }
     }
 
+    @Override
     protected DBCursor<T> put(String op, QueryCondition value) {
         checkExecuted();
-        cursor.getQuery().put(op, jacksonDBCollection.serializeQueryCondition(op, value));
+        cursor.getQuery().put(op,
+                jacksonDBCollection.serializeQueryCondition(op, value));
         return this;
     }
 
+    @Override
     protected DBCursor<T> put(String field, String op, QueryCondition value) {
         checkExecuted();
         DBObject subQuery;
@@ -536,10 +575,12 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
         } else {
             subQuery = (DBObject) saved;
         }
-        subQuery.put(op, jacksonDBCollection.serializeQueryCondition(field, value));
+        subQuery.put(op,
+                jacksonDBCollection.serializeQueryCondition(field, value));
         return this;
     }
 
+    @Override
     protected DBCursor<T> putGroup(String op, DBQuery.Query... expressions) {
         checkExecuted();
         List<DBObject> conditions = new ArrayList<DBObject>();

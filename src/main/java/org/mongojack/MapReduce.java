@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +16,10 @@
  */
 package org.mongojack;
 
+import java.util.Map;
+
 import com.mongodb.DBObject;
 import com.mongodb.ReadPreference;
-
-import java.util.Map;
 
 /**
  * Map reduce command builder
@@ -32,12 +33,14 @@ public class MapReduce {
         REPLACE(com.mongodb.MapReduceCommand.OutputType.REPLACE),
 
         /**
-         * Merge the job output with the existing contents of outputTarget collection
+         * Merge the job output with the existing contents of outputTarget
+         * collection
          */
         MERGE(com.mongodb.MapReduceCommand.OutputType.MERGE),
 
         /**
-         * Reduce the job output with the existing contents of outputTarget collection
+         * Reduce the job output with the existing contents of outputTarget
+         * collection
          */
         REDUCE(com.mongodb.MapReduceCommand.OutputType.REDUCE),
 
@@ -57,21 +60,28 @@ public class MapReduce {
         }
     }
 
-
     /**
      * Build a map reduce command
-     *
-     * @param map        The map function
-     * @param reduce     The reduce function
-     * @param outputType The outputType
-     * @param collection The collection name, may be null if output type is INLINE
-     * @param resultType The type to deserialise the result to
-     * @param keyType    The type of the keys that are being reduced on
+     * 
+     * @param map
+     *            The map function
+     * @param reduce
+     *            The reduce function
+     * @param outputType
+     *            The outputType
+     * @param collection
+     *            The collection name, may be null if output type is INLINE
+     * @param resultType
+     *            The type to deserialise the result to
+     * @param keyType
+     *            The type of the keys that are being reduced on
      * @return The command
      */
-    public static <T, K> MapReduceCommand<T, K> build(String map, String reduce, OutputType outputType, String collection,
-                                                      Class<T> resultType, Class<K> keyType) {
-        return new MapReduceCommand<T, K>(map, reduce, outputType, collection, resultType, keyType);
+    public static <T, K> MapReduceCommand<T, K> build(String map,
+            String reduce, OutputType outputType, String collection,
+            Class<T> resultType, Class<K> keyType) {
+        return new MapReduceCommand<T, K>(map, reduce, outputType, collection,
+                resultType, keyType);
     }
 
     public static class MapReduceCommand<T, K> {
@@ -92,7 +102,9 @@ public class MapReduce {
         private boolean verbose = true;
         private DBObject extra;
 
-        private MapReduceCommand(String map, String reduce, OutputType outputType, String collection, Class<T> resultType, Class<K> keyType) {
+        private MapReduceCommand(String map, String reduce,
+                OutputType outputType, String collection, Class<T> resultType,
+                Class<K> keyType) {
             this.map = map;
             this.reduce = reduce;
             this.outputType = outputType;
@@ -103,19 +115,22 @@ public class MapReduce {
 
         /**
          * Set the read preference for reading the results
-         *
-         * @param readPreference The read preference
+         * 
+         * @param readPreference
+         *            The read preference
          * @return this command
          */
-        public MapReduceCommand<T, K> setReadPreference(ReadPreference readPreference) {
+        public MapReduceCommand<T, K> setReadPreference(
+                ReadPreference readPreference) {
             this.readPreference = readPreference;
             return this;
         }
 
         /**
          * Set the db to output to if it's not this db
-         *
-         * @param outputDB the db to output to
+         * 
+         * @param outputDB
+         *            the db to output to
          * @return this command
          */
         public MapReduceCommand<T, K> setOutputDB(String outputDB) {
@@ -125,8 +140,9 @@ public class MapReduce {
 
         /**
          * Set the query to limit the items that are mapped
-         *
-         * @param query The query
+         * 
+         * @param query
+         *            The query
          * @return this command
          */
         public MapReduceCommand<T, K> setQuery(DBQuery.Query query) {
@@ -136,8 +152,9 @@ public class MapReduce {
 
         /**
          * Set the finalize function
-         *
-         * @param finalize The finalize function
+         * 
+         * @param finalize
+         *            The finalize function
          * @return this command
          */
         public MapReduceCommand<T, K> setFinalize(String finalize) {
@@ -147,8 +164,9 @@ public class MapReduce {
 
         /**
          * Sort the input objects by this key
-         *
-         * @param sort The sort
+         * 
+         * @param sort
+         *            The sort
          * @return this command
          */
         public MapReduceCommand<T, K> setSort(DBObject sort) {
@@ -158,8 +176,9 @@ public class MapReduce {
 
         /**
          * Set the limit for the result collection to return
-         *
-         * @param limit The limit
+         * 
+         * @param limit
+         *            The limit
          * @return this command
          */
         public MapReduceCommand<T, K> setLimit(int limit) {
@@ -168,9 +187,11 @@ public class MapReduce {
         }
 
         /**
-         * Set the scope in which the javascript code for map, reduce and finalise is executed
-         *
-         * @param scope The scope
+         * Set the scope in which the javascript code for map, reduce and
+         * finalise is executed
+         * 
+         * @param scope
+         *            The scope
          * @return this command
          */
         public MapReduceCommand<T, K> setScope(Map<String, Object> scope) {
@@ -180,8 +201,9 @@ public class MapReduce {
 
         /**
          * Set whether statistics on job execution time should be provided
-         *
-         * @param verbose True if stats should be provided
+         * 
+         * @param verbose
+         *            True if stats should be provided
          * @return this command
          */
         public MapReduceCommand<T, K> setVerbose(boolean verbose) {
@@ -191,8 +213,9 @@ public class MapReduce {
 
         /**
          * Set extra arguments to the map reduce command
-         *
-         * @param extra The extra arguments
+         * 
+         * @param extra
+         *            The extra arguments
          * @return this command
          */
         public MapReduceCommand<T, K> setExtra(DBObject extra) {
@@ -205,8 +228,9 @@ public class MapReduce {
             if (this.query != null) {
                 query = collection.serializeQuery(this.query);
             }
-            com.mongodb.MapReduceCommand command = new com.mongodb.MapReduceCommand(collection.getDbCollection(), map,
-                    reduce, this.collection, outputType.getDriverType(), query);
+            com.mongodb.MapReduceCommand command = new com.mongodb.MapReduceCommand(
+                    collection.getDbCollection(), map, reduce, this.collection,
+                    outputType.getDriverType(), query);
             if (finalize != null) {
                 command.setFinalize(finalize);
             }

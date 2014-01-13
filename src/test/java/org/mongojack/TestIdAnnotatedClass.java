@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +16,18 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.junit.Test;
-import org.mongojack.Id;
-import org.mongojack.JacksonDBCollection;
-import org.mongojack.ObjectId;
-
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
+
+import org.junit.Test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class TestIdAnnotatedClass extends MongoDBTestBase {
 
-    private <T, K> JacksonDBCollection<T, K> createCollFor(T object, Class<K> keyType) throws Exception {
+    private <T, K> JacksonDBCollection<T, K> createCollFor(T object,
+            Class<K> keyType) throws Exception {
         // Stupid generics...
         return (JacksonDBCollection) getCollection(object.getClass(), keyType);
     }
@@ -37,7 +36,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testIdFieldAnnotated() throws Exception {
         IdFieldAnnotated o = new IdFieldAnnotated();
         o.id = "blah";
-        JacksonDBCollection<IdFieldAnnotated, String> coll = createCollFor(o, String.class);
+        JacksonDBCollection<IdFieldAnnotated, String> coll = createCollFor(o,
+                String.class);
         coll.insert(o);
         IdFieldAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
@@ -53,7 +53,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testJpaIdFieldAnnotated() throws Exception {
         JpaIdFieldAnnotated o = new JpaIdFieldAnnotated();
         o.id = "blah";
-        JacksonDBCollection<JpaIdFieldAnnotated, String> coll = createCollFor(o, String.class);
+        JacksonDBCollection<JpaIdFieldAnnotated, String> coll = createCollFor(
+                o, String.class);
         coll.insert(o);
         JpaIdFieldAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
@@ -69,7 +70,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testGetterSetterAnnotated() throws Exception {
         GetterSetterAnnotated o = new GetterSetterAnnotated();
         o.setId("blah");
-        JacksonDBCollection<GetterSetterAnnotated, String> coll = createCollFor(o, String.class);
+        JacksonDBCollection<GetterSetterAnnotated, String> coll = createCollFor(
+                o, String.class);
         coll.insert(o);
         GetterSetterAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
@@ -93,7 +95,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     @Test
     public void testCreatorGetterAnnotated() throws Exception {
         CreatorGetterAnnotated o = new CreatorGetterAnnotated("blah");
-        JacksonDBCollection<CreatorGetterAnnotated, String> coll = createCollFor(o, String.class);
+        JacksonDBCollection<CreatorGetterAnnotated, String> coll = createCollFor(
+                o, String.class);
         coll.insert(o);
         CreatorGetterAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
@@ -118,7 +121,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testObjectIdFieldAnnotated() throws Exception {
         ObjectIdFieldAnnotated o = new ObjectIdFieldAnnotated();
         o.id = new org.bson.types.ObjectId().toString();
-        JacksonDBCollection<ObjectIdFieldAnnotated, String> coll = createCollFor(o, String.class);
+        JacksonDBCollection<ObjectIdFieldAnnotated, String> coll = createCollFor(
+                o, String.class);
         coll.insert(o);
         ObjectIdFieldAnnotated result = coll.findOneById(o.id);
         assertThat(result, notNullValue());
@@ -133,8 +137,10 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
     @Test
     public void testCreatorGetterObjectIdAnnotated() throws Exception {
-        CreatorGetterObjectIdAnnotated o = new CreatorGetterObjectIdAnnotated(new org.bson.types.ObjectId().toString());
-        JacksonDBCollection<CreatorGetterObjectIdAnnotated, String> coll = createCollFor(o, String.class);
+        CreatorGetterObjectIdAnnotated o = new CreatorGetterObjectIdAnnotated(
+                new org.bson.types.ObjectId().toString());
+        JacksonDBCollection<CreatorGetterObjectIdAnnotated, String> coll = createCollFor(
+                o, String.class);
         coll.insert(o);
         CreatorGetterObjectIdAnnotated result = coll.findOneById(o.id);
         assertThat(result, notNullValue());
@@ -155,6 +161,5 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
             return id;
         }
     }
-
 
 }
