@@ -151,9 +151,114 @@
             <roles>
                 <role>Author</role>
             </roles>
-            <organization>VZ Netzwerke</organization>
+            <organization>devbliss GmbH</organization>
+            <organizationUrl>https://devbliss.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Marco Reinwarth</name>
+            <email>marco.reinwarth@devbliss.com</email>
+            <url>https://about.me/marei</url>
+            <roles>
+                <role>Maintainer</role>
+            </roles>
+            <organization>devbliss GmbH</organization>
+            <organizationUrl>https://devbliss.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Bastien Mary</name>
+            <email>bastien.mary@devbliss.com</email>
+            <roles>
+                <role>Maintainer</role>
+            </roles>
+            <organization>devbliss GmbH</organization>
+            <organizationUrl>https://devbliss.com</organizationUrl>
         </developer>
     </developers>
+
+    <contributors>
+        <contributor>
+            <name>Ben McCann</name>
+            <url>http://www.benmccann.com/</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Christian Riedel</name>
+            <url>https://github.com/criedel</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Reimund Klain</name>
+            <url>http://blog.klain.eu</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>aleskiewicz</name>
+            <url>https://github.com/aleskiewicz</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>John Hinnegan</name>
+            <url>https://github.com/softwaregravy</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>pmaedel</name>
+            <url>https://github.com/pmaedel</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>ThinkNear</organization>
+        </contributor>
+        <contributor>
+            <name>Timothy Maxwell</name>
+            <url>https://github.com/truthspirit</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>saadmufti</name>
+            <url>https://github.com/saadmufti</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Jan Meyer</name>
+            <url>http://www.m-bs.de</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>Meyer Business Services GmbH</organization>
+            <organizationUrl>http://www.m-bs.de</organizationUrl>
+        </contributor>
+        <contributor>
+            <name>Paul Bakker</name>
+            <url>http://twitter.com/pbakker</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>Luminis Technologies</organization>
+        </contributor>
+        <contributor>
+            <name>Jeff Yemin</name>
+            <url>https://github.com/jyemin</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>MongoDB, Inc.</organization>
+        </contributor>
+    </contributors>
 
     <licenses>
         <license>
