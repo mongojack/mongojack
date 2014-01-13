@@ -40,7 +40,7 @@ Querying can be done using chained query builder methods on the DBCursor:
 
 The collection, cursor and write result interfaces are very similar to the standard Java MongoDB driver. Most methods have been copied across, with generic typing added where appropriate, and overloading to use the generic type where sometimes the generic type is not powerful enough, such as for queries and specifying fields for partial objects.
 
-When it comes to mapping your objects, generally all you need to use is the Jackson annotations, such as `@JsonProperty` and `@JsonCreator`.  If you want a type of `ObjectId`, you have two options, either make your field be of type `ObjectId`, or you can also use `String`, as long as you annotate *both* the serialising and deserialising properties with `@net.vz.mongodb.jackson.ObjectId`.  For example:
+When it comes to mapping your objects, generally all you need to use is the Jackson annotations, such as `@JsonProperty` and `@JsonCreator`.  If you want a type of `ObjectId`, you have two options, either make your field be of type `ObjectId`, or you can also use `String`, as long as you annotate *both* the serialising and deserialising properties with `@org.mongojack.ObjectId`.  For example:
 
     public class MyObject {
       private String id;
@@ -63,9 +63,9 @@ Now your id property will be stored in the database as an object ID, and you can
       public Long id;
     }
 
-Another useful implication of this is if you want to use the same object for database objects and objects to return on the web, you can name the id whatever you want for the web, and you don't need to use Jackson views to to specify which property gets mapped to what name for the database and for the web.
+Another useful implication of this is if you want to use the same object for database objects and objects to return on the web, you can name the id whatever you want for the web, and you don't need to use Jackson views to specify which property gets mapped to what name for the database and for the web.
 
-The only limitation to using the id annotation is if you are using `@Creator` annotated constructors or factory methods, because `@javax.persistence.Id` is not supported on method parameters.  For this reason, the mapper provides the annotation `@net.vz.mongodb.jackson.Id`, and it can be used like so:
+The only limitation to using the id annotation is if you are using `@Creator` annotated constructors or factory methods, because `@javax.persistence.Id` is not supported on method parameters.  For this reason, the mapper provides the annotation `@org.mongojack.Id`, and it can be used like so:
 
     public class MyObject {
       private final String id;
@@ -90,7 +90,7 @@ If you're using your data objects for both storage and web views, you might want
 Of course, if you really want to control things and Jackson's annotations aren't enough, the wrap method is also overloaded to accept an `ObjectMapper`.  For convenience, you should add the object ID module in order to get the object id and id annotation mapping features:
 
     ObjectMapper myObjectMapper = ...
-    myObjectMapper.withModule(net.vz.mongodb.jackson.internal.MongoJacksonMapperModule.INSTANCE);
+    myObjectMapper.withModule(org.mongojack.internal.MongoJackModule.INSTANCE);
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
             String.class, myObjectMapper);
 
