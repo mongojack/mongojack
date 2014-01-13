@@ -16,8 +16,8 @@
     <description>Maps MongoDB objects to POJOs using Jackson</description>
     <url>http://mongojack.org</url>
     <organization>
-        <name>VZ Netzwerke</name>
-        <url>http://vz.net</url>
+        <name>devbliss GmbH</name>
+        <url>http://www.devbliss.com</url>
     </organization>
     <inceptionYear>2011</inceptionYear>
 
