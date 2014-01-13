@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,19 +16,24 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.introspect.*;
-import com.fasterxml.jackson.databind.type.TypeFactory;
+import java.lang.annotation.Annotation;
+
 import org.mongojack.DBRef;
 import org.mongojack.Id;
 import org.mongojack.ObjectId;
 
-import java.lang.annotation.Annotation;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.introspect.Annotated;
+import com.fasterxml.jackson.databind.introspect.AnnotatedField;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
+import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
+import com.fasterxml.jackson.databind.introspect.NopAnnotationIntrospector;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 
 /**
  * Annotation introspector that supports @ObjectId's
- *
+ * 
  * @author James Roper
  * @since 1.0
  */
@@ -73,12 +79,12 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
 
     private String findPropertyName(Annotated annotated) {
 
-        if (annotated.hasAnnotation(Id.class) || annotated.hasAnnotation(javax.persistence.Id.class)) {
+        if (annotated.hasAnnotation(Id.class)
+                || annotated.hasAnnotation(javax.persistence.Id.class)) {
             return "_id";
         }
         return null;
     }
-
 
     // Handling of ObjectId annotated properties
     @Override
@@ -92,7 +98,8 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public Object findDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            return findObjectIdDeserializer(typeFactory.constructType(am.getGenericType()));
+            return findObjectIdDeserializer(typeFactory.constructType(am
+                    .getGenericType()));
         }
         return null;
     }
@@ -128,10 +135,13 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
             } else {
                 dbRefType = type;
             }
-            JsonDeserializer keyDeserializer = findObjectIdDeserializer(dbRefType.containedType(1));
-            return new DBRefDeserializer(dbRefType.containedType(0), dbRefType.containedType(1), keyDeserializer);
+            JsonDeserializer keyDeserializer = findObjectIdDeserializer(dbRefType
+                    .containedType(1));
+            return new DBRefDeserializer(dbRefType.containedType(0),
+                    dbRefType.containedType(1), keyDeserializer);
         } else if (type.getRawClass() == org.bson.types.ObjectId.class) {
-            // Don't know why someone would annotated an ObjectId with @ObjectId, but handle it
+            // Don't know why someone would annotated an ObjectId with
+            // @ObjectId, but handle it
             return new ObjectIdDeserializers.ToObjectIdDeserializer();
         }
         return null;

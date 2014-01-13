@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,23 +16,25 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
+import org.junit.Before;
+import org.junit.Test;
+
+import com.fasterxml.jackson.annotation.JsonView;
+
 public class TestJsonViews extends MongoDBTestBase {
 
     private JacksonDBCollection<ObjectWithView, String> coll;
-    
+
     @Before
     public void setUp() {
-        coll = getCollection(ObjectWithView.class, String.class, MockView1.class);
+        coll = getCollection(ObjectWithView.class, String.class,
+                MockView1.class);
     }
-    
+
     @Test
     public void testNormalPropertyWithView() {
         coll.save(new ObjectWithView("id", "normal", "view1", "view2"));
@@ -54,8 +57,9 @@ public class TestJsonViews extends MongoDBTestBase {
         public ObjectWithView() {
         }
 
-        public ObjectWithView(String id, String normal, String view1, String view2) {
-            this._id = id;
+        public ObjectWithView(String id, String normal, String view1,
+                String view2) {
+            _id = id;
             this.normal = normal;
             this.view1 = view1;
             this.view2 = view2;
@@ -68,6 +72,10 @@ public class TestJsonViews extends MongoDBTestBase {
         @JsonView(MockView2.class)
         public String view2;
     }
-    public class MockView1 {}
-    public class MockView2 {}
+
+    public class MockView1 {
+    }
+
+    public class MockView2 {
+    }
 }

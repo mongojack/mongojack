@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +16,19 @@
  */
 package org.mongojack.internal.stream;
 
+import java.io.IOException;
+
+import org.bson.BSONObject;
+import org.bson.io.OutputBuffer;
+import org.mongojack.MongoJsonMappingException;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBEncoder;
 import com.mongodb.MongoException;
-import de.undercouch.bson4jackson.BsonGenerator;
-import org.mongojack.MongoJsonMappingException;
-import org.bson.BSONObject;
-import org.bson.io.OutputBuffer;
 
-import java.io.IOException;
+import de.undercouch.bson4jackson.BsonGenerator;
 
 /**
  * DBEncoder that uses bson4jackson if the object is a JacksonDBObject
@@ -34,19 +37,24 @@ public class JacksonDBEncoder implements DBEncoder {
     private final ObjectMapper objectMapper;
     private final DBEncoder defaultDBEncoder;
 
-    public JacksonDBEncoder(ObjectMapper objectMapper, DBEncoder defaultDBEncoder) {
+    public JacksonDBEncoder(ObjectMapper objectMapper,
+            DBEncoder defaultDBEncoder) {
         this.objectMapper = objectMapper;
         this.defaultDBEncoder = defaultDBEncoder;
     }
 
+    @Override
     public int writeObject(OutputBuffer buf, BSONObject object) {
         if (object instanceof JacksonDBObject) {
             JacksonDBObject<?> jacksonDbObject = (JacksonDBObject<?>) object;
             OutputBufferOutputStream stream = new OutputBufferOutputStream(buf);
-            BsonGenerator generator = new DBEncoderBsonGenerator(JsonGenerator.Feature.collectDefaults(), stream);
+            BsonGenerator generator = new DBEncoderBsonGenerator(
+                    JsonGenerator.Feature.collectDefaults(), stream);
             try {
-                objectMapper.writerWithView(jacksonDbObject.getView()).writeValue(generator, jacksonDbObject.getObject());
-                // The generator buffers everything so that it can write the number of bytes to the stream
+                objectMapper.writerWithView(jacksonDbObject.getView())
+                        .writeValue(generator, jacksonDbObject.getObject());
+                // The generator buffers everything so that it can write the
+                // number of bytes to the stream
                 generator.close();
             } catch (JsonMappingException e) {
                 throw new MongoJsonMappingException(e);

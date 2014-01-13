@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,34 +16,47 @@
  */
 package org.mongojack.internal.util;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
 import com.fasterxml.jackson.databind.ser.SerializerFactory;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
 /**
- * Accesses things in Jackson that usually aren't accessible.  Here be dragons.
+ * Accesses things in Jackson that usually aren't accessible. Here be dragons.
  */
 public class JacksonAccessor {
 
-    public static JsonDeserializer findDeserializer(ObjectMapper objectMapper, JavaType type) {
-        return invoke(objectMapper, objectMapperFindRootDeserializer, JsonDeserializer.class,
+    public static JsonDeserializer findDeserializer(ObjectMapper objectMapper,
+            JavaType type) {
+        return invoke(objectMapper, objectMapperFindRootDeserializer,
+                JsonDeserializer.class,
                 createDeserializationContext(objectMapper), type);
     }
 
-    public static DeserializationContext createDeserializationContext(ObjectMapper objectMapper) {
-        return invoke(objectMapper, objectMapperCreateDeserializationContext, DeserializationContext.class,
-                null, objectMapper.getDeserializationConfig());
+    public static DeserializationContext createDeserializationContext(
+            ObjectMapper objectMapper) {
+        return invoke(objectMapper, objectMapperCreateDeserializationContext,
+                DeserializationContext.class, null,
+                objectMapper.getDeserializationConfig());
     }
 
-    public static BeanPropertyWriter findPropertyWriter(BeanSerializerBase serializer, String propertyName) {
-        BeanPropertyWriter[] props = get(serializer, beanSerializerBaseProps, BeanPropertyWriter[].class);
+    public static BeanPropertyWriter findPropertyWriter(
+            BeanSerializerBase serializer, String propertyName) {
+        BeanPropertyWriter[] props = get(serializer, beanSerializerBaseProps,
+                BeanPropertyWriter[].class);
         for (BeanPropertyWriter prop : props) {
             if (propertyName.equals(prop.getName())) {
                 return prop;
@@ -51,16 +65,23 @@ public class JacksonAccessor {
         return null;
     }
 
-    public static SerializerFactory getSerializerFactory(ObjectMapper objectMapper) {
-        return get(objectMapper, objectMapperSerializerFactory, SerializerFactory.class);
+    public static SerializerFactory getSerializerFactory(
+            ObjectMapper objectMapper) {
+        return get(objectMapper, objectMapperSerializerFactory,
+                SerializerFactory.class);
     }
 
-    public static SerializerProvider getSerializerProvider(ObjectMapper objectMapper) {
-        DefaultSerializerProvider serializerProvider = (DefaultSerializerProvider) objectMapper.getSerializerProvider();
-        return serializerProvider.createInstance(objectMapper.getSerializationConfig(), getSerializerFactory(objectMapper));
+    public static SerializerProvider getSerializerProvider(
+            ObjectMapper objectMapper) {
+        DefaultSerializerProvider serializerProvider = (DefaultSerializerProvider) objectMapper
+                .getSerializerProvider();
+        return serializerProvider.createInstance(
+                objectMapper.getSerializationConfig(),
+                getSerializerFactory(objectMapper));
     }
 
-    public static JsonSerializer findValueSerializer(SerializerProvider serializerProvider, JavaType javaType) {
+    public static JsonSerializer findValueSerializer(
+            SerializerProvider serializerProvider, JavaType javaType) {
         try {
             return serializerProvider.findValueSerializer(javaType, null);
         } catch (JsonMappingException e) {
@@ -68,7 +89,8 @@ public class JacksonAccessor {
         }
     }
 
-    public static JsonSerializer findValueSerializer(SerializerProvider serializerProvider, Class clazz) {
+    public static JsonSerializer findValueSerializer(
+            SerializerProvider serializerProvider, Class clazz) {
         try {
             return serializerProvider.findValueSerializer(clazz, null);
         } catch (JsonMappingException e) {
@@ -82,12 +104,15 @@ public class JacksonAccessor {
     private static final Field objectMapperSerializerFactory;
 
     static {
-        objectMapperCreateDeserializationContext = findMethod(ObjectMapper.class, "createDeserializationContext",
+        objectMapperCreateDeserializationContext = findMethod(
+                ObjectMapper.class, "createDeserializationContext",
                 new Class[] {JsonParser.class, DeserializationConfig.class});
-        objectMapperFindRootDeserializer = findMethod(ObjectMapper.class, "_findRootDeserializer",
-                new Class[] {DeserializationContext.class, JavaType.class});
+        objectMapperFindRootDeserializer = findMethod(ObjectMapper.class,
+                "_findRootDeserializer", new Class[] {
+                        DeserializationContext.class, JavaType.class});
         beanSerializerBaseProps = findField(BeanSerializerBase.class, "_props");
-        objectMapperSerializerFactory = findField(ObjectMapper.class, "_serializerFactory");
+        objectMapperSerializerFactory = findField(ObjectMapper.class,
+                "_serializerFactory");
     }
 
     private static Method findMethod(Class clazz, String name, Class[] argTypes) {
@@ -118,7 +143,8 @@ public class JacksonAccessor {
         }
     }
 
-    private static <T> T invoke(Object object, Method method, Class<T> returnType, Object... args) {
+    private static <T> T invoke(Object object, Method method,
+            Class<T> returnType, Object... args) {
         try {
             return (T) method.invoke(object, args);
         } catch (IllegalAccessException e) {

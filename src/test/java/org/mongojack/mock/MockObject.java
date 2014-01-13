@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,24 +75,54 @@ public class MockObject {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         MockObject that = (MockObject) o;
 
-        if (_id != null ? !_id.equals(that._id) : that._id != null) return false;
-        if (bigDecimal != null ? !bigDecimal.equals(that.bigDecimal) : that.bigDecimal != null) return false;
-        if (bigInteger != null ? !bigInteger.equals(that.bigInteger) : that.bigInteger != null) return false;
-        if (booleans != null ? !booleans.equals(that.booleans) : that.booleans != null) return false;
-        if (complexList != null ? !complexList.equals(that.complexList) : that.complexList != null) return false;
-        if (doubles != null ? !doubles.equals(that.doubles) : that.doubles != null) return false;
-        if (floats != null ? !floats.equals(that.floats) : that.floats != null) return false;
-        if (integer != null ? !integer.equals(that.integer) : that.integer != null) return false;
-        if (longs != null ? !longs.equals(that.longs) : that.longs != null) return false;
-        if (date != null ? !date.equals(that.date) : that.date != null) return false;
-        if (object != null ? !object.equals(that.object) : that.object != null) return false;
-        if (simpleList != null ? !simpleList.equals(that.simpleList) : that.simpleList != null) return false;
-        if (string != null ? !string.equals(that.string) : that.string != null) return false;
+        if (_id != null ? !_id.equals(that._id) : that._id != null) {
+            return false;
+        }
+        if (bigDecimal != null ? !bigDecimal.equals(that.bigDecimal) : that.bigDecimal != null) {
+            return false;
+        }
+        if (bigInteger != null ? !bigInteger.equals(that.bigInteger) : that.bigInteger != null) {
+            return false;
+        }
+        if (booleans != null ? !booleans.equals(that.booleans) : that.booleans != null) {
+            return false;
+        }
+        if (complexList != null ? !complexList.equals(that.complexList) : that.complexList != null) {
+            return false;
+        }
+        if (doubles != null ? !doubles.equals(that.doubles) : that.doubles != null) {
+            return false;
+        }
+        if (floats != null ? !floats.equals(that.floats) : that.floats != null) {
+            return false;
+        }
+        if (integer != null ? !integer.equals(that.integer) : that.integer != null) {
+            return false;
+        }
+        if (longs != null ? !longs.equals(that.longs) : that.longs != null) {
+            return false;
+        }
+        if (date != null ? !date.equals(that.date) : that.date != null) {
+            return false;
+        }
+        if (object != null ? !object.equals(that.object) : that.object != null) {
+            return false;
+        }
+        if (simpleList != null ? !simpleList.equals(that.simpleList) : that.simpleList != null) {
+            return false;
+        }
+        if (string != null ? !string.equals(that.string) : that.string != null) {
+            return false;
+        }
 
         return true;
     }

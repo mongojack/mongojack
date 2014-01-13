@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,26 +16,28 @@
  */
 package org.mongojack;
 
-import org.junit.Test;
-import org.mongojack.*;
-
-import java.util.Arrays;
-import java.util.List;
-
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Test;
+
 public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void simpleDbRefShouldBeSavedAsDbRef() {
-        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class, String.class);
-        JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class);
+        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class,
+                String.class);
+        JacksonDBCollection<Referenced, String> refColl = getCollection(
+                Referenced.class, String.class);
 
         refColl.insert(new Referenced("hello", 10));
-        coll.insert(new Owner(new DBRef<Referenced, String>("hello", refColl.getName())));
+        coll.insert(new Owner(new DBRef<Referenced, String>("hello", refColl
+                .getName())));
         String id = coll.findOne()._id;
 
         Owner saved = coll.findOneById(id);
@@ -51,12 +54,15 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void dbRefWithObjectIdShouldBeSavedAsDbRef() {
-        JacksonDBCollection<ObjectIdOwner, String> coll = getCollection(ObjectIdOwner.class, String.class);
-        JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class);
+        JacksonDBCollection<ObjectIdOwner, String> coll = getCollection(
+                ObjectIdOwner.class, String.class);
+        JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(
+                ObjectIdReferenced.class, byte[].class);
 
         byte[] refId = new org.bson.types.ObjectId().toByteArray();
         refColl.insert(new ObjectIdReferenced(refId, 10));
-        coll.insert(new ObjectIdOwner(new DBRef<ObjectIdReferenced, byte[]>(refId, refColl.getName())));
+        coll.insert(new ObjectIdOwner(new DBRef<ObjectIdReferenced, byte[]>(
+                refId, refColl.getName())));
         String id = coll.findOne()._id;
 
         ObjectIdOwner saved = coll.findOneById(id);
@@ -73,11 +79,14 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void testUsingMongoCollectionAnnotation() {
-        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class, String.class);
-        JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class, "referenced");
+        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class,
+                String.class);
+        JacksonDBCollection<Referenced, String> refColl = getCollection(
+                Referenced.class, String.class, "referenced");
 
         refColl.insert(new Referenced("hello", 10));
-        coll.insert(new Owner(new DBRef<Referenced, String>("hello", Referenced.class)));
+        coll.insert(new Owner(new DBRef<Referenced, String>("hello",
+                Referenced.class)));
         String id = coll.findOne()._id;
 
         Owner saved = coll.findOneById(id);
@@ -94,11 +103,13 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void testDBUpdateWithDbRef() {
-        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class, String.class);
+        JacksonDBCollection<Owner, String> coll = getCollection(Owner.class,
+                String.class);
         coll.insert(new Owner());
         String id = coll.findOne()._id;
 
-        coll.updateById(id, DBUpdate.set("ref", new DBRef<Referenced, String>("hello", Referenced.class)));
+        coll.updateById(id, DBUpdate.set("ref", new DBRef<Referenced, String>(
+                "hello", Referenced.class)));
         assertThat(coll.findOneById(id).ref, notNullValue());
         assertThat(coll.findOneById(id).ref.getId(), equalTo("hello"));
     }
@@ -146,7 +157,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     public static class ObjectIdReferenced {
         public ObjectIdReferenced(byte[] id, int i) {
-            this._id = id;
+            _id = id;
             this.i = i;
         }
 
@@ -160,14 +171,18 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void collectionOfDbRefsShouldBeSavedAsDbRefs() {
-        JacksonDBCollection<CollectionOwner, String> coll = getCollection(CollectionOwner.class, String.class);
-        JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class, "referenced");
+        JacksonDBCollection<CollectionOwner, String> coll = getCollection(
+                CollectionOwner.class, String.class);
+        JacksonDBCollection<Referenced, String> refColl = getCollection(
+                Referenced.class, String.class, "referenced");
 
         refColl.insert(new Referenced("hello", 10));
         refColl.insert(new Referenced("world", 20));
 
         CollectionOwner owner = new CollectionOwner();
-        owner.list = Arrays.asList(new DBRef<Referenced, String>("hello", refColl.getName()), new DBRef<Referenced, String>("world", refColl.getName()));
+        owner.list = Arrays.asList(new DBRef<Referenced, String>("hello",
+                refColl.getName()), new DBRef<Referenced, String>("world",
+                refColl.getName()));
         owner._id = "foo";
         coll.insert(owner);
 
@@ -175,9 +190,11 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(saved.list, notNullValue());
         assertThat(saved.list, hasSize(2));
         assertThat(saved.list.get(0).getId(), equalTo("hello"));
-        assertThat(saved.list.get(0).getCollectionName(), equalTo(refColl.getName()));
+        assertThat(saved.list.get(0).getCollectionName(),
+                equalTo(refColl.getName()));
         assertThat(saved.list.get(1).getId(), equalTo("world"));
-        assertThat(saved.list.get(1).getCollectionName(), equalTo(refColl.getName()));
+        assertThat(saved.list.get(1).getCollectionName(),
+                equalTo(refColl.getName()));
 
         // Try loading them
         Referenced ref = saved.list.get(0).fetch();
@@ -193,14 +210,18 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void fetchCollectionOfDBRefsShouldReturnRightResults() {
-        JacksonDBCollection<CollectionOwner, String> coll = getCollection(CollectionOwner.class, String.class);
-        JacksonDBCollection<Referenced, String> refColl = getCollection(Referenced.class, String.class, "referenced");
+        JacksonDBCollection<CollectionOwner, String> coll = getCollection(
+                CollectionOwner.class, String.class);
+        JacksonDBCollection<Referenced, String> refColl = getCollection(
+                Referenced.class, String.class, "referenced");
 
         refColl.insert(new Referenced("hello", 10));
         refColl.insert(new Referenced("world", 20));
 
         CollectionOwner owner = new CollectionOwner();
-        owner.list = Arrays.asList(new DBRef<Referenced, String>("hello", refColl.getName()), new DBRef<Referenced, String>("world", refColl.getName()));
+        owner.list = Arrays.asList(new DBRef<Referenced, String>("hello",
+                refColl.getName()), new DBRef<Referenced, String>("world",
+                refColl.getName()));
         owner._id = "foo";
         coll.insert(owner);
 
@@ -220,8 +241,10 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Test
     public void collectionOfObjectIdDbRefsShouldBeSavedAsObjectIdDbRefs() {
-        JacksonDBCollection<ObjectIdCollectionOwner, String> coll = getCollection(ObjectIdCollectionOwner.class, String.class);
-        JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(ObjectIdReferenced.class, byte[].class, "referenced");
+        JacksonDBCollection<ObjectIdCollectionOwner, String> coll = getCollection(
+                ObjectIdCollectionOwner.class, String.class);
+        JacksonDBCollection<ObjectIdReferenced, byte[]> refColl = getCollection(
+                ObjectIdReferenced.class, byte[].class, "referenced");
 
         byte[] refId1 = new org.bson.types.ObjectId().toByteArray();
         refColl.insert(new ObjectIdReferenced(refId1, 10));
@@ -229,7 +252,10 @@ public class TestDBRefHandling extends MongoDBTestBase {
         refColl.insert(new ObjectIdReferenced(refId2, 20));
 
         ObjectIdCollectionOwner owner = new ObjectIdCollectionOwner();
-        owner.list = Arrays.asList(new DBRef<ObjectIdReferenced, byte[]>(refId1, refColl.getName()), new DBRef<ObjectIdReferenced, byte[]>(refId2, refColl.getName()));
+        owner.list = Arrays
+                .asList(new DBRef<ObjectIdReferenced, byte[]>(refId1, refColl
+                        .getName()), new DBRef<ObjectIdReferenced, byte[]>(
+                        refId2, refColl.getName()));
         owner._id = "foo";
         coll.insert(owner);
 
@@ -237,10 +263,11 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(saved.list, notNullValue());
         assertThat(saved.list, hasSize(2));
         assertThat(saved.list.get(0).getId(), equalTo(refId1));
-        assertThat(saved.list.get(0).getCollectionName(), equalTo(refColl.getName()));
+        assertThat(saved.list.get(0).getCollectionName(),
+                equalTo(refColl.getName()));
         assertThat(saved.list.get(1).getId(), equalTo(refId2));
-        assertThat(saved.list.get(1).getCollectionName(), equalTo(refColl.getName()));
-
+        assertThat(saved.list.get(1).getCollectionName(),
+                equalTo(refColl.getName()));
 
         // Try loading them
         ObjectIdReferenced ref = saved.list.get(0).fetch();
