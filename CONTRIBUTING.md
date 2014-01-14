@@ -49,9 +49,6 @@ User with appropriate rights can create two kind of releases: snaphost and norma
 </server>
 ```
 
-### For a snapshot release:
-* mvn clean deploy <-> deploy a snapshot version of mongojack on https://oss.sonatype.org/index.html
-
 ### For a normal release:
 * mvn release:clean
 * mvn release:prepare <-> prepare for a release in SCM
@@ -67,3 +64,6 @@ To update the documentation, be sure you have the correct server configuration i
 </server>
 ```
 Then run `mvn site:site` to generate the documentation and `mvn site:deploy` to deploy it. Check on [mongojack.org](http://mongojack.org) that the update was successful.
+
+### For a snapshot release:
+* mvn clean deploy <-> deploy a snapshot version of mongojack on https://oss.sonatype.org/index.html
