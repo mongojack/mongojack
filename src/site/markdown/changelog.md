@@ -4,6 +4,8 @@ Changelog
 unversioned
 -----------
 
+* Added a how-to-release documentation
+
 2.0.0
 -----
 
