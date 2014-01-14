@@ -6,6 +6,9 @@ unversioned
 
 2.0.0
 -----
+
+_Released 2014.01.13_
+
 * code cleanups & some new tests
 * upgrade mongo-java-driver to 2.11.3 and jackson to 2.2.3 (by benmccann)
 * adding parameterized findAndModify (by truthspirit)
