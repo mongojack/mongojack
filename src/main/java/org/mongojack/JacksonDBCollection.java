@@ -1861,35 +1861,13 @@ public class JacksonDBCollection<T, K> {
     /**
      * Performs an aggregation pipeline against this collection.
      * 
-     * @Param query 
-     *             The initial query in the aggregation pipeline.
-     * @Param ops 
-     *             An array of pipeline operations.
-     * @return The mongojack aggregation result with the result objects mapped to the type for this collection using the
-     *              Jackson Object mapper for this collection.
-     * @throws MongoException
-     *             If an error occurred
-     * @see <a
-     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
-     */
-    public AggregationResult<T> aggregate(DBQuery.Query query, DBObject ... ops)
-        throws MongoException {
-        DBObject[] additionalOps = new DBObject[ops.length];
-        for (int opIdx = 0; opIdx < ops.length; opIdx++) {
-            additionalOps[opIdx] = serializeFields(ops[opIdx]);
-        }
-        return new AggregationResult<T>(this, dbCollection.aggregate(serializeQuery(query), additionalOps));
-    }
-    
-    /**
-     * Performs an aggregation pipeline against this collection.
-     * 
-     * @Param 
+     * @Param aggregation an Aggregation specifying the operations for the aggregation pipeline, and the return type.
      * @return an AggregationResult with the result objects mapped to the type specified by the Aggregation.
      * @throws MongoException
      *             If an error occurred
      * @see <a
      *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @since 2.1.0
      */
     public <S> AggregationResult<S> aggregate(Aggregation<S> aggregation)
         throws MongoException {

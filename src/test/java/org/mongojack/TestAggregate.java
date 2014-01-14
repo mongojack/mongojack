@@ -47,9 +47,7 @@ public class TestAggregate extends MongoDBTestBase {
                 coll.aggregate(new Aggregation<MockObject>(MockObject.class, 
                 new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*")))));
         Assert.assertEquals(2, result.results().size());
-    }
-
-    
+    }    
     
     @Test
     public void testAggregateMultipleOpsItemsInCollection() {
@@ -67,5 +65,4 @@ public class TestAggregate extends MongoDBTestBase {
                 ));
         Assert.assertEquals(1, result.results().size());
     }
-    
 }
