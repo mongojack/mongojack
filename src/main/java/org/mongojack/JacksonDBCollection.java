@@ -1857,6 +1857,53 @@ public class JacksonDBCollection<T, K> {
         return new MapReduceOutput<S, L>(this, dbCollection.mapReduce(command
                 .build(this)), command.getResultType(), command.getKeyType());
     }
+    
+    /**
+     * Performs an aggregation pipeline against this collection.
+     * 
+     * @Param query 
+     *             The initial query in the aggregation pipeline.
+     * @Param ops 
+     *             An array of pipeline operations.
+     * @return The mongojack aggregation result with the result objects mapped to the type for this collection using the
+     *              Jackson Object mapper for this collection.
+     * @throws MongoException
+     *             If an error occurred
+     * @see <a
+     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public AggregationResult<T> aggregate(DBQuery.Query query, DBObject ... ops)
+        throws MongoException {
+        DBObject[] additionalOps = new DBObject[ops.length];
+        for (int opIdx = 0; opIdx < ops.length; opIdx++) {
+            additionalOps[opIdx] = serializeFields(ops[opIdx]);
+        }
+        return new AggregationResult<T>(this, dbCollection.aggregate(serializeQuery(query), additionalOps));
+    }
+    
+    /**
+     * Performs an aggregation pipeline against this collection.
+     * 
+     * @Param 
+     * @return an AggregationResult with the result objects mapped to the type specified by the Aggregation.
+     * @throws MongoException
+     *             If an error occurred
+     * @see <a
+     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     */
+    public <S> AggregationResult<S> aggregate(Aggregation<S> aggregation)
+        throws MongoException {
+        
+        DBObject[] ops = aggregation.getAdditionalOps();
+        DBObject[] additionalOps = new DBObject[ops.length];
+        
+        for (int opIdx = 0; opIdx < ops.length; opIdx++) {
+            additionalOps[opIdx] = serializeFields(ops[opIdx]);
+        }
+        
+        return new AggregationResult<S>(this, dbCollection.aggregate(serializeFields(aggregation.getInitialOp()), additionalOps));
+    }
+    
 
     /**
      * Return a list of the indexes for this collection. Each object in the list
@@ -2144,7 +2191,14 @@ public class JacksonDBCollection<T, K> {
         return generator.getDBObject();
     }
 
-    DBObject convertToDbObject(T object) throws MongoException {
+    /**
+     * Convert an object into a DBObject using the Jackson ObjectMapper for this collection.
+     * 
+     * @param object The object to convert
+     * @return a mongo DBObject serialized with the ObjectMapper for this collection.
+     * @throws MongoException
+     */
+    public DBObject convertToDbObject(T object) throws MongoException {
         if (object == null) {
             return null;
         }
@@ -2165,7 +2219,15 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    DBObject[] convertToDbObjects(T... objects) throws MongoException {
+    /**
+     * Convert an array of objects to mongo DBObjects using the Jackson ObjectMapper for this
+     * collection.
+     * 
+     * @param objects The array of objects to convert
+     * @return The array of resulting DBObjects in the same order as the received objects. 
+     * @throws MongoException
+     */
+    public DBObject[] convertToDbObjects(T... objects) throws MongoException {
         DBObject[] results = new DBObject[objects.length];
         for (int i = 0; i < objects.length; i++) {
             results[i] = convertToDbObject(objects[i]);
@@ -2173,7 +2235,15 @@ public class JacksonDBCollection<T, K> {
         return results;
     }
 
-    T convertFromDbObject(DBObject dbObject) throws MongoException {
+    /**
+     * Convert a DBObject, normally a query result to the object type for this
+     * collection using the Jackson ObjectMapper for this collection.
+     * 
+     * @param dbObject The DBObject to convert
+     * @return A converted instance of the object type of this class.
+     * @throws MongoException
+     */
+    public T convertFromDbObject(DBObject dbObject) throws MongoException {
         if (dbObject == null) {
             return null;
         }
@@ -2192,7 +2262,16 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz)
+    /**
+     * Convert a DBObject into a given class, using the Jackson ObjectMapper
+     * for this collection.
+     * 
+     * @param dbObject The DBObject to convert
+     * @param clazz The class into which we are converting.
+     * @return An instance of the requested class mapped from the DBObject.
+     * @throws MongoException
+     */
+    public <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz)
             throws MongoException {
         if (dbObject == null) {
             return null;
@@ -2212,7 +2291,14 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
+    /**
+     * Convert an array of DBObjects into the type for this collection, using the 
+     * Jackson ObjectMapper for this collection.
+     * @param dbObjects
+     * @return
+     * @throws MongoException
+     */
+    public List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
         final List<T> results = new ArrayList<T>(dbObjects.length);
         for (DBObject dbObject : dbObjects) {
             results.add(convertFromDbObject(dbObject));
@@ -2220,11 +2306,26 @@ public class JacksonDBCollection<T, K> {
         return results;
     }
 
-    DBObject serializeFields(DBObject value) {
+    /**
+     * Serialize the fields of the given object using the object mapper 
+     * for this collection. 
+     * This will convert POJOs to DBObjects where necessary.
+     * 
+     * @param value The object to serialize the fields of
+     * @return The DBObject, safe for use in a mongo query.
+     */
+    public DBObject serializeFields(DBObject value) {
         return SerializationUtils.serializeFields(objectMapper, value);
     }
-
-    DBObject serializeQuery(DBQuery.Query query) {
+    
+    /**
+     * Serialize the given DBQuery.Query using the object mapper
+     * for this collection. 
+     * 
+     * @param query The DBQuery.Query to serialize.
+     * @return The query as a serialized DBObject ready to pass to mongo.
+     */    
+    public DBObject serializeQuery(DBQuery.Query query) {
         return SerializationUtils.serializeQuery(objectMapper, type, query);
     }
 
