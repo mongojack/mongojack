@@ -29,6 +29,7 @@ Aggregate command
 Aggregation will be done by calling the JacksonDBCollection aggregate method:
 
 ```
-Aggregation<User> aggregation = new Aggregation<User>(User.class, new BasicDBOject)
-AggregationResult<User> result = collection.aggregate();
+Aggregation<User> aggregation = new Aggregation<User>(User.class, new BasicDBObject("string", Pattern.compile("string1")));
+AggregationResult<User> aggregationResult = collection.aggregate(aggregation);
 ```
+Once you have the `AggregationResult` object, it's possible to access the aggregated `User` objects by calling `aggregationResult.results()`.
