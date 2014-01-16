@@ -1857,7 +1857,7 @@ public class JacksonDBCollection<T, K> {
         return new MapReduceOutput<S, L>(this, dbCollection.mapReduce(command
                 .build(this)), command.getResultType(), command.getKeyType());
     }
-    
+
     /**
      * Performs an aggregation pipeline against this collection.
      * 
@@ -1870,18 +1870,18 @@ public class JacksonDBCollection<T, K> {
      * @since 2.1.0
      */
     public <S> AggregationResult<S> aggregate(Aggregation<S> aggregation)
-        throws MongoException {
-        
+            throws MongoException {
+
         DBObject[] ops = aggregation.getAdditionalOps();
         DBObject[] additionalOps = new DBObject[ops.length];
-        
+
         for (int opIdx = 0; opIdx < ops.length; opIdx++) {
             additionalOps[opIdx] = serializeFields(ops[opIdx]);
         }
-        
-        return new AggregationResult<S>(this, dbCollection.aggregate(serializeFields(aggregation.getInitialOp()), additionalOps));
+
+        return new AggregationResult<S>(this, dbCollection.aggregate(serializeFields(aggregation.getInitialOp()), additionalOps), aggregation
+                .getResultType());
     }
-    
 
     /**
      * Return a list of the indexes for this collection. Each object in the list
@@ -2202,7 +2202,7 @@ public class JacksonDBCollection<T, K> {
      * collection.
      * 
      * @param objects The array of objects to convert
-     * @return The array of resulting DBObjects in the same order as the received objects. 
+     * @return The array of resulting DBObjects in the same order as the received objects.
      * @throws MongoException
      */
     public DBObject[] convertToDbObjects(T... objects) throws MongoException {
@@ -2270,8 +2270,9 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Convert an array of DBObjects into the type for this collection, using the 
+     * Convert an array of DBObjects into the type for this collection, using the
      * Jackson ObjectMapper for this collection.
+     * 
      * @param dbObjects
      * @return
      * @throws MongoException
@@ -2285,8 +2286,8 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Serialize the fields of the given object using the object mapper 
-     * for this collection. 
+     * Serialize the fields of the given object using the object mapper
+     * for this collection.
      * This will convert POJOs to DBObjects where necessary.
      * 
      * @param value The object to serialize the fields of
@@ -2295,14 +2296,14 @@ public class JacksonDBCollection<T, K> {
     public DBObject serializeFields(DBObject value) {
         return SerializationUtils.serializeFields(objectMapper, value);
     }
-    
+
     /**
      * Serialize the given DBQuery.Query using the object mapper
-     * for this collection. 
+     * for this collection.
      * 
      * @param query The DBQuery.Query to serialize.
      * @return The query as a serialized DBObject ready to pass to mongo.
-     */    
+     */
     public DBObject serializeQuery(DBQuery.Query query) {
         return SerializationUtils.serializeQuery(objectMapper, type, query);
     }
