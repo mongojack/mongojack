@@ -263,6 +263,13 @@
                 <role>developer</role>
             </roles>
             <organization>MongoDB, Inc.</organization>
+        </contributor>        
+        <contributor>
+            <name>Christopher Exell</name>
+            <url>https://github.com/exell-christopher</url>
+            <roles>
+                <role>developer</role>
+            </roles>
         </contributor>
     </contributors>
 
