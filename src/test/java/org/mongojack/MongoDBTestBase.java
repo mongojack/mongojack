@@ -51,7 +51,7 @@ public abstract class MongoDBTestBase {
     @Before
     public void connectToDb() throws Exception {
         String testDbHost = "localhost";
-        int testDbPort = 37017;
+        int testDbPort = Integer.parseInt(System.getProperty("embedMongoDbPort"));
         if (environment.containsKey(dbHostKey)) {
             testDbHost = environment.get(dbHostKey);
         }

@@ -78,6 +78,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!-- Necessary because according to the docs, site filtering doesn't work for properties with dots in them -->
         <siteProjectVersion>${project.version}</siteProjectVersion>
+        <embed.mongodb.port>37037</embed.mongodb.port>
+        <embed.mongodb.version>2.4.9</embed.mongodb.version>
     </properties>
 
     <build>
@@ -149,8 +151,8 @@
                             <goal>start</goal>
                         </goals>
                         <configuration>
-                            <port>37017</port>
-                            <version>2.4.9</version>
+                            <port>${embed.mongodb.port}</port>
+                            <version>${embed.mongodb.version}</version>
                             <databaseDirectory>${project.build.directory}/mongodb</databaseDirectory>
                             <logging>file</logging>
                             <logFile>${project.build.directory}/embedmongo.log</logFile>
@@ -171,6 +173,9 @@
                 <version>2.16</version>
                 <configuration>
                    <skip>true</skip>
+                   <systemPropertyVariables>
+                       <embedMongoDbPort>${embed.mongodb.port}</embedMongoDbPort>
+                   </systemPropertyVariables>
                 </configuration>
                 <executions>
                     <execution>
