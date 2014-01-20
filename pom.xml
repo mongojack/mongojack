@@ -184,6 +184,15 @@
                         <goals>
                             <goal>test</goal>
                         </goals>
+                        <configuration>
+                            <skip>false</skip>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                            <excludes>
+                                <exclude>**/*IntegrationTest.java</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>integrationtests</id>
@@ -193,6 +202,9 @@
                         <phase>integration-test</phase>
                         <configuration>
                             <skip>false</skip>
+                            <includes>
+                                <include>**/*IntegrationTest.java</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>

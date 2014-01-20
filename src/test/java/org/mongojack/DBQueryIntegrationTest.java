@@ -29,7 +29,7 @@ import org.mongojack.mock.MockObject;
 
 import com.mongodb.MongoException;
 
-public class TestDBQuery extends MongoDBTestBase {
+public class DBQueryIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

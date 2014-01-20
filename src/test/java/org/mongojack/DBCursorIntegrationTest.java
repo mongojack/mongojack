@@ -32,7 +32,7 @@ import com.mongodb.BasicDBObject;
 /**
  * Test the Json DB Cursor
  */
-public class TestDBCursor extends MongoDBTestBase {
+public class DBCursorIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

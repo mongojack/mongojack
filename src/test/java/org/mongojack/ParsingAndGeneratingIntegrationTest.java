@@ -42,7 +42,7 @@ import com.mongodb.MongoException;
 /**
  * Test for parser and generator
  */
-public class TestParsingAndGenerating extends MongoDBTestBase {
+public class ParsingAndGeneratingIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

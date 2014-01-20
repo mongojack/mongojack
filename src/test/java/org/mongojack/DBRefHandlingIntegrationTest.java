@@ -26,7 +26,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class TestDBRefHandling extends MongoDBTestBase {
+public class DBRefHandlingIntegrationTest extends MongoDBTestBase {
 
     @Test
     public void simpleDbRefShouldBeSavedAsDbRef() {

@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
-public class TestJsonViews extends MongoDBTestBase {
+public class JsonViewsIntegrationTest extends MongoDBTestBase {
 
     private JacksonDBCollection<ObjectWithView, String> coll;
 

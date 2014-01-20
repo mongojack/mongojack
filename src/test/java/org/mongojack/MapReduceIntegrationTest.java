@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
-public class TestMapReduce extends MongoDBTestBase {
+public class MapReduceIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

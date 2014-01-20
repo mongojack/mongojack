@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
 @MongoTestParams(serializerType = MongoTestParams.SerializationType.OBJECT)
-public class TestWriteResult extends MongoDBTestBase {
+public class WriteResultIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
