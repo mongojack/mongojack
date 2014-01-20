@@ -375,6 +375,13 @@ public class TestDBQuery extends MongoDBTestBase {
         cursor.in("blah", "blah");
     }
 
+    @Test
+    public void testFindOneByIdFetchesSame() throws Exception {
+        insertMockObject();
+        MockObject one = coll.findOne();
+        assertThat(one, equalTo(coll.findOneById(one._id)));
+    }
+
     private MockObject insertMockObject() {
         MockObject mockObject = new MockObject("someid", "hello", 10);
         mockObject.simpleList = Arrays.asList("a", "b", "c");
