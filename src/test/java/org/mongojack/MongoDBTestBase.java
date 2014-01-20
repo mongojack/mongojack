@@ -28,7 +28,7 @@ import org.junit.runner.RunWith;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
 
 /**
  * Base class for unit tests that run against MongoDB. Assumes there is a
@@ -44,18 +44,19 @@ public abstract class MongoDBTestBase {
     private boolean useStreamParser = true;
     private boolean useStreamSerialiser = false;
 
-    protected Mongo mongo;
+    protected MongoClient mongo;
     protected DB db;
     private Set<String> collections;
 
     @Before
     public void connectToDb() throws Exception {
         String testDbHost = "localhost";
+        int testDbPort = 37017;
         if (environment.containsKey(dbHostKey)) {
             testDbHost = environment.get(dbHostKey);
         }
 
-        mongo = new Mongo(testDbHost);
+        mongo = new MongoClient(testDbHost, testDbPort);
         db = mongo.getDB("unittest");
         collections = new HashSet<String>();
     }

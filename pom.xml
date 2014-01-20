@@ -149,7 +149,7 @@
                             <goal>start</goal>
                         </goals>
                         <configuration>
-                            <port>27017</port>
+                            <port>37017</port>
                             <version>2.4.9</version>
                             <databaseDirectory>${project.build.directory}/mongodb</databaseDirectory>
                             <logging>file</logging>
