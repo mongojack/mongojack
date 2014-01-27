@@ -31,7 +31,7 @@ import org.bson.types.ObjectId;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
-public class TestObjectIdHandling extends MongoDBTestBase {
+public class ObjectIdHandlingIntegrationTest extends MongoDBTestBase {
 
     @Test
     public void testObjectIdGenerated() {

@@ -29,7 +29,7 @@ import org.mongojack.mock.MockObjectAggregationResult;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
-public class TestAggregate extends MongoDBTestBase {
+public class AggregateIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

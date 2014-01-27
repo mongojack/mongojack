@@ -32,7 +32,7 @@ import org.mongojack.mock.MockObject;
 
 import com.mongodb.BasicDBObject;
 
-public class TestJacksonDBCollection extends MongoDBTestBase {
+public class JacksonDBCollectionIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

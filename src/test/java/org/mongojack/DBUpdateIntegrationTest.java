@@ -36,7 +36,7 @@ import com.mongodb.DBObject;
 /**
  * Test a DBUpdate item
  */
-public class TestDBUpdate extends MongoDBTestBase {
+public class DBUpdateIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

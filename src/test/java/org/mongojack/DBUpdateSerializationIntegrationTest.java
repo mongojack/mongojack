@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-public class TestDBUpdateSerialization extends MongoDBTestBase {
+public class DBUpdateSerializationIntegrationTest extends MongoDBTestBase {
 
     private JacksonDBCollection<MockObject, String> coll;
 

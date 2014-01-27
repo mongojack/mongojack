@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
-public class TestDBSort extends MongoDBTestBase {
+public class DBSortIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before

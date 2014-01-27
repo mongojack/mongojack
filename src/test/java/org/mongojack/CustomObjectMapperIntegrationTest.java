@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mongodb.DBObject;
 
-public class TestCustomObjectMapper extends MongoDBTestBase {
+public class CustomObjectMapperIntegrationTest extends MongoDBTestBase {
 
     private JacksonDBCollection<MockObject, String> coll;
 

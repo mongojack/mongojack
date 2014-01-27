@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class TestIdAnnotatedClass extends MongoDBTestBase {
+public class IdAnnotatedClassIntegrationTest extends MongoDBTestBase {
 
     private <T, K> JacksonDBCollection<T, K> createCollFor(T object,
             Class<K> keyType) throws Exception {

@@ -36,6 +36,7 @@ Documentation
 
 * [Installation](./installation.html)
 * [Tutorial](./tutorial.html)
+* [Tests](./tests.md)
 * Advanced
     * [Building Queries](./queries.html)
     * [ObjectId Handling](./object-ids.html)

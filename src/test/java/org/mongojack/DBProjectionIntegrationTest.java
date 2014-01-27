@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
-public class TestDBProjection extends MongoDBTestBase {
+public class DBProjectionIntegrationTest extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
