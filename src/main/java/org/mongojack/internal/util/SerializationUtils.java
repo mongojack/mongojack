@@ -182,8 +182,19 @@ public class SerializationUtils {
             }
             List<Object> serializedConditions = new ArrayList<Object>();
             for (QueryCondition item : coll.getValues()) {
-                serializedConditions.add(serializeQueryCondition(
-                        serializerProvider, serializer, "$", item));
+               if(key.startsWith("$in")){
+					SimpleQueryCondition simple = (SimpleQueryCondition) item;
+					if(String.class.isInstance(simple.getValue())){
+						serializedConditions.add(simple.getValue());
+					}else{
+						serializedConditions.add(serializeQueryCondition(
+								serializerProvider, serializer, "$", item));
+					}
+				}else{
+
+					serializedConditions.add(serializeQueryCondition(
+							serializerProvider, serializer, "$", item));
+				}
             }
             return serializedConditions;
         } else {
