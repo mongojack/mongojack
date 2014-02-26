@@ -182,7 +182,7 @@ public class SerializationUtils {
             }
             List<Object> serializedConditions = new ArrayList<Object>();
             for (QueryCondition item : coll.getValues()) {
-               if(key.startsWith("$in")){
+               if(key.startsWith("$in") || key.startsWith("$nin")){
 	           SimpleQueryCondition simple = (SimpleQueryCondition) item;
 		   if(String.class.isInstance(simple.getValue())){
 		       serializedConditions.add(simple.getValue());
