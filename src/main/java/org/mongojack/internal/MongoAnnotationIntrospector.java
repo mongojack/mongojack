@@ -44,7 +44,6 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         this.typeFactory = typeFactory;
     }
 
-    @Override
     public boolean isHandled(Annotation ann) {
         return ann.annotationType() == ObjectId.class
                 || ann.annotationType() == Id.class

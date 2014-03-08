@@ -16,28 +16,17 @@
  */
 package org.mongojack.internal.object;
 
+import com.fasterxml.jackson.core.*;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import org.mongojack.internal.util.VersionUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.mongojack.internal.util.VersionUtils;
-
-import com.fasterxml.jackson.core.Base64Variant;
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.SerializableString;
-import com.fasterxml.jackson.core.TreeNode;
-import com.fasterxml.jackson.core.Version;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 
 /**
  * JSON generator that actually generates a BSON object
@@ -82,6 +71,14 @@ public class BsonObjectGenerator extends JsonGenerator {
     public boolean isEnabled(Feature f) {
         return false;
     }
+
+    @Override
+    public int getFeatureMask() {
+        return JsonGenerator.Feature.collectDefaults();
+    }
+
+    @Override
+    public JsonGenerator setFeatureMask(int i) { return this; }
 
     @Override
     public JsonGenerator setCodec(ObjectCodec oc) {
