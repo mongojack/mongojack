@@ -271,6 +271,13 @@
                 <role>developer</role>
             </roles>
         </contributor>
+         <contributor>
+            <name>Yann Deshayes</name>
+            <url>https://github.com/ydeshayes</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
     </contributors>
 
     <licenses>
