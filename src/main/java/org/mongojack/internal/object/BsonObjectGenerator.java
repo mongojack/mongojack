@@ -84,6 +84,16 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
+    public JsonGenerator setFeatureMask(int mask) {
+        return this;
+    }
+
+    @Override
+    public int getFeatureMask() {
+        return 0;
+    }
+
+    @Override
     public JsonGenerator setCodec(ObjectCodec oc) {
         objectCodec = oc;
         return this;

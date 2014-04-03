@@ -44,13 +44,6 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         this.typeFactory = typeFactory;
     }
 
-    @Override
-    public boolean isHandled(Annotation ann) {
-        return ann.annotationType() == ObjectId.class
-                || ann.annotationType() == Id.class
-                || ann.annotationType() == javax.persistence.Id.class;
-    }
-
     // Handling of javax.persistence.Id
     @Override
     public String findSerializationName(AnnotatedMethod am) {
