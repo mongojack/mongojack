@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.PropertyName;
 
 /**
  * Annotation introspector that supports @ObjectId's
- * 
+ *
  * @author James Roper
  * @since 1.0
  */

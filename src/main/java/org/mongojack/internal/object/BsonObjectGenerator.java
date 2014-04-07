@@ -16,11 +16,6 @@
  */
 package org.mongojack.internal.object;
 
-import com.fasterxml.jackson.core.*;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import org.mongojack.internal.util.VersionUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -28,9 +23,25 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.mongojack.internal.util.VersionUtils;
+
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.SerializableString;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.core.Version;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+
 /**
  * JSON generator that actually generates a BSON object
- * 
+ *
  * @author James Roper
  * @since 1.0
  */
@@ -453,13 +464,11 @@ public class BsonObjectGenerator extends JsonGenerator {
             object = new BasicDBObject();
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             object.put(getCurrentName(), value);
         }
 
-        @Override
-        DBObject get() {
+        @Override DBObject get() {
             return object;
         }
     }
@@ -474,13 +483,11 @@ public class BsonObjectGenerator extends JsonGenerator {
             super(parent, JsonStreamContext.TYPE_ARRAY);
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             array.add(value);
         }
 
-        @Override
-        List<Object> get() {
+        @Override List<Object> get() {
             return array;
         }
     }
@@ -497,14 +504,12 @@ public class BsonObjectGenerator extends JsonGenerator {
             this.rootValue = rootValue;
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             throw new IllegalStateException(
                     "Cannot write multiple values to a root value node");
         }
 
-        @Override
-        Object get() {
+        @Override Object get() {
             return rootValue;
         }
     }
