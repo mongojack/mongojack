@@ -4,6 +4,7 @@ Changelog
 unversioned
 -----------
 
+* Updated mongo-java-driver to newer version (by benmccann)
 * Upgrade Jackson and Bson4Jackson to prevent potential conflicts with Jackson 2.2.X (by yunspace)
 * Implementation of the mongoDB Aggregation feature
 * Added a how-to-release documentation
