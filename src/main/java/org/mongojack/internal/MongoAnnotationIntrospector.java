@@ -16,8 +16,6 @@
  */
 package org.mongojack.internal;
 
-import java.lang.annotation.Annotation;
-
 import org.mongojack.DBRef;
 import org.mongojack.Id;
 import org.mongojack.ObjectId;
@@ -25,15 +23,13 @@ import org.mongojack.ObjectId;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.introspect.Annotated;
-import com.fasterxml.jackson.databind.introspect.AnnotatedField;
-import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
-import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.fasterxml.jackson.databind.introspect.NopAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.databind.PropertyName;
 
 /**
  * Annotation introspector that supports @ObjectId's
- * 
+ *
  * @author James Roper
  * @since 1.0
  */
@@ -44,37 +40,26 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         this.typeFactory = typeFactory;
     }
 
-    @Override
-    public boolean isHandled(Annotation ann) {
-        return ann.annotationType() == ObjectId.class
-                || ann.annotationType() == Id.class
-                || ann.annotationType() == javax.persistence.Id.class;
-    }
-
     // Handling of javax.persistence.Id
     @Override
-    public String findSerializationName(AnnotatedMethod am) {
-        return findPropertyName(am);
+    public PropertyName findNameForDeserialization(Annotated a) {
+
+        String rawName = findPropertyName(a);
+        if (rawName != null) {
+            return new PropertyName(rawName);
+        }
+        return null;
     }
 
     @Override
-    public String findDeserializationName(AnnotatedMethod am) {
-        return findPropertyName(am);
-    }
+    public PropertyName findNameForSerialization(Annotated a) {
 
-    @Override
-    public String findDeserializationName(AnnotatedField af) {
-        return findPropertyName(af);
-    }
+        String rawName = findPropertyName(a);
+        if (rawName != null) {
+            return new PropertyName(rawName);
+        }
+        return null;
 
-    @Override
-    public String findSerializationName(AnnotatedField af) {
-        return findPropertyName(af);
-    }
-
-    @Override
-    public String findDeserializationName(AnnotatedParameter param) {
-        return findPropertyName(param);
     }
 
     private String findPropertyName(Annotated annotated) {

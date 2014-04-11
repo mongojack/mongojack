@@ -41,7 +41,7 @@ import com.mongodb.DBObject;
 
 /**
  * JSON generator that actually generates a BSON object
- * 
+ *
  * @author James Roper
  * @since 1.0
  */
@@ -82,6 +82,14 @@ public class BsonObjectGenerator extends JsonGenerator {
     public boolean isEnabled(Feature f) {
         return false;
     }
+
+    @Override
+    public int getFeatureMask() {
+        return JsonGenerator.Feature.collectDefaults();
+    }
+
+    @Override
+    public JsonGenerator setFeatureMask(int i) { return this; }
 
     @Override
     public JsonGenerator setCodec(ObjectCodec oc) {
@@ -456,13 +464,11 @@ public class BsonObjectGenerator extends JsonGenerator {
             object = new BasicDBObject();
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             object.put(getCurrentName(), value);
         }
 
-        @Override
-        DBObject get() {
+        @Override DBObject get() {
             return object;
         }
     }
@@ -477,13 +483,11 @@ public class BsonObjectGenerator extends JsonGenerator {
             super(parent, JsonStreamContext.TYPE_ARRAY);
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             array.add(value);
         }
 
-        @Override
-        List<Object> get() {
+        @Override List<Object> get() {
             return array;
         }
     }
@@ -500,14 +504,12 @@ public class BsonObjectGenerator extends JsonGenerator {
             this.rootValue = rootValue;
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             throw new IllegalStateException(
                     "Cannot write multiple values to a root value node");
         }
 
-        @Override
-        Object get() {
+        @Override Object get() {
             return rootValue;
         }
     }
