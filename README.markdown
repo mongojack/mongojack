@@ -20,6 +20,7 @@ Quick start
 
 #### Using Maven
 The quickest and easiest way to start using MongoJack is to use Maven. To do that, add the following to your dependencies list:
+
         <dependency>
             <groupId>org.mongojack</groupId>
             <artifactId>mongojack</artifactId>
@@ -27,6 +28,7 @@ The quickest and easiest way to start using MongoJack is to use Maven. To do tha
         </dependency>
 
 You will also have to tell Maven to use the snapshot repository. To do that, add the following above the `<build />` element and as a subelement of `<project />`:
+
         <repositories>
             <repository>
                 <id>oss-sonatype</id>
