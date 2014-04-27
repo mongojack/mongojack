@@ -1064,7 +1064,6 @@ public class JacksonDBCollection<T, K> {
      * @param name
      *            name of field to index on
      */
-    @Deprecated
     public final void ensureIndex(final String name) {
         ensureIndex(new BasicDBObject(name, 1));
     }
@@ -1077,7 +1076,6 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      *             If an error occurred
      */
-    @Deprecated
     public final void ensureIndex(final DBObject keys) throws MongoException {
         dbCollection.ensureIndex(keys);
     }
@@ -1092,7 +1090,6 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      *             If an error occurred
      */
-    @Deprecated
     public void ensureIndex(DBObject keys, String name) throws MongoException {
         ensureIndex(keys, name, false);
     }
@@ -1111,7 +1108,6 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      *             If an error occurred
      */
-    @Deprecated
     public void ensureIndex(DBObject keys, String name, boolean unique)
             throws MongoException {
         dbCollection.ensureIndex(keys, name, unique);
@@ -1127,7 +1123,6 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      *             If an error occurred
      */
-    @Deprecated
     public void ensureIndex(final DBObject keys, final DBObject optionsIN)
             throws MongoException {
         dbCollection.ensureIndex(keys, optionsIN);
@@ -1136,7 +1131,6 @@ public class JacksonDBCollection<T, K> {
     /**
      * Clears all indices that have not yet been applied to this collection.
      */
-    @Deprecated
     public void resetIndexCache() {
         dbCollection.resetIndexCache();
     }
@@ -1875,8 +1869,6 @@ public class JacksonDBCollection<T, K> {
      *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      * @since 2.1.0
      */
-    @Deprecated
-    @SuppressWarnings("unchecked")
     public <S> AggregationResult<S> aggregate(Aggregation<S> aggregation)
             throws MongoException {
 
