@@ -10,6 +10,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
+/**
+ * Test use of polymorphic types with mongojack
+ * @author Luke Palmer
+ */
 public class TestPolymorphic extends MongoDBTestBase {
     private JacksonDBCollection<MockBaseObject, String> coll;
 
