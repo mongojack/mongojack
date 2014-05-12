@@ -279,6 +279,13 @@
                 <role>developer</role>
             </roles>
         </contributor>
+        <contributor>
+            <name>Luke Palmer</name>
+            <url>http://www.lukepalmer.net</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
     </contributors>
 
     <licenses>
