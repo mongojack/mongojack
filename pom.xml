@@ -49,6 +49,13 @@
             <version>2.4</version>
         </dependency>
         <dependency>
+			<groupId>de.flapdoodle.embed</groupId>
+			<artifactId>de.flapdoodle.embed.mongo</artifactId>
+			<version>1.45</version>
+			<optional>true</optional>
+			<scope>compile</scope>
+		</dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
