@@ -30,12 +30,12 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.3.3</version>
+            <version>2.4.1</version>
         </dependency>
         <dependency>
             <groupId>de.undercouch</groupId>
             <artifactId>bson4jackson</artifactId>
-            <version>2.3.1</version>
+            <version>2.4.0</version>
         </dependency>
         <dependency>
             <groupId>javax.persistence</groupId>
@@ -342,17 +342,21 @@
     </profiles>
 
     <scm>
-        <url>https://github.com/devbliss/mongojack</url>
-        <connection>scm:git://github.com/devbliss/mongojack.git</connection>
-        <developerConnection>scm:git:git@github.com:devbliss/mongojack.git</developerConnection>
+        <url>https://bertramn@github.com/bertramn/mongojack</url>
+        <connection>scm:https://bertramn@github.com/bertramn/mongojack.git</connection>
+        <developerConnection>scm:https://bertramn@github.com/bertramn/mongojack.git</developerConnection>
     </scm>
 
-    <distributionManagement>
-        <site>
-            <id>github-project-site</id>
-            <url>gitsite:git@github.com/devbliss/mongojack.git</url>
-        </site>
-    </distributionManagement>
+	<distributionManagement>
+		<repository>
+			<id>mvn.fareliner.com</id>
+			<url>http://mvn.fareliner.com/content/repositories/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>mvn.fareliner.com</id>
+			<url>http://mvn.fareliner.com/content/repositories/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 
     <issueManagement>
         <system>GitHub</system>
