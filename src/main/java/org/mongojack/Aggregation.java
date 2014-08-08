@@ -59,6 +59,5 @@ public class Aggregation<T> {
         allOps.add(initialOp);
         allOps.addAll(Arrays.asList(additionalOps));
         return allOps;
-
     }
 }
