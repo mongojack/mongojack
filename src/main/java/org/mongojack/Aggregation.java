@@ -53,12 +53,12 @@ public class Aggregation<T> {
     public DBObject[] getAdditionalOps() {
         return additionalOps;
     }
-    
-    public List<DBObject> getAllOps(){
-    	List<DBObject> allOps = new ArrayList<DBObject>();
-    	allOps.add(initialOp);
-    	allOps.addAll(Arrays.asList(additionalOps));
-    	return allOps;
-    	
+
+    public List<DBObject> getAllOps() {
+        List<DBObject> allOps = new ArrayList<DBObject>();
+        allOps.add(initialOp);
+        allOps.addAll(Arrays.asList(additionalOps));
+        return allOps;
+
     }
 }

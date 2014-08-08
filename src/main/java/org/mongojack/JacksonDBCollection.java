@@ -1875,14 +1875,14 @@ public class JacksonDBCollection<T, K> {
      *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      * @since 2.1.0
      */
-    
+
     public <S> AggregationResult<S> aggregate(Aggregation<S> aggregation)
             throws MongoException {
 
         List<DBObject> serializedOps = new ArrayList<DBObject>();
-        for (DBObject dbObject : aggregation.getAllOps()){
-        	serializedOps.add(serializeFields(dbObject));
-		}
+        for (DBObject dbObject : aggregation.getAllOps()) {
+            serializedOps.add(serializeFields(dbObject));
+        }
 
         return new AggregationResult<S>(this, dbCollection.aggregate(serializedOps), aggregation
                 .getResultType());
