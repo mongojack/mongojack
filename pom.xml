@@ -48,12 +48,12 @@
             <version>2.4</version>
         </dependency>
         <dependency>
-			<groupId>de.flapdoodle.embed</groupId>
-			<artifactId>de.flapdoodle.embed.mongo</artifactId>
-			<version>1.45</version>
-			<optional>true</optional>
-			<scope>compile</scope>
-		</dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo</artifactId>
+            <version>1.45</version>
+            <optional>true</optional>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -342,21 +342,17 @@
     </profiles>
 
     <scm>
-        <url>https://bertramn@github.com/bertramn/mongojack</url>
-        <connection>scm:https://bertramn@github.com/bertramn/mongojack.git</connection>
-        <developerConnection>scm:https://bertramn@github.com/bertramn/mongojack.git</developerConnection>
+        <url>https://github.com/devbliss/mongojack</url>
+        <connection>scm:git://github.com/devbliss/mongojack.git</connection>
+        <developerConnection>scm:git:git@github.com:devbliss/mongojack.git</developerConnection>
     </scm>
 
-	<distributionManagement>
-		<repository>
-			<id>mvn.fareliner.com</id>
-			<url>http://mvn.fareliner.com/content/repositories/releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>mvn.fareliner.com</id>
-			<url>http://mvn.fareliner.com/content/repositories/snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <distributionManagement>
+        <site>
+            <id>github-project-site</id>
+            <url>gitsite:git@github.com/devbliss/mongojack.git</url>
+        </site>
+    </distributionManagement>
 
     <issueManagement>
         <system>GitHub</system>
