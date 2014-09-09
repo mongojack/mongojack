@@ -29,6 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
+import com.mongodb.MongoClient;
+import com.mongodb.ServerAddress;
 
 /**
  * Base class for unit tests that run against MongoDB. Assumes there is a
@@ -37,6 +39,7 @@ import com.mongodb.Mongo;
  */
 @RunWith(MongoDBTestCaseRunner.class)
 public abstract class MongoDBTestBase {
+ 
     private static final Random rand = new Random();
     private static final String dbHostKey = "MONGOJACK_TESTDB_HOST";
     private static final Map<String, String> environment = System.getenv();
@@ -44,18 +47,18 @@ public abstract class MongoDBTestBase {
     private boolean useStreamParser = true;
     private boolean useStreamSerialiser = false;
 
-    protected Mongo mongo;
+    protected MongoClient mongo;
     protected DB db;
     private Set<String> collections;
 
     @Before
     public void connectToDb() throws Exception {
-        String testDbHost = "localhost";
         if (environment.containsKey(dbHostKey)) {
-            testDbHost = environment.get(dbHostKey);
+            mongo = new MongoClient(environment.get(dbHostKey));
+        } else {
+            mongo = new MongoClient();
         }
 
-        mongo = new Mongo(testDbHost);
         db = mongo.getDB("unittest");
         collections = new HashSet<String>();
     }
