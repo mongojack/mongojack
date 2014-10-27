@@ -22,11 +22,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mongojack.DBQuery.Query;
+import org.mongojack.mock.MockObjectWithListOfStringsWithGettersSetters;
+import org.mongojack.mock.MockObjectWithListOfStringsWithoutGettersSetters;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -37,6 +41,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.mongodb.DBCollection;
 
 public class TestQuerySerialization extends MongoDBTestBase {
 
@@ -128,6 +133,58 @@ public class TestQuerySerialization extends MongoDBTestBase {
                 hasSize(1));
     }
 
+    @Test
+    public void testInQueryWithCollectionAndArrayOfStringsWithGettersSetters() {
+        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
+        JacksonDBCollection<MockObjectWithListOfStringsWithGettersSetters, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithListOfStringsWithGettersSetters.class, String.class);
+        Query q = DBQuery.empty().in("simpleList", (Object) new String[] { "b" });
+        c2.find(q);
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndSingleStringWithGettersSetters() {
+        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
+        JacksonDBCollection<MockObjectWithListOfStringsWithGettersSetters, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithListOfStringsWithGettersSetters.class, String.class);
+        Query q = DBQuery.empty().in("simpleList", "b");
+        c2.find(q);
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndCollectionOfStringsWithGettersSetters() {
+        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
+        JacksonDBCollection<MockObjectWithListOfStringsWithGettersSetters, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithListOfStringsWithGettersSetters.class, String.class);
+        List<String> x = new ArrayList<String>();
+        x.add("b");
+        Query q = DBQuery.empty().in("simpleList", x);
+        c2.find(q);
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndArrayOfStringsWithoutGettersSetters() {
+        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
+        JacksonDBCollection<MockObjectWithListOfStringsWithoutGettersSetters, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithListOfStringsWithoutGettersSetters.class, String.class);
+        Query q = DBQuery.empty().in("simpleList", (Object) new String[] { "b" });
+        c2.find(q);
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndSingleStringWithoutGettersSetters() {
+        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
+        JacksonDBCollection<MockObjectWithListOfStringsWithoutGettersSetters, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithListOfStringsWithoutGettersSetters.class, String.class);
+        Query q = DBQuery.empty().in("simpleList", "b");
+        c2.find(q);
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndCollectionOfStringsWithoutGettersSetters() {
+        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
+        JacksonDBCollection<MockObjectWithListOfStringsWithoutGettersSetters, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithListOfStringsWithoutGettersSetters.class, String.class);
+        List<String> x = new ArrayList<String>();
+        x.add("b");
+        Query q = DBQuery.empty().in("simpleList", x);
+        c2.find(q);
+    }
+    
     public static class MockObject {
         @ObjectId
         @Id
