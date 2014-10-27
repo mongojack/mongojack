@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +16,6 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
@@ -28,9 +25,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.Mongo;
+
 /**
- * Base class for unit tests that run against MongoDB. Assumes there is a MongoDB instance listening on the default
- * port on localhost, and that we can do whatever we want to a database called "unittest".
+ * Base class for unit tests that run against MongoDB. Assumes there is a
+ * MongoDB instance listening on the default port on localhost, and that we can
+ * do whatever we want to a database called "unittest".
  */
 @RunWith(MongoDBTestCaseRunner.class)
 public abstract class MongoDBTestBase {
@@ -66,9 +69,11 @@ public abstract class MongoDBTestBase {
     }
 
     /**
-     * Get a collection with the given name, and store it, so that it will be dropped in clean up
-     *
-     * @param name The name of the collection
+     * Get a collection with the given name, and store it, so that it will be
+     * dropped in clean up
+     * 
+     * @param name
+     *            The name of the collection
      * @return The collection
      */
     protected DBCollection getCollection(String name) {
@@ -77,8 +82,9 @@ public abstract class MongoDBTestBase {
     }
 
     /**
-     * Get a collection with a random name. Should grant some degree of isolation from tests running in parallel.
-     *
+     * Get a collection with a random name. Should grant some degree of
+     * isolation from tests running in parallel.
+     * 
      * @return The collection
      */
     protected DBCollection getCollection() {
@@ -95,34 +101,47 @@ public abstract class MongoDBTestBase {
         return getCollection(name.toString());
     }
 
-    protected <T, K> JacksonDBCollection<T, K> configure(JacksonDBCollection<T, K> collection) {
+    protected <T, K> JacksonDBCollection<T, K> configure(
+            JacksonDBCollection<T, K> collection) {
         if (useStreamParser) {
-            collection.enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+            collection
+                    .enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         } else {
-            collection.disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
+            collection
+                    .disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
         }
         if (useStreamSerialiser) {
-            collection.enable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
+            collection
+                    .enable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
         } else {
-            collection.disable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
+            collection
+                    .disable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
         }
         return collection;
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType) {
-        return configure(JacksonDBCollection.wrap(getCollection(), type, keyType));
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
+            Class<K> keyType) {
+        return configure(JacksonDBCollection.wrap(getCollection(), type,
+                keyType));
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, Class<?> view) {
-        return configure(JacksonDBCollection.wrap(getCollection(), type, keyType, view));
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
+            Class<K> keyType, Class<?> view) {
+        return configure(JacksonDBCollection.wrap(getCollection(), type,
+                keyType, view));
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, String collectionName) {
-        return configure(JacksonDBCollection.wrap(getCollection(collectionName), type, keyType));
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
+            Class<K> keyType, String collectionName) {
+        return configure(JacksonDBCollection.wrap(
+                getCollection(collectionName), type, keyType));
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type, Class<K> keyType, ObjectMapper mapper) {
-        return configure(JacksonDBCollection.wrap(getCollection(), type, keyType, mapper));
+    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
+            Class<K> keyType, ObjectMapper mapper) {
+        return configure(JacksonDBCollection.wrap(getCollection(), type,
+                keyType, mapper));
     }
 
     public void setUseStreamParser(boolean useStreamParser) {

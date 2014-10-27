@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +16,21 @@
  */
 package org.mongojack;
 
-import com.mongodb.BasicDBObject;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
-import org.mongojack.mock.MockObject;
-
-import java.util.List;
-
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertThat;
+
+import java.util.List;
+
+import org.hamcrest.Matchers;
+import org.junit.Before;
+import org.junit.Test;
+import org.mongojack.mock.MockObject;
+
+import com.mongodb.BasicDBObject;
 
 public class TestJacksonDBCollection extends MongoDBTestBase {
     private JacksonDBCollection<MockObject, String> coll;
@@ -44,7 +46,8 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         MockObject o2 = new MockObject("2", "ten", 10);
         coll.insert(o1, o2, new MockObject("twenty", 20));
 
-        List<MockObject> results = coll.find(new BasicDBObject("string", "ten")).toArray();
+        List<MockObject> results = coll
+                .find(new BasicDBObject("string", "ten")).toArray();
         assertThat(results, hasSize(2));
         assertThat(results, contains(o1, o2));
     }
@@ -55,7 +58,8 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         coll.insert(new MockObject("ten", 100));
         coll.insert(new MockObject("twenty", 20));
 
-        List<MockObject> results = coll.find(new BasicDBObject("string", "ten"),
+        List<MockObject> results = coll.find(
+                new BasicDBObject("string", "ten"),
                 new BasicDBObject("string", "something not null")).toArray();
         assertThat(results, hasSize(2));
         assertThat(results.get(0).integer, nullValue());
@@ -63,7 +67,6 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         assertThat(results.get(1).integer, nullValue());
         assertThat(results.get(1).string, equalTo("ten"));
     }
-
 
     @Test
     public void testRemove() {
@@ -92,36 +95,43 @@ public class TestJacksonDBCollection extends MongoDBTestBase {
         assertThat(remaining, Matchers.hasSize(2));
         assertThat(remaining, not(contains(object)));
     }
-    
+
     @Test
-    public void testFindAndModifyWithBuilder(){
-    	coll.insert(new MockObject("id1", "ten", 10));
-    	coll.insert(new MockObject("id2", "ten", 10));
-    	
-    	MockObject result1 = coll.findAndModify(DBQuery.is("_id", "id1"), null, null, false, DBUpdate.set("integer", 20).set("string", "twenty"), true, false);
-    	assertThat(result1.integer, equalTo(20));
-    	assertThat(result1.string, equalTo("twenty"));
-    	
-    	MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null, null, false, DBUpdate.set("integer", 30).set("string", "thirty"), true, false);
-    	assertThat(result2.integer, equalTo(30));
-    	assertThat(result2.string, equalTo("thirty"));
-    	
-    	coll.removeById("id1");
-    	coll.removeById("id2");
-    	
+    public void testFindAndModifyWithBuilder() {
+        coll.insert(new MockObject("id1", "ten", 10));
+        coll.insert(new MockObject("id2", "ten", 10));
+
+        MockObject result1 = coll.findAndModify(DBQuery.is("_id", "id1"), null,
+                null, false, DBUpdate.set("integer", 20)
+                        .set("string", "twenty"), true, false);
+        assertThat(result1.integer, equalTo(20));
+        assertThat(result1.string, equalTo("twenty"));
+
+        MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null,
+                null, false, DBUpdate.set("integer", 30)
+                        .set("string", "thirty"), true, false);
+        assertThat(result2.integer, equalTo(30));
+        assertThat(result2.string, equalTo("thirty"));
+
+        coll.removeById("id1");
+        coll.removeById("id2");
+
     }
 
     @Test
     public void testFindAndModifyWithParameterizedType() {
         coll.insert(new MockObject("ten", 10));
 
-        MockObject init = coll.findOne(DBQuery.is("string", "ten").is("integer", 10));
+        MockObject init = coll.findOne(DBQuery.is("string", "ten").is(
+                "integer", 10));
 
-        MockObject result1 = coll.findAndModify(DBQuery.is("_id", init._id), null, null, false, new MockObject("twenty", 20), true, true);
+        MockObject result1 = coll.findAndModify(DBQuery.is("_id", init._id),
+                null, null, false, new MockObject("twenty", 20), true, true);
         assertThat(result1.integer, equalTo(20));
         assertThat(result1.string, equalTo("twenty"));
 
-        MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null, null, false, new MockObject("id2", "thirty", 30), true, true);
+        MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null,
+                null, false, new MockObject("id2", "thirty", 30), true, true);
         assertThat(result2._id, equalTo("id2"));
         assertThat(result2.integer, equalTo(30));
         assertThat(result2.string, equalTo("thirty"));

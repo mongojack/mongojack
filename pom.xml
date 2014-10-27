@@ -9,15 +9,15 @@
 
     <groupId>org.mongojack</groupId>
     <artifactId>mongojack</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
-    <packaging>bundle</packaging>
+    <version>2.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
     <name>MongoJack</name>
     <description>Maps MongoDB objects to POJOs using Jackson</description>
     <url>http://mongojack.org</url>
     <organization>
-        <name>VZ Netzwerke</name>
-        <url>http://vz.net</url>
+        <name>devbliss GmbH</name>
+        <url>http://www.devbliss.com</url>
     </organization>
     <inceptionYear>2011</inceptionYear>
 
@@ -63,6 +63,12 @@
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-library</artifactId>
             <version>1.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+           <groupId>org.mockito</groupId>
+           <artifactId>mockito-all</artifactId>
+           <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -151,9 +157,121 @@
             <roles>
                 <role>Author</role>
             </roles>
-            <organization>VZ Netzwerke</organization>
+            <organization>devbliss GmbH</organization>
+            <organizationUrl>https://devbliss.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Marco Reinwarth</name>
+            <email>marco.reinwarth@devbliss.com</email>
+            <url>https://about.me/marei</url>
+            <roles>
+                <role>Maintainer</role>
+            </roles>
+            <organization>devbliss GmbH</organization>
+            <organizationUrl>https://devbliss.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Bastien Mary</name>
+            <email>bastien.mary@devbliss.com</email>
+            <roles>
+                <role>Maintainer</role>
+            </roles>
+            <organization>devbliss GmbH</organization>
+            <organizationUrl>https://devbliss.com</organizationUrl>
         </developer>
     </developers>
+
+    <contributors>
+        <contributor>
+            <name>Ben McCann</name>
+            <url>http://www.benmccann.com/</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Christian Riedel</name>
+            <url>https://github.com/criedel</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Reimund Klain</name>
+            <url>http://blog.klain.eu</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>aleskiewicz</name>
+            <url>https://github.com/aleskiewicz</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>John Hinnegan</name>
+            <url>https://github.com/softwaregravy</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>pmaedel</name>
+            <url>https://github.com/pmaedel</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>ThinkNear</organization>
+        </contributor>
+        <contributor>
+            <name>Timothy Maxwell</name>
+            <url>https://github.com/truthspirit</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>saadmufti</name>
+            <url>https://github.com/saadmufti</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+        <contributor>
+            <name>Jan Meyer</name>
+            <url>http://www.m-bs.de</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>Meyer Business Services GmbH</organization>
+            <organizationUrl>http://www.m-bs.de</organizationUrl>
+        </contributor>
+        <contributor>
+            <name>Paul Bakker</name>
+            <url>http://twitter.com/pbakker</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>Luminis Technologies</organization>
+        </contributor>
+        <contributor>
+            <name>Jeff Yemin</name>
+            <url>https://github.com/jyemin</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>MongoDB, Inc.</organization>
+        </contributor>        
+        <contributor>
+            <name>Christopher Exell</name>
+            <url>https://github.com/exell-christopher</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
+    </contributors>
 
     <licenses>
         <license>
