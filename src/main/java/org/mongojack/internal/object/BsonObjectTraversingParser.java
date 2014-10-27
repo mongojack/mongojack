@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,36 +16,46 @@
  */
 package org.mongojack.internal.object;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.core.base.ParserMinimalBase;
-import com.mongodb.BasicDBObject;
-import org.mongojack.JacksonDBCollection;
-import org.mongojack.internal.JacksonDBCollectionProvider;
-import org.mongojack.internal.util.VersionUtils;
-import org.bson.BSONObject;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.bson.BSONObject;
+import org.mongojack.JacksonDBCollection;
+import org.mongojack.internal.JacksonDBCollectionProvider;
+import org.mongojack.internal.util.VersionUtils;
+
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.core.base.ParserMinimalBase;
+import com.mongodb.BasicDBObject;
+
 /**
- * Parses a BSONObject by traversing it.  This class was copied from
- * {@link com.fasterxml.jackson.databind.node.TreeTraversingParser} and then adapted to be for BSONObject's, rather than JsonNode's.
- *
- * While decoding by the cursor uses DBDecoderBsonParser, there are still things that need to be decoded from the DBObjects,
- * including the result of findAndModify, and saved objects after saving.
- *
+ * Parses a BSONObject by traversing it. This class was copied from
+ * {@link com.fasterxml.jackson.databind.node.TreeTraversingParser} and then
+ * adapted to be for BSONObject's, rather than JsonNode's.
+ * 
+ * While decoding by the cursor uses DBDecoderBsonParser, there are still things
+ * that need to be decoded from the DBObjects, including the result of
+ * findAndModify, and saved objects after saving.
+ * 
  * @author James Roper
  * @since 1.0
  */
-public class BsonObjectTraversingParser extends ParserMinimalBase implements JacksonDBCollectionProvider {
+public class BsonObjectTraversingParser extends ParserMinimalBase implements
+        JacksonDBCollectionProvider {
 
     private final JacksonDBCollection dbCollection;
 
     /*
-    /**********************************************************
-    /* Configuration
-    /**********************************************************
+     * /********************************************************** /*
+     * Configuration /**********************************************************
      */
 
     protected ObjectCodec objectCodec;
@@ -55,36 +66,35 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     protected BsonObjectCursor nodeCursor;
 
     /*
-    /**********************************************************
-    /* State
-    /**********************************************************
+     * /********************************************************** /* State
+     * /**********************************************************
      */
 
     /**
-     * Sometimes parser needs to buffer a single look-ahead token; if so,
-     * it'll be stored here. This is currently used for handling
+     * Sometimes parser needs to buffer a single look-ahead token; if so, it'll
+     * be stored here. This is currently used for handling
      */
     protected JsonToken nextToken;
 
     /**
-     * Flag needed to handle recursion into contents of child
-     * Array/Object nodes.
+     * Flag needed to handle recursion into contents of child Array/Object
+     * nodes.
      */
     protected boolean startContainer;
 
     /**
-     * Flag that indicates whether parser is closed or not. Gets
-     * set when parser is either closed by explicit call
-     * ({@link #close}) or when end-of-input is reached.
+     * Flag that indicates whether parser is closed or not. Gets set when parser
+     * is either closed by explicit call ({@link #close}) or when end-of-input
+     * is reached.
      */
     protected boolean closed;
 
     /*
-    /**********************************************************
-    /* Life-cycle
-    /**********************************************************
+     * /********************************************************** /* Life-cycle
+     * /**********************************************************
      */
-    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, Object rootValue, ObjectCodec codec) {
+    public BsonObjectTraversingParser(JacksonDBCollection dbCollection,
+            Object rootValue, ObjectCodec codec) {
         this(dbCollection, new BasicDBObject("root", rootValue), null);
         try {
             nextToken();
@@ -95,7 +105,8 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
         }
     }
 
-    public BsonObjectTraversingParser(JacksonDBCollection dbCollection, BSONObject o, ObjectCodec codec) {
+    public BsonObjectTraversingParser(JacksonDBCollection dbCollection,
+            BSONObject o, ObjectCodec codec) {
         super(0);
         this.dbCollection = dbCollection;
         objectCodec = codec;
@@ -124,9 +135,9 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-    /**********************************************************
-    /* Closeable implementation
-    /**********************************************************
+     * /********************************************************** /* Closeable
+     * implementation
+     * /**********************************************************
      */
 
     @Override
@@ -139,9 +150,9 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-    /**********************************************************
-    /* Public API, traversal
-    /**********************************************************
+     * /********************************************************** /* Public
+     * API, traversal
+     * /**********************************************************
      */
 
     @Override
@@ -156,13 +167,14 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
             startContainer = false;
             // minor optimization: empty containers can be skipped
             if (!nodeCursor.currentHasChildren()) {
-                _currToken = (_currToken == JsonToken.START_OBJECT) ?
-                        JsonToken.END_OBJECT : JsonToken.END_ARRAY;
+                _currToken = (_currToken == JsonToken.START_OBJECT) ? JsonToken.END_OBJECT
+                        : JsonToken.END_ARRAY;
                 return _currToken;
             }
             nodeCursor = nodeCursor.iterateChildren();
             _currToken = nodeCursor.nextToken();
-            if (_currToken == JsonToken.START_OBJECT || _currToken == JsonToken.START_ARRAY) {
+            if (_currToken == JsonToken.START_OBJECT
+                    || _currToken == JsonToken.START_ARRAY) {
                 startContainer = true;
             }
             return _currToken;
@@ -175,7 +187,8 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
         // Otherwise, next entry from currentFieldName cursor
         _currToken = nodeCursor.nextToken();
         if (_currToken != null) {
-            if (_currToken == JsonToken.START_OBJECT || _currToken == JsonToken.START_ARRAY) {
+            if (_currToken == JsonToken.START_OBJECT
+                    || _currToken == JsonToken.START_ARRAY) {
                 startContainer = true;
             }
             return _currToken;
@@ -204,9 +217,9 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-    /**********************************************************
-    /* Public API, token accessors
-    /**********************************************************
+     * /********************************************************** /* Public
+     * API, token accessors
+     * /**********************************************************
      */
 
     @Override
@@ -230,9 +243,9 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-    /**********************************************************
-    /* Public API, access to textual content
-    /**********************************************************
+     * /********************************************************** /* Public
+     * API, access to textual content
+     * /**********************************************************
      */
 
     @Override
@@ -276,12 +289,12 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-    /**********************************************************
-    /* Public API, typed non-text access
-    /**********************************************************
+     * /********************************************************** /* Public
+     * API, typed non-text access
+     * /**********************************************************
      */
 
-    //public byte getByteValue() throws IOException
+    // public byte getByteValue() throws IOException
 
     @Override
     public NumberType getNumberType() throws IOException {
@@ -359,9 +372,9 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-    /**********************************************************
-    /* Public API, typed binary (base64) access
-    /**********************************************************
+     * /********************************************************** /* Public
+     * API, typed binary (base64) access
+     * /**********************************************************
      */
 
     @Override
@@ -391,10 +404,9 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
     }
 
     /*
-   /**********************************************************
-   /* Internal methods
-   /**********************************************************
-    */
+     * /********************************************************** /* Internal
+     * methods /**********************************************************
+     */
 
     protected Object currentNode() {
         if (closed || nodeCursor == null) {
@@ -403,8 +415,8 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements Jac
         return nodeCursor.currentNode();
     }
 
+    @Override
     public JacksonDBCollection getDBCollection() {
         return dbCollection;
     }
 }
-

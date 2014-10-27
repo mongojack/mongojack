@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,24 +15,6 @@
  * limitations under the License.
  */
 package org.mongojack;
-
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.*;
-
-import org.mongojack.internal.FetchableDBRef;
-import org.mongojack.internal.MongoJackModule;
-import org.mongojack.internal.query.QueryCondition;
-import org.mongojack.internal.stream.JacksonEncoderFactory;
-import org.mongojack.internal.util.IdHandler;
-import org.mongojack.internal.util.IdHandlerFactory;
-import org.mongojack.internal.JacksonCollectionKey;
-import org.mongojack.internal.object.BsonObjectGenerator;
-import org.mongojack.internal.object.BsonObjectTraversingParser;
-import org.mongojack.internal.stream.JacksonDBObject;
-import org.mongojack.internal.stream.JacksonDecoderFactory;
-import org.mongojack.internal.util.SerializationUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,15 +24,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.mongojack.internal.FetchableDBRef;
+import org.mongojack.internal.JacksonCollectionKey;
+import org.mongojack.internal.MongoJackModule;
+import org.mongojack.internal.object.BsonObjectGenerator;
+import org.mongojack.internal.object.BsonObjectTraversingParser;
+import org.mongojack.internal.query.QueryCondition;
+import org.mongojack.internal.stream.JacksonDBObject;
+import org.mongojack.internal.stream.JacksonDecoderFactory;
+import org.mongojack.internal.stream.JacksonEncoderFactory;
+import org.mongojack.internal.util.IdHandler;
+import org.mongojack.internal.util.IdHandlerFactory;
+import org.mongojack.internal.util.SerializationUtils;
+
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
+import com.mongodb.GroupCommand;
+import com.mongodb.MapReduceCommand;
+import com.mongodb.MongoException;
+import com.mongodb.QueryBuilder;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
+
 /**
- * A DBCollection that marshals/demarshals objects to/from Jackson annotated classes.  It provides a very thin wrapper
- * over an existing DBCollection.
- *
+ * A DBCollection that marshals/demarshals objects to/from Jackson annotated
+ * classes. It provides a very thin wrapper over an existing DBCollection.
+ * 
  * A JacksonDBCollection is threadsafe, with a few caveats:
- *
- *   If you pass your own ObjectMapper to it, it is not thread safe to reconfigure that ObjectMapper at all after creating it.
- *   The setWritePreference and a few other methods on JacksonDBCollection should not be called from multiple threads
- *
+ * 
+ * If you pass your own ObjectMapper to it, it is not thread safe to reconfigure
+ * that ObjectMapper at all after creating it. The setWritePreference and a few
+ * other methods on JacksonDBCollection should not be called from multiple
+ * threads
+ * 
  * @author James Roper
  * @since 1.0
  */
@@ -57,21 +70,25 @@ public class JacksonDBCollection<T, K> {
 
     public enum Feature {
         /**
-         * Deserialize objects directly from the MongoDB stream.  This is the default, as it performs the best.  If set
-         * to false, then it uses the MongoDB driver to deserialize objects to DBObjects, and then traverses those
-         * objects to do the Jackson parsing.  This may be desirable, for example, when auto hydrating of objects is
-         * enabled, because in order to hydrate objects, a second connection needs to be made to MongoDB, which has the
-         * potential to deadlock when the connection pool gets exhausted when using stream deserialization.  Using
-         * object deserialization, the hydration occurs after the connection to load the object has been returned to
-         * the pool.
+         * Deserialize objects directly from the MongoDB stream. This is the
+         * default, as it performs the best. If set to false, then it uses the
+         * MongoDB driver to deserialize objects to DBObjects, and then
+         * traverses those objects to do the Jackson parsing. This may be
+         * desirable, for example, when auto hydrating of objects is enabled,
+         * because in order to hydrate objects, a second connection needs to be
+         * made to MongoDB, which has the potential to deadlock when the
+         * connection pool gets exhausted when using stream deserialization.
+         * Using object deserialization, the hydration occurs after the
+         * connection to load the object has been returned to the pool.
          */
         USE_STREAM_DESERIALIZATION(true),
 
         /**
-         * Serialize objects directly to the MongoDB stream.  While this performs better than serializing to MongoDB
-         * DBObjects first, it has the disadvantage of not being able to generate IDs before sending objects to the
-         * server, which means WriteResult.getSavedId() getSavedObject() will not work.  Hence it is disabled by
-         * default.
+         * Serialize objects directly to the MongoDB stream. While this performs
+         * better than serializing to MongoDB DBObjects first, it has the
+         * disadvantage of not being able to generate IDs before sending objects
+         * to the server, which means WriteResult.getSavedId() getSavedObject()
+         * will not work. Hence it is disabled by default.
          */
         USE_STREAM_SERIALIZATION(false);
 
@@ -86,7 +103,8 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule.configure(new ObjectMapper());
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule
+            .configure(new ObjectMapper());
 
     private final DBCollection dbCollection;
     private final JavaType type;
@@ -100,19 +118,24 @@ public class JacksonDBCollection<T, K> {
     /**
      * Cache of referenced collections
      */
-    private final Map<JacksonCollectionKey, JacksonDBCollection> referencedCollectionCache = new ConcurrentHashMap<JacksonCollectionKey, JacksonDBCollection>();
+    private final Map<JacksonCollectionKey, JacksonDBCollection> referencedCollectionCache =
+            new ConcurrentHashMap<JacksonCollectionKey, JacksonDBCollection>();
 
-    protected JacksonDBCollection(DBCollection dbCollection, JavaType type, JavaType keyType, ObjectMapper objectMapper,
-                                  Class<?> view, Map<Feature, Boolean> features) {
+    protected JacksonDBCollection(DBCollection dbCollection, JavaType type,
+            JavaType keyType, ObjectMapper objectMapper, Class<?> view,
+            Map<Feature, Boolean> features) {
         this.dbCollection = dbCollection;
         this.type = type;
         this.keyType = keyType;
         this.objectMapper = objectMapper;
         this.view = view;
-        this.decoderFactory = new JacksonDecoderFactory<T>(this, objectMapper, type);
-        // We want to find how we should serialize the ID, in case it is passed to us
+        this.decoderFactory = new JacksonDecoderFactory<T>(this, objectMapper,
+                type);
+        // We want to find how we should serialize the ID, in case it is passed
+        // to us
         try {
-            this.idHandler = (IdHandler) IdHandlerFactory.getIdHandlerForProperty(objectMapper, type);
+            this.idHandler = (IdHandler) IdHandlerFactory
+                    .getIdHandlerForProperty(objectMapper, type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException("Unable to introspect class", e);
         }
@@ -121,73 +144,103 @@ public class JacksonDBCollection<T, K> {
         } else {
             this.features = features;
         }
-        dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(objectMapper, this));
+        dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(
+                objectMapper, this));
     }
 
     /**
      * Wraps a DB collection in a JacksonDBCollection
-     *
-     * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialize to
+     * 
+     * @param dbCollection
+     *            The DB collection to wrap
+     * @param type
+     *            The type of objects to deserialize to
      * @return The wrapped collection
      */
-    public static <T> JacksonDBCollection<T, Object> wrap(DBCollection dbCollection, Class<T> type) {
-        return new JacksonDBCollection<T, Object>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
-                DEFAULT_OBJECT_MAPPER.constructType(Object.class), DEFAULT_OBJECT_MAPPER, null, null);
+    public static <T> JacksonDBCollection<T, Object> wrap(
+            DBCollection dbCollection, Class<T> type) {
+        return new JacksonDBCollection<T, Object>(dbCollection,
+                DEFAULT_OBJECT_MAPPER.constructType(type),
+                DEFAULT_OBJECT_MAPPER.constructType(Object.class),
+                DEFAULT_OBJECT_MAPPER, null, null);
     }
 
     /**
      * Wraps a DB collection in a JacksonDBCollection
-     *
-     * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialize to
-     * @param keyType      The type of the objects key
+     * 
+     * @param dbCollection
+     *            The DB collection to wrap
+     * @param type
+     *            The type of objects to deserialize to
+     * @param keyType
+     *            The type of the objects key
      * @return The wrapped collection
      */
-    public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType) {
-        return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
-                DEFAULT_OBJECT_MAPPER.constructType(keyType), DEFAULT_OBJECT_MAPPER, null, null);
+    public static <T, K> JacksonDBCollection<T, K> wrap(
+            DBCollection dbCollection, Class<T> type, Class<K> keyType) {
+        return new JacksonDBCollection<T, K>(dbCollection,
+                DEFAULT_OBJECT_MAPPER.constructType(type),
+                DEFAULT_OBJECT_MAPPER.constructType(keyType),
+                DEFAULT_OBJECT_MAPPER, null, null);
     }
 
     /**
      * Wraps a DB collection in a JacksonDBCollection
-     *
-     * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialize to
-     * @param keyType      The type of the objects key
-     * @param view         The JSON view to use for serialization
+     * 
+     * @param dbCollection
+     *            The DB collection to wrap
+     * @param type
+     *            The type of objects to deserialize to
+     * @param keyType
+     *            The type of the objects key
+     * @param view
+     *            The JSON view to use for serialization
      * @return The wrapped collection
      */
-    public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, Class<?> view) {
-      ObjectMapper objectMapper = new ObjectMapper();
-      MongoJackModule.configure(objectMapper);
-      return new JacksonDBCollection<T, K>(dbCollection, DEFAULT_OBJECT_MAPPER.constructType(type),
-              DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper, view, null);
+    public static <T, K> JacksonDBCollection<T, K> wrap(
+            DBCollection dbCollection, Class<T> type, Class<K> keyType,
+            Class<?> view) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        MongoJackModule.configure(objectMapper);
+        return new JacksonDBCollection<T, K>(dbCollection,
+                DEFAULT_OBJECT_MAPPER.constructType(type),
+                DEFAULT_OBJECT_MAPPER.constructType(keyType), objectMapper,
+                view, null);
     }
 
     /**
-     * Wraps a DB collection in a JacksonDBCollection, using the given object mapper.
-     *
-     * JacksonDBCollection requires a specially configured object mapper to work.  It does not automatically configure
-     * the object mapper passed into this method, because the same object mapper might be passed into multiple calls to
-     * this method.  Consequently, it is up to the caller to ensure that the object mapper has been configured for use
-     * by JacksonDBCollection.  This can be done by passing the object mapper to
-     * {@link org.mongojack.internal.MongoJackModule#configure(com.fasterxml.jackson.databind.ObjectMapper)}.
-     *
-     * @param dbCollection The DB collection to wrap
-     * @param type         The type of objects to deserialize to
-     * @param objectMapper The ObjectMapper to configure.
+     * Wraps a DB collection in a JacksonDBCollection, using the given object
+     * mapper.
+     * 
+     * JacksonDBCollection requires a specially configured object mapper to
+     * work. It does not automatically configure the object mapper passed into
+     * this method, because the same object mapper might be passed into multiple
+     * calls to this method. Consequently, it is up to the caller to ensure that
+     * the object mapper has been configured for use by JacksonDBCollection.
+     * This can be done by passing the object mapper to
+     * {@link org.mongojack.internal.MongoJackModule#configure(com.fasterxml.jackson.databind.ObjectMapper)} .
+     * 
+     * @param dbCollection
+     *            The DB collection to wrap
+     * @param type
+     *            The type of objects to deserialize to
+     * @param objectMapper
+     *            The ObjectMapper to configure.
      * @return The wrapped collection
      */
-    public static <T, K> JacksonDBCollection<T, K> wrap(DBCollection dbCollection, Class<T> type, Class<K> keyType, ObjectMapper objectMapper) {
-        return new JacksonDBCollection<T, K>(dbCollection, objectMapper.constructType(type),
+    public static <T, K> JacksonDBCollection<T, K> wrap(
+            DBCollection dbCollection, Class<T> type, Class<K> keyType,
+            ObjectMapper objectMapper) {
+        return new JacksonDBCollection<T, K>(dbCollection,
+                objectMapper.constructType(type),
                 objectMapper.constructType(keyType), objectMapper, null, null);
     }
 
     /**
      * Enable the given feature
-     *
-     * @param feature The feature to enable
+     * 
+     * @param feature
+     *            The feature to enable
      * @return this object
      */
     public JacksonDBCollection<T, K> enable(Feature feature) {
@@ -197,8 +250,9 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Disable the given feature
-     *
-     * @param feature The feature to disable
+     * 
+     * @param feature
+     *            The feature to disable
      * @return this object
      */
     public JacksonDBCollection<T, K> disable(Feature feature) {
@@ -208,8 +262,9 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Whether the given feature is enabled
-     *
-     * @param feature The feature to check
+     * 
+     * @param feature
+     *            The feature to check
      * @return whether it is enabled
      */
     public boolean isEnabled(Feature feature) {
@@ -221,10 +276,9 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
-
     /**
      * Get the underlying db collection
-     *
+     * 
      * @return The underlying db collection
      */
     public DBCollection getDbCollection() {
@@ -232,72 +286,89 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Inserts an object into the database.
-     * if the objects _id is null, one will be generated
-     * you can get the _id that was generated by calling getSavedObject() or getSavedId() on the result
-     *
-     * @param object The object to insert
+     * Inserts an object into the database. if the objects _id is null, one will
+     * be generated you can get the _id that was generated by calling
+     * getSavedObject() or getSavedId() on the result
+     * 
+     * @param object
+     *            The object to insert
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public WriteResult<T, K> insert(T object) throws MongoException {
         DBObject dbObject = convertToDbObject(object);
-        return new WriteResult<T, K>(this, dbCollection.insert(dbObject), dbObject);
+        return new WriteResult<T, K>(this, dbCollection.insert(dbObject),
+                dbObject);
     }
 
     /**
-     * Inserts an object into the database.
-     * if the objects _id is null, one will be generated
-     * you can get the _id that was generated by calling getSavedObject() or getSavedId() on the result
-     *
-     * @param object  The object to insert
-     * @param concern the write concern
+     * Inserts an object into the database. if the objects _id is null, one will
+     * be generated you can get the _id that was generated by calling
+     * getSavedObject() or getSavedId() on the result
+     * 
+     * @param object
+     *            The object to insert
+     * @param concern
+     *            the write concern
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> insert(T object, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> insert(T object, WriteConcern concern)
+            throws MongoException {
         DBObject dbObject = convertToDbObject(object);
-        return new WriteResult<T, K>(this, dbCollection.insert(dbObject, concern), dbObject);
+        return new WriteResult<T, K>(this, dbCollection.insert(dbObject,
+                concern), dbObject);
     }
 
     /**
-     * Inserts objects into the database.
-     * if the objects _id is null, one will be generated
-     * you can get the _id that were generated by calling getSavedObjects() or getSavedIds() on the result
-     *
-     * @param objects The objects to insert
+     * Inserts objects into the database. if the objects _id is null, one will
+     * be generated you can get the _id that were generated by calling
+     * getSavedObjects() or getSavedIds() on the result
+     * 
+     * @param objects
+     *            The objects to insert
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public WriteResult<T, K> insert(T... objects) throws MongoException {
         DBObject[] dbObjects = convertToDbObjects(objects);
-        return new WriteResult<T, K>(this, dbCollection.insert(dbObjects), dbObjects);
+        return new WriteResult<T, K>(this, dbCollection.insert(dbObjects),
+                dbObjects);
     }
 
-
     /**
-     * Inserts objects into the database.
-     * if the objects _id is null, one will be generated
-     * you can get the _id that were generated by calling getSavedObjects() or getSavedIds() on the result
-     *
-     * @param objects The objects to insert
-     * @param concern the write concern
+     * Inserts objects into the database. if the objects _id is null, one will
+     * be generated you can get the _id that were generated by calling
+     * getSavedObjects() or getSavedIds() on the result
+     * 
+     * @param objects
+     *            The objects to insert
+     * @param concern
+     *            the write concern
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> insert(WriteConcern concern, T... objects) throws MongoException {
+    public WriteResult<T, K> insert(WriteConcern concern, T... objects)
+            throws MongoException {
         DBObject[] dbObjects = convertToDbObjects(objects);
-        return new WriteResult<T, K>(this, dbCollection.insert(concern, dbObjects), dbObjects);
+        return new WriteResult<T, K>(this, dbCollection.insert(concern,
+                dbObjects), dbObjects);
     }
 
     /**
-     * Inserts objects into the database.
-     * if the objects _id is null, one will be generated
-     * you can get the _id that were generated by calling getSavedObjects() or getSavedIds() on the result
-     *
-     * @param list The objects to insert
+     * Inserts objects into the database. if the objects _id is null, one will
+     * be generated you can get the _id that were generated by calling
+     * getSavedObjects() or getSavedIds() on the result
+     * 
+     * @param list
+     *            The objects to insert
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     @SuppressWarnings({"unchecked"})
     public WriteResult<T, K> insert(List<T> list) throws MongoException {
@@ -305,616 +376,870 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Inserts objects into the database.
-     * if the objects _id is null, one will be generated
-     * you can get the _id that were generated by calling getSavedObjects() or getSavedIds() on the result
-     *
-     * @param list    The objects to insert
-     * @param concern the write concern
+     * Inserts objects into the database. if the objects _id is null, one will
+     * be generated you can get the _id that were generated by calling
+     * getSavedObjects() or getSavedIds() on the result
+     * 
+     * @param list
+     *            The objects to insert
+     * @param concern
+     *            the write concern
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     @SuppressWarnings({"unchecked"})
-    public WriteResult<T, K> insert(List<T> list, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> insert(List<T> list, WriteConcern concern)
+            throws MongoException {
         return insert(concern, list.toArray((T[]) new Object[list.size()]));
     }
 
     /**
      * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param object  object with which to update <tt>query</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param multi
+     *            if the update should be applied to all objects matching (db
+     *            version 1.1.3 and above). An object will not be inserted if it
+     *            does not exist in the collection and upsert=true and
+     *            multi=true. See <a
+     *            href="http://www.mongodb.org/display/DOCS/Atomic+Operations"
+     *            >http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * @param concern
+     *            the write concern
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.update(serializeFields(query), object, upsert, multi, concern));
-    }
-
-    /**
-     * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param update  update with which to update <tt>query</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @return The write result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.update(serializeQuery(query),
-                update.serialiseAndGet(objectMapper, type), upsert, multi, concern));
-    }
-
-    /**
-     * Performs an update operation.
-     *
-     * @param query   search query for old object to update
-     * @param object  object with which to update <tt>query</tt>
-     * @param upsert  if the database should create the element if it does not exist
-     * @param multi   if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *                not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *                See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
-     * @param concern the write concern
-     * @return The write result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(DBQuery.Query query, T object, boolean upsert, boolean multi, WriteConcern concern) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.update(serializeQuery(query),
-                convertToBasicDbObject(object), upsert, multi, concern));
-    }
-
-    /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)} with default WriteConcern.
-     *
-     * @param query  search query for old object to update
-     * @param object object with which to update <tt>q</tt>
-     * @param upsert if the database should create the element if it does not exist
-     * @param multi  if the update should be applied to all objects matching (db version 1.1.3 and above)
-     *               See http://www.mongodb.org/display/DOCS/Atomic+Operations
-     * @return The result
-     * @throws MongoException If an error occurred
-     */
-    public WriteResult<T, K> update(DBObject query, DBObject object, boolean upsert, boolean multi)
+    public WriteResult<T, K> update(DBObject query, DBObject object,
+            boolean upsert, boolean multi, WriteConcern concern)
             throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(
+                serializeFields(query), object, upsert, multi, concern));
+    }
+
+    /**
+     * Performs an update operation.
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param update
+     *            update with which to update <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param multi
+     *            if the update should be applied to all objects matching (db
+     *            version 1.1.3 and above). An object will not be inserted if it
+     *            does not exist in the collection and upsert=true and
+     *            multi=true. See <a
+     *            href="http://www.mongodb.org/display/DOCS/Atomic+Operations"
+     *            >http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * @param concern
+     *            the write concern
+     * @return The write result
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public WriteResult<T, K> update(DBQuery.Query query,
+            DBUpdate.Builder update, boolean upsert, boolean multi,
+            WriteConcern concern) throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(
+                serializeQuery(query),
+                update.serialiseAndGet(objectMapper, type), upsert, multi,
+                concern));
+    }
+
+    /**
+     * Performs an update operation.
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param multi
+     *            if the update should be applied to all objects matching (db
+     *            version 1.1.3 and above). An object will not be inserted if it
+     *            does not exist in the collection and upsert=true and
+     *            multi=true. See <a
+     *            href="http://www.mongodb.org/display/DOCS/Atomic+Operations"
+     *            >http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * @param concern
+     *            the write concern
+     * @return The write result
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public WriteResult<T, K> update(DBQuery.Query query, T object,
+            boolean upsert, boolean multi, WriteConcern concern)
+            throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.update(
+                serializeQuery(query), convertToBasicDbObject(object), upsert,
+                multi, concern));
+    }
+
+    /**
+     * calls
+     * {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)}
+     * with default WriteConcern.
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>q</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param multi
+     *            if the update should be applied to all objects matching (db
+     *            version 1.1.3 and above) See
+     *            http://www.mongodb.org/display/DOCS/Atomic+Operations
+     * @return The result
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public WriteResult<T, K> update(DBObject query, DBObject object,
+            boolean upsert, boolean multi) throws MongoException {
         return update(query, object, upsert, multi, getWriteConcern());
     }
 
     /**
      * Performs an update operation.
-     *
-     * @param query  search query for old object to update
-     * @param update update with which to update <tt>query</tt>
-     * @param upsert if the database should create the element if it does not exist
-     * @param multi  if the update should be applied to all objects matching (db version 1.1.3 and above). An object will
-     *               not be inserted if it does not exist in the collection and upsert=true and multi=true.
-     *               See <a href="http://www.mongodb.org/display/DOCS/Atomic+Operations">http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param update
+     *            update with which to update <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param multi
+     *            if the update should be applied to all objects matching (db
+     *            version 1.1.3 and above). An object will not be inserted if it
+     *            does not exist in the collection and upsert=true and
+     *            multi=true. See <a
+     *            href="http://www.mongodb.org/display/DOCS/Atomic+Operations"
+     *            >http://www.mongodb.org/display/DOCS/Atomic+Operations</a>
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, boolean multi) throws MongoException {
+    public WriteResult<T, K> update(DBQuery.Query query,
+            DBUpdate.Builder update, boolean upsert, boolean multi)
+            throws MongoException {
         return this.update(query, update, upsert, multi, getWriteConcern());
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)} with default WriteConcern.
-     *
-     * @param query  search query for old object to update
-     * @param object object with which to update <tt>q</tt>
-     * @param upsert if the database should create the element if it does not exist
-     * @param multi  if the update should be applied to all objects matching (db version 1.1.3 and above)
-     *               See http://www.mongodb.org/display/DOCS/Atomic+Operations
+     * calls
+     * {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean, com.mongodb.WriteConcern)}
+     * with default WriteConcern.
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>q</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param multi
+     *            if the update should be applied to all objects matching (db
+     *            version 1.1.3 and above) See
+     *            http://www.mongodb.org/display/DOCS/Atomic+Operations
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> update(DBQuery.Query query, T object, boolean upsert, boolean multi)
-            throws MongoException {
+    public WriteResult<T, K> update(DBQuery.Query query, T object,
+            boolean upsert, boolean multi) throws MongoException {
         return update(query, object, upsert, multi, getWriteConcern());
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=false
-     *
-     * @param query  search query for old object to update
-     * @param object object with which to update <tt>query</tt>
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
+     * and multi=false
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> update(DBObject query, DBObject object) throws MongoException {
+    public WriteResult<T, K> update(DBObject query, DBObject object)
+            throws MongoException {
         return update(query, object, false, false);
     }
 
     /**
      * Performs an update operation.
-     *
-     * @param query  search query for old object to update
-     * @param update update with which to update <tt>query</tt>
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param update
+     *            update with which to update <tt>query</tt>
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update) throws MongoException {
+    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update)
+            throws MongoException {
         return this.update(query, update, false, false);
     }
 
-
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=false
-     *
-     * @param query  search query for old object to update
-     * @param object object with which to update <tt>query</tt>
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
+     * and multi=false
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> update(DBQuery.Query query, T object) throws MongoException {
+    public WriteResult<T, K> update(DBQuery.Query query, T object)
+            throws MongoException {
         return update(query, object, false, false);
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=false
-     *
-     * @param id     the id of the object to update
-     * @param object object with which to update <tt>query</tt>
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
+     * and multi=false
+     * 
+     * @param id
+     *            the id of the object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public WriteResult<T, K> updateById(K id, T object) throws MongoException {
-        return update(createIdQuery(id), convertToDbObject(object), false, false);
+        return update(createIdQuery(id), convertToDbObject(object), false,
+                false);
     }
 
     /**
      * Performs an update operation.
-     *
-     * @param id     The id of the document to update
-     * @param update update with which to update <tt>query</tt>
+     * 
+     * @param id
+     *            The id of the document to update
+     * @param update
+     *            update with which to update <tt>query</tt>
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> updateById(K id, DBUpdate.Builder update) throws MongoException {
-        return this.update(createIdQuery(id), update.serialiseAndGet(objectMapper, type));
+    public WriteResult<T, K> updateById(K id, DBUpdate.Builder update)
+            throws MongoException {
+        return this.update(createIdQuery(id),
+                update.serialiseAndGet(objectMapper, type));
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
-     *
-     * @param query  search query for old object to update
-     * @param object object with which to update <tt>query</tt>
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
+     * and multi=true
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> updateMulti(DBObject query, DBObject object) throws MongoException {
+    public WriteResult<T, K> updateMulti(DBObject query, DBObject object)
+            throws MongoException {
         return update(query, object, false, true);
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
-     *
-     * @param query  search query for old object to update
-     * @param update update with which to update <tt>query</tt>
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
+     * and multi=true
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param update
+     *            update with which to update <tt>query</tt>
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> updateMulti(DBQuery.Query query, DBUpdate.Builder update) throws MongoException {
+    public WriteResult<T, K> updateMulti(DBQuery.Query query,
+            DBUpdate.Builder update) throws MongoException {
         return update(query, update, false, true);
     }
 
     /**
-     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
-     *
-     * @param query  search query for old object to update
-     * @param object object with which to update <tt>query</tt>
+     * calls {@link DBCollection#update(com.mongodb.DBObject, com.mongodb.DBObject, boolean, boolean)} with upsert=false
+     * and multi=true
+     * 
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> updateMulti(DBQuery.Query query, T object) throws MongoException {
+    public WriteResult<T, K> updateMulti(DBQuery.Query query, T object)
+            throws MongoException {
         return update(query, object, false, true);
     }
 
-
     /**
      * Removes objects from the database collection.
-     *
-     * @param query   the object that documents to be removed must match
-     * @param concern WriteConcern for this operation
+     * 
+     * @param query
+     *            the object that documents to be removed must match
+     * @param concern
+     *            WriteConcern for this operation
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> remove(DBObject query, WriteConcern concern) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(serializeFields(query), concern));
+    public WriteResult<T, K> remove(DBObject query, WriteConcern concern)
+            throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(
+                serializeFields(query), concern));
     }
 
     /**
      * Removes objects from the database collection.
-     *
-     * @param query  the query
-     * @param concern WriteConcern for this operation
+     * 
+     * @param query
+     *            the query
+     * @param concern
+     *            WriteConcern for this operation
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> remove(DBQuery.Query query, WriteConcern concern) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(serializeQuery(query), concern));
+    public WriteResult<T, K> remove(DBQuery.Query query, WriteConcern concern)
+            throws MongoException {
+        return new WriteResult<T, K>(this, dbCollection.remove(
+                serializeQuery(query), concern));
     }
 
     /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
-     *
-     * @param query the query that documents to be removed must match
+     * 
+     * @param query
+     *            the query that documents to be removed must match
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public WriteResult<T, K> remove(DBObject query) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(serializeFields(query)));
+        return new WriteResult<T, K>(this,
+                dbCollection.remove(serializeFields(query)));
     }
 
     /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
-     *
-     * @param query the query
+     * 
+     * @param query
+     *            the query
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public WriteResult<T, K> remove(DBQuery.Query query) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(serializeQuery(query)));
+        return new WriteResult<T, K>(this,
+                dbCollection.remove(serializeQuery(query)));
     }
 
     /**
      * calls {@link DBCollection#remove(com.mongodb.DBObject, com.mongodb.WriteConcern)} with the default WriteConcern
-     *
-     * @param id the id of the document to remove
+     * 
+     * @param id
+     *            the id of the document to remove
      * @return The write result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public WriteResult<T, K> removeById(K id) throws MongoException {
-        return new WriteResult<T, K>(this, dbCollection.remove(createIdQuery(id)));
+        return new WriteResult<T, K>(this,
+                dbCollection.remove(createIdQuery(id)));
     }
 
     /**
      * Finds the first document in the query and updates it.
-     *
-     * @param query     query to match
-     * @param fields    fields to be returned
-     * @param sort      sort to apply before picking first document
-     * @param remove    if true, document found will be removed
-     * @param update    update to apply
-     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
-     * @param upsert    do upsert (insert if document not present)
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to be returned
+     * @param sort
+     *            sort to apply before picking first document
+     * @param remove
+     *            if true, document found will be removed
+     * @param update
+     *            update to apply
+     * @param returnNew
+     *            if true, the updated document is returned, otherwise the old
+     *            document is returned (or it would be lost forever)
+     * @param upsert
+     *            do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBObject update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, update, returnNew, upsert));
+    public T findAndModify(DBObject query, DBObject fields, DBObject sort,
+            boolean remove, DBObject update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeFields(query), fields, sort, remove, update,
+                returnNew, upsert));
     }
 
     /**
      * Finds the first document in the query and updates it.
-     *
-     * @param query     query to match
-     * @param fields    fields to be returned
-     * @param sort      sort to apply before picking first document
-     * @param remove    if true, document found will be removed
-     * @param update    update to apply
-     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
-     * @param upsert    do upsert (insert if document not present)
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to be returned
+     * @param sort
+     *            sort to apply before picking first document
+     * @param remove
+     *            if true, document found will be removed
+     * @param update
+     *            update to apply
+     * @param returnNew
+     *            if true, the updated document is returned, otherwise the old
+     *            document is returned (or it would be lost forever)
+     * @param upsert
+     *            do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, T update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, convertToBasicDbObject(update), returnNew, upsert));
+    public T findAndModify(DBObject query, DBObject fields, DBObject sort,
+            boolean remove, T update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeFields(query), fields, sort, remove,
+                convertToBasicDbObject(update), returnNew, upsert));
     }
 
     /**
      * Finds the first document in the query and updates it.
-     *
-     * @param query     query to match
-     * @param fields    fields to be returned
-     * @param sort      sort to apply before picking first document
-     * @param remove    if true, document found will be removed
-     * @param update    update to apply
-     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
-     * @param upsert    do upsert (insert if document not present)
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to be returned
+     * @param sort
+     *            sort to apply before picking first document
+     * @param remove
+     *            if true, document found will be removed
+     * @param update
+     *            update to apply
+     * @param returnNew
+     *            if true, the updated document is returned, otherwise the old
+     *            document is returned (or it would be lost forever)
+     * @param upsert
+     *            do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort, boolean remove, T update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeQuery(query), fields, sort, remove, convertToBasicDbObject(update), returnNew, upsert));
+    public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort,
+            boolean remove, T update, boolean returnNew, boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeQuery(query), fields, sort, remove,
+                convertToBasicDbObject(update), returnNew, upsert));
     }
 
     /**
      * Finds the first document in the query and updates it.
-     *
-     * @param query     query to match
-     * @param fields    fields to be returned
-     * @param sort      sort to apply before picking first document
-     * @param remove    if true, document found will be removed
-     * @param update    update to apply
-     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
-     * @param upsert    do upsert (insert if document not present)
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to be returned
+     * @param sort
+     *            sort to apply before picking first document
+     * @param remove
+     *            if true, document found will be removed
+     * @param update
+     *            update to apply
+     * @param returnNew
+     *            if true, the updated document is returned, otherwise the old
+     *            document is returned (or it would be lost forever)
+     * @param upsert
+     *            do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort, boolean remove, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeQuery(query), fields, sort, remove, update.serialiseAndGet(objectMapper, type), returnNew, upsert));
+    public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort,
+            boolean remove, DBUpdate.Builder update, boolean returnNew,
+            boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeQuery(query), fields, sort, remove,
+                update.serialiseAndGet(objectMapper, type), returnNew, upsert));
     }
 
     /**
      * Finds the first document in the query and updates it.
-     *
-     * @param query     query to match
-     * @param fields    fields to be returned
-     * @param sort      sort to apply before picking first document
-     * @param remove    if true, document found will be removed
-     * @param update    update to apply
-     * @param returnNew if true, the updated document is returned, otherwise the old document is returned (or it would be lost forever)
-     * @param upsert    do upsert (insert if document not present)
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to be returned
+     * @param sort
+     *            sort to apply before picking first document
+     * @param remove
+     *            if true, document found will be removed
+     * @param update
+     *            update to apply
+     * @param returnNew
+     *            if true, the updated document is returned, otherwise the old
+     *            document is returned (or it would be lost forever)
+     * @param upsert
+     *            do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(DBObject query, DBObject fields, DBObject sort, boolean remove, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, update.serialiseAndGet(objectMapper, type), returnNew, upsert));
+    public T findAndModify(DBObject query, DBObject fields, DBObject sort,
+            boolean remove, DBUpdate.Builder update, boolean returnNew,
+            boolean upsert) {
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeFields(query), fields, sort, remove,
+                update.serialiseAndGet(objectMapper, type), returnNew, upsert));
     }
 
-
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, remove=false, returnNew=false, upsert=false
-     *
-     * @param query  The query
-     * @param sort   The sort
-     * @param update The update to apply
+     * 
+     * @param query
+     *            The query
+     * @param sort
+     *            The sort
+     * @param update
+     *            The update to apply
      * @return the old object
      */
     public T findAndModify(DBObject query, DBObject sort, DBObject update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
-    
+
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, remove=false, returnNew=false, upsert=false
-     *
-     * @param query  The query
-     * @param sort   The sort
-     * @param update The update to apply
+     * 
+     * @param query
+     *            The query
+     * @param sort
+     *            The sort
+     * @param update
+     *            The update to apply
      * @return the old object
      */
-    public T findAndModify(DBObject query, DBObject sort, DBUpdate.Builder update) {
+    public T findAndModify(DBObject query, DBObject sort,
+            DBUpdate.Builder update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
 
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, remove=false, returnNew=false, upsert=false
-     *
-     * @param query  The query
-     * @param sort   The sort
-     * @param update The update to apply
+     * 
+     * @param query
+     *            The query
+     * @param sort
+     *            The sort
+     * @param update
+     *            The update to apply
      * @return the old object
      */
-    public T findAndModify(DBQuery.Query query, DBObject sort, DBUpdate.Builder update) {
+    public T findAndModify(DBQuery.Query query, DBObject sort,
+            DBUpdate.Builder update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
 
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
-     *
-     * @param query  The query
-     * @param update The update to apply
+     * 
+     * @param query
+     *            The query
+     * @param update
+     *            The update to apply
      * @return the old object
      */
     public T findAndModify(DBObject query, DBObject update) {
         return findAndModify(query, null, null, false, update, false, false);
     }
-    
+
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
      * 
      * @param query
      * @param update
      * @return
      */
-    public T findAndModify(DBObject query, DBUpdate.Builder update){
-    	return findAndModify(query, null, null, false, update, false, false);
-    }
-
-    /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
-     * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
-     *
-     * @param query
-     * @param update
-     * @return
-     */
-    public T findAndModify(DBQuery.Query query, DBUpdate.Builder update){
+    public T findAndModify(DBObject query, DBUpdate.Builder update) {
         return findAndModify(query, null, null, false, update, false, false);
     }
 
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
-     * with fields=null, sort=null, remove=true, returnNew=false, upsert=false
-     *
-     * @param query The query
-     * @return the removed object
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, sort=null, remove=false, returnNew=false, upsert=false
+     * 
+     * @param query
+     * @param update
+     * @return
      */
-    public T findAndRemove(DBObject query) {
-        return findAndModify(query, null, null, true, new BasicDBObject(), false, false); // Alibi DBObject due ambiguous method call
+    public T findAndModify(DBQuery.Query query, DBUpdate.Builder update) {
+        return findAndModify(query, null, null, false, update, false, false);
     }
 
     /**
-     * calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
      * with fields=null, sort=null, remove=true, returnNew=false, upsert=false
-     *
-     * @param query The query
+     * 
+     * @param query
+     *            The query
+     * @return the removed object
+     */
+    public T findAndRemove(DBObject query) {
+        return findAndModify(query, null, null, true, new BasicDBObject(),
+                false, false); // Alibi DBObject due ambiguous method call
+    }
+
+    /**
+     * calls
+     * {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean, com.mongodb.DBObject, boolean, boolean)}
+     * with fields=null, sort=null, remove=true, returnNew=false, upsert=false
+     * 
+     * @param query
+     *            The query
      * @return the removed object
      */
     public T findAndRemove(DBQuery.Query query) {
-        return findAndModify(serializeQuery(query), null, null, true, new BasicDBObject(), false, false); // Alibi DBObject due ambiguous method call
+        return findAndModify(serializeQuery(query), null, null, true,
+                new BasicDBObject(), false, false); // Alibi DBObject due
+                                                    // ambiguous method call
     }
 
     /**
      * calls {@link DBCollection#createIndex(com.mongodb.DBObject, com.mongodb.DBObject)} with default index options
-     *
-     * @param keys an object with a key set of the fields desired for the index
-     * @throws MongoException If an error occurred
+     * 
+     * @param keys
+     *            an object with a key set of the fields desired for the index
+     * @throws MongoException
+     *             If an error occurred
      */
     public final void createIndex(final DBObject keys) throws MongoException {
         dbCollection.createIndex(keys);
     }
 
     /**
-     * Forces creation of an index on a set of fields, if one does not already exist.
-     *
-     * @param keys    The keys to index
-     * @param options The options
-     * @throws MongoException If an error occurred
+     * Forces creation of an index on a set of fields, if one does not already
+     * exist.
+     * 
+     * @param keys
+     *            The keys to index
+     * @param options
+     *            The options
+     * @throws MongoException
+     *             If an error occurred
      */
-    public void createIndex(DBObject keys, DBObject options) throws MongoException {
+    public void createIndex(DBObject keys, DBObject options)
+            throws MongoException {
         dbCollection.createIndex(keys, options);
     }
 
     /**
-     * Creates an ascending index on a field with default options, if one does not already exist.
-     *
-     * @param name name of field to index on
+     * Creates an ascending index on a field with default options, if one does
+     * not already exist.
+     * 
+     * @param name
+     *            name of field to index on
      */
+    @Deprecated
     public final void ensureIndex(final String name) {
         ensureIndex(new BasicDBObject(name, 1));
     }
 
     /**
      * calls {@link DBCollection#ensureIndex(com.mongodb.DBObject, com.mongodb.DBObject)} with default options
-     *
-     * @param keys an object with a key set of the fields desired for the index
-     * @throws MongoException If an error occurred
+     * 
+     * @param keys
+     *            an object with a key set of the fields desired for the index
+     * @throws MongoException
+     *             If an error occurred
      */
+    @Deprecated
     public final void ensureIndex(final DBObject keys) throws MongoException {
         dbCollection.ensureIndex(keys);
     }
 
     /**
      * calls {@link DBCollection#ensureIndex(com.mongodb.DBObject, java.lang.String, boolean)} with unique=false
-     *
-     * @param keys fields to use for index
-     * @param name an identifier for the index
-     * @throws MongoException If an error occurred
+     * 
+     * @param keys
+     *            fields to use for index
+     * @param name
+     *            an identifier for the index
+     * @throws MongoException
+     *             If an error occurred
      */
+    @Deprecated
     public void ensureIndex(DBObject keys, String name) throws MongoException {
         ensureIndex(keys, name, false);
     }
 
     /**
-     * Ensures an index on this collection (that is, the index will be created if it does not exist).
-     *
-     * @param keys   fields to use for index
-     * @param name   an identifier for the index. If null or empty, the default name will be used.
-     * @param unique if the index should be unique
-     * @throws MongoException If an error occurred
+     * Ensures an index on this collection (that is, the index will be created
+     * if it does not exist).
+     * 
+     * @param keys
+     *            fields to use for index
+     * @param name
+     *            an identifier for the index. If null or empty, the default
+     *            name will be used.
+     * @param unique
+     *            if the index should be unique
+     * @throws MongoException
+     *             If an error occurred
      */
-    public void ensureIndex(DBObject keys, String name, boolean unique) throws MongoException {
+    @Deprecated
+    public void ensureIndex(DBObject keys, String name, boolean unique)
+            throws MongoException {
         dbCollection.ensureIndex(keys, name, unique);
     }
 
     /**
      * Creates an index on a set of fields, if one does not already exist.
-     *
-     * @param keys      an object with a key set of the fields desired for the index
-     * @param optionsIN options for the index (name, unique, etc)
-     * @throws MongoException If an error occurred
+     * 
+     * @param keys
+     *            an object with a key set of the fields desired for the index
+     * @param optionsIN
+     *            options for the index (name, unique, etc)
+     * @throws MongoException
+     *             If an error occurred
      */
-    public void ensureIndex(final DBObject keys, final DBObject optionsIN) throws MongoException {
+    @Deprecated
+    public void ensureIndex(final DBObject keys, final DBObject optionsIN)
+            throws MongoException {
         dbCollection.ensureIndex(keys, optionsIN);
     }
 
     /**
      * Clears all indices that have not yet been applied to this collection.
      */
+    @Deprecated
     public void resetIndexCache() {
         dbCollection.resetIndexCache();
     }
 
     /**
      * Set hint fields for this collection (to optimize queries).
-     *
-     * @param lst a list of <code>DBObject</code>s to be used as hints
+     * 
+     * @param lst
+     *            a list of <code>DBObject</code>s to be used as hints
      */
     public void setHintFields(List<DBObject> lst) {
         dbCollection.setHintFields(lst);
     }
 
-
     /**
      * Queries for an object in this collection.
-     *
-     * @param query object for which to search
+     * 
+     * @param query
+     *            object for which to search
      * @return an iterator over the results
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public org.mongojack.DBCursor<T> find(DBObject query) throws MongoException {
-        return new org.mongojack.DBCursor<T>(this, dbCollection.find(serializeFields(query)));
+        return new org.mongojack.DBCursor<T>(this,
+                dbCollection.find(serializeFields(query)));
     }
 
     /**
      * Queries for an object in this collection.
-     *
-     * @param query object for which to search
+     * 
+     * @param query
+     *            object for which to search
      * @return an iterator over the results
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public org.mongojack.DBCursor<T> find(DBQuery.Query query) throws MongoException {
-        return new org.mongojack.DBCursor<T>(this, dbCollection.find(serializeQuery(query)));
+    public org.mongojack.DBCursor<T> find(DBQuery.Query query)
+            throws MongoException {
+        return new org.mongojack.DBCursor<T>(this,
+                dbCollection.find(serializeQuery(query)));
     }
 
     /**
      * Queries for an object in this collection.
      * <p/>
      * <p>
-     * An empty DBObject will match every document in the collection.
-     * Regardless of fields specified, the _id fields are always returned.
+     * An empty DBObject will match every document in the collection. Regardless of fields specified, the _id fields are
+     * always returned.
      * </p>
      * <p>
-     * An example that returns the "x" and "_id" fields for every document
-     * in the collection that has an "x" field:
+     * An example that returns the "x" and "_id" fields for every document in the collection that has an "x" field:
      * </p>
-     * <blockquote><pre>
-     * BasicDBObject keys = new BasicDBObject();
-     * keys.put("x", 1);
-     * <p/>
-     * DBCursor cursor = collection.find(new BasicDBObject(), keys);
-     * </pre></blockquote>
-     *
-     * @param query object for which to search
-     * @param keys  fields to return
+     * <blockquote>
+     * 
+     * <pre>
+	 * BasicDBObject keys = new BasicDBObject();
+	 * keys.put("x", 1);
+	 * <p/>
+	 * DBCursor cursor = collection.find(new BasicDBObject(), keys);
+	 * </pre>
+     * 
+     * </blockquote>
+     * 
+     * @param query
+     *            object for which to search
+     * @param keys
+     *            fields to return
      * @return a cursor to iterate over results
      */
     public final org.mongojack.DBCursor<T> find(DBObject query, DBObject keys) {
-        return new org.mongojack.DBCursor<T>(this, dbCollection.find(serializeFields(query), keys));
+        return new org.mongojack.DBCursor<T>(this, dbCollection.find(
+                serializeFields(query), keys));
     }
 
     /**
      * Queries for an object in this collection.
      * <p/>
      * <p>
-     * An empty DBObject will match every document in the collection.
-     * Regardless of fields specified, the _id fields are always returned.
+     * An empty DBObject will match every document in the collection. Regardless of fields specified, the _id fields are
+     * always returned.
      * </p>
-     * To keys object should have non null values for every key that you want to return
-     *
-     * @param query object for which to search
-     * @param keys  fields to return
+     * To keys object should have non null values for every key that you want to
+     * return
+     * 
+     * @param query
+     *            object for which to search
+     * @param keys
+     *            fields to return
      * @return a cursor to iterate over results
      */
-    public final org.mongojack.DBCursor<T> find(DBQuery.Query query, DBObject keys) {
-        return new org.mongojack.DBCursor<T>(this, dbCollection.find(serializeQuery(query), keys));
+    public final org.mongojack.DBCursor<T> find(DBQuery.Query query,
+            DBObject keys) {
+        return new org.mongojack.DBCursor<T>(this, dbCollection.find(
+                serializeQuery(query), keys));
     }
-
 
     /**
      * Queries for all objects in this collection.
-     *
+     * 
      * @return a cursor which will iterate over every object
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public final org.mongojack.DBCursor<T> find() throws MongoException {
         return new org.mongojack.DBCursor<T>(this, dbCollection.find());
@@ -922,9 +1247,10 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection.
-     *
+     * 
      * @return the object found, or <code>null</code> if the collection is empty
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public T findOne() throws MongoException {
         return findOne(new BasicDBObject());
@@ -932,10 +1258,12 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Find an object by the given id
-     *
-     * @param id The id
+     * 
+     * @param id
+     *            The id
      * @return The object
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public T findOneById(K id) throws MongoException {
         return findOneById(id, (DBObject) null);
@@ -943,10 +1271,12 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Find an object by the given id
-     *
-     * @param id The id
+     * 
+     * @param id
+     *            The id
      * @return The object
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public T findOneById(K id, DBObject fields) throws MongoException {
         return findOne(createIdQuery(id), fields);
@@ -954,10 +1284,12 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Find an object by the given id
-     *
-     * @param id The id
+     * 
+     * @param id
+     *            The id
      * @return The object
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public T findOneById(K id, T fields) throws MongoException {
         return findOneById(id, convertToBasicDbObject(fields));
@@ -965,10 +1297,12 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection matching the query.
-     *
-     * @param query the query object
+     * 
+     * @param query
+     *            the query object
      * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public T findOne(DBObject query) throws MongoException {
         return findOne(query, null);
@@ -976,10 +1310,12 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection matching the query.
-     *
-     * @param query the query object
+     * 
+     * @param query
+     *            the query object
      * @return the object found, or <code>null</code> if no such object exists
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public T findOne(DBQuery.Query query) throws MongoException {
         return findOne(query, null);
@@ -987,9 +1323,11 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection matching the query.
-     *
-     * @param query  the query object
-     * @param fields the fields to return
+     * 
+     * @param query
+     *            the query object
+     * @param fields
+     *            the fields to return
      * @return the object found, or <code>null</code> if no such object exists
      */
     public T findOne(DBObject query, DBObject fields) {
@@ -998,9 +1336,11 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection matching the query.
-     *
-     * @param query  the query object
-     * @param fields an object for which every non null field will be returned
+     * 
+     * @param query
+     *            the query object
+     * @param fields
+     *            an object for which every non null field will be returned
      * @return the object found, or <code>null</code> if no such object exists
      */
     public T findOne(DBQuery.Query query, DBObject fields) {
@@ -1009,14 +1349,18 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection matching the query.
-     *
-     * @param query    the query object
-     * @param fields   fields to return
-     * @param readPref The read preference
+     * 
+     * @param query
+     *            the query object
+     * @param fields
+     *            fields to return
+     * @param readPref
+     *            The read preference
      * @return the object found, or <code>null</code> if no such object exists
      */
     public T findOne(DBObject query, DBObject fields, ReadPreference readPref) {
-        org.mongojack.DBCursor<T> cursor = find(query, fields).setReadPreference(readPref);
+        org.mongojack.DBCursor<T> cursor = find(query, fields)
+                .setReadPreference(readPref);
         if (cursor.hasNext()) {
             return cursor.next();
         } else {
@@ -1026,14 +1370,19 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns a single object from this collection matching the query.
-     *
-     * @param query    the query object
-     * @param fields   an object for which every non null field will be returned
-     * @param readPref The read preferences
+     * 
+     * @param query
+     *            the query object
+     * @param fields
+     *            an object for which every non null field will be returned
+     * @param readPref
+     *            The read preferences
      * @return the object found, or <code>null</code> if no such object exists
      */
-    public T findOne(DBQuery.Query query, DBObject fields, ReadPreference readPref) {
-        org.mongojack.DBCursor<T> cursor = find(query, fields).setReadPreference(readPref);
+    public T findOne(DBQuery.Query query, DBObject fields,
+            ReadPreference readPref) {
+        org.mongojack.DBCursor<T> cursor = find(query, fields)
+                .setReadPreference(readPref);
         if (cursor.hasNext()) {
             return cursor.next();
         } else {
@@ -1042,28 +1391,37 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Fetch a collection of dbrefs.  This is more efficient than fetching one at a time.
-     *
-     * @param collection the collection to fetch
-     * @param <R>        The type of the reference
+     * Fetch a collection of dbrefs. This is more efficient than fetching one at
+     * a time.
+     * 
+     * @param collection
+     *            the collection to fetch
+     * @param <R>
+     *            The type of the reference
      * @return The collection of referenced objcets
      */
-    public <R, RK> List<R> fetch(Collection<org.mongojack.DBRef<R, RK>> collection) {
+    public <R, RK> List<R> fetch(
+            Collection<org.mongojack.DBRef<R, RK>> collection) {
         return fetch(collection, null);
     }
 
     /**
-     * Fetch a collection of dbrefs.  This is more efficient than fetching one at a time.
-     *
-     * @param collection the collection to fetch
-     * @param fields     The fields to retrieve for each of the documents
+     * Fetch a collection of dbrefs. This is more efficient than fetching one at
+     * a time.
+     * 
+     * @param collection
+     *            the collection to fetch
+     * @param fields
+     *            The fields to retrieve for each of the documents
      * @return The collection of referenced objcets
      */
-    public <R, RK> List<R> fetch(Collection<org.mongojack.DBRef<R, RK>> collection, DBObject fields) {
+    public <R, RK> List<R> fetch(
+            Collection<org.mongojack.DBRef<R, RK>> collection, DBObject fields) {
         Map<JacksonCollectionKey, List<Object>> collectionsToIds = new HashMap<JacksonCollectionKey, List<Object>>();
         for (org.mongojack.DBRef<R, RK> ref : collection) {
             if (ref instanceof FetchableDBRef) {
-                JacksonCollectionKey key = ((FetchableDBRef) ref).getCollectionKey();
+                JacksonCollectionKey key = ((FetchableDBRef) ref)
+                        .getCollectionKey();
                 List<Object> ids = collectionsToIds.get(key);
                 if (ids == null) {
                     ids = new ArrayList<Object>();
@@ -1073,9 +1431,11 @@ public class JacksonDBCollection<T, K> {
             }
         }
         List<R> results = new ArrayList<R>();
-        for (Map.Entry<JacksonCollectionKey, List<Object>> entry : collectionsToIds.entrySet()) {
-            for (R result : this.<R, RK>getReferenceCollection(entry.getKey()).find(
-                    new QueryBuilder().put("_id").in(entry.getValue()).get(), fields)) {
+        for (Map.Entry<JacksonCollectionKey, List<Object>> entry : collectionsToIds
+                .entrySet()) {
+            for (R result : this.<R, RK> getReferenceCollection(entry.getKey())
+                    .find(new QueryBuilder().put("_id").in(entry.getValue())
+                            .get(), fields)) {
                 results.add(result);
             }
         }
@@ -1084,9 +1444,10 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * calls {@link DBCollection#save(com.mongodb.DBObject, com.mongodb.WriteConcern)} with default WriteConcern
-     *
-     * @param object the object to save
-     *               will add <code>_id</code> field to jo if needed
+     * 
+     * @param object
+     *            the object to save will add <code>_id</code> field to jo if
+     *            needed
      * @return The result
      */
     public final WriteResult<T, K> save(T object) {
@@ -1094,33 +1455,41 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Saves an object to this collection (does insert or update based on the object _id).
-     *
-     * @param object  the <code>DBObject</code> to save
-     * @param concern the write concern
+     * Saves an object to this collection (does insert or update based on the
+     * object _id).
+     * 
+     * @param object
+     *            the <code>DBObject</code> to save
+     * @param concern
+     *            the write concern
      * @return The result
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public WriteResult<T, K> save(T object, WriteConcern concern) throws MongoException {
+    public WriteResult<T, K> save(T object, WriteConcern concern)
+            throws MongoException {
         DBObject dbObject = convertToDbObject(object);
-        return new WriteResult<T, K>(this, dbCollection.save(dbObject, concern), dbObject);
+        return new WriteResult<T, K>(this,
+                dbCollection.save(dbObject, concern), dbObject);
     }
 
     /**
      * Drops all indices from this collection
-     *
-     * @throws MongoException If an error occurred
+     * 
+     * @throws MongoException
+     *             If an error occurred
      */
     public void dropIndexes() throws MongoException {
         dropIndexes("*");
     }
 
-
     /**
      * Drops an index from this collection
-     *
-     * @param name the index name
-     * @throws MongoException If an error occurred
+     * 
+     * @param name
+     *            the index name
+     * @throws MongoException
+     *             If an error occurred
      */
     public void dropIndexes(String name) throws MongoException {
         dbCollection.dropIndexes(name);
@@ -1128,8 +1497,9 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Drops (deletes) this collection. Use with care.
-     *
-     * @throws MongoException If an error occurred
+     * 
+     * @throws MongoException
+     *             If an error occurred
      */
     public void drop() throws MongoException {
         dbCollection.drop();
@@ -1137,32 +1507,35 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * returns the number of documents in this collection.
-     *
+     * 
      * @return The count
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public long count()
-            throws MongoException {
+    public long count() throws MongoException {
         return getCount(new BasicDBObject(), null);
     }
 
     /**
      * returns the number of documents that match a query.
-     *
-     * @param query query to match
+     * 
+     * @param query
+     *            query to match
      * @return The count
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public long count(DBObject query) throws MongoException {
         return getCount(query, null);
     }
 
-
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with an empty query and null fields.
-     *
+     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with an empty query and null
+     * fields.
+     * 
      * @return number of documents that match query
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public long getCount() throws MongoException {
         return getCount(new BasicDBObject(), null);
@@ -1170,10 +1543,12 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with null fields.
-     *
-     * @param query query to match
+     * 
+     * @param query
+     *            query to match
      * @return The count
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public long getCount(DBObject query) throws MongoException {
         return getCount(query, null);
@@ -1181,132 +1556,187 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject)} with null fields.
-     *
-     * @param query query to match
+     * 
+     * @param query
+     *            query to match
      * @return The count
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public long getCount(DBQuery.Query query) throws MongoException {
         return getCount(query, null);
     }
 
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long)} with limit=0 and skip=0
-     *
-     * @param query  query to match
-     * @param fields fields to return
+     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long)} with limit=0 and
+     * skip=0
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to return
      * @return The count
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     public long getCount(DBObject query, DBObject fields) throws MongoException {
         return getCount(query, fields, 0, 0);
     }
 
     /**
-     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long)} with limit=0 and skip=0
-     *
-     * @param query  query to match
-     * @param fields fields to return
+     * calls {@link DBCollection#getCount(com.mongodb.DBObject, com.mongodb.DBObject, long, long)} with limit=0 and
+     * skip=0
+     * 
+     * @param query
+     *            query to match
+     * @param fields
+     *            fields to return
      * @return The count
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public long getCount(DBQuery.Query query, DBObject fields) throws MongoException {
+    public long getCount(DBQuery.Query query, DBObject fields)
+            throws MongoException {
         return getCount(query, fields, 0, 0);
     }
 
     /**
-     * Returns the number of documents in the collection
-     * that match the specified query
-     *
-     * @param query  query to select documents to count
-     * @param fields fields to return
-     * @param limit  limit the count to this value
-     * @param skip   number of entries to skip
+     * Returns the number of documents in the collection that match the
+     * specified query
+     * 
+     * @param query
+     *            query to select documents to count
+     * @param fields
+     *            fields to return
+     * @param limit
+     *            limit the count to this value
+     * @param skip
+     *            number of entries to skip
      * @return number of documents that match query and fields
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public long getCount(DBObject query, DBObject fields, long limit, long skip) throws MongoException {
-        return dbCollection.getCount(serializeFields(query), fields, limit, skip);
+    public long getCount(DBObject query, DBObject fields, long limit, long skip)
+            throws MongoException {
+        return dbCollection.getCount(serializeFields(query), fields, limit,
+                skip);
     }
 
     /**
-     * Returns the number of documents in the collection
-     * that match the specified query
-     *
-     * @param query  query to select documents to count
-     * @param fields fields to return
-     * @param limit  limit the count to this value
-     * @param skip   number of entries to skip
+     * Returns the number of documents in the collection that match the
+     * specified query
+     * 
+     * @param query
+     *            query to select documents to count
+     * @param fields
+     *            fields to return
+     * @param limit
+     *            limit the count to this value
+     * @param skip
+     *            number of entries to skip
      * @return number of documents that match query and fields
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public long getCount(DBQuery.Query query, DBObject fields, long limit, long skip) throws MongoException {
-        return dbCollection.getCount(serializeQuery(query), fields, limit, skip);
+    public long getCount(DBQuery.Query query, DBObject fields, long limit,
+            long skip) throws MongoException {
+        return dbCollection
+                .getCount(serializeQuery(query), fields, limit, skip);
     }
 
     /**
-     * Calls {@link DBCollection#rename(java.lang.String, boolean)} with dropTarget=false
-     *
-     * @param newName new collection name (not a full namespace)
+     * Calls {@link DBCollection#rename(java.lang.String, boolean)} with
+     * dropTarget=false
+     * 
+     * @param newName
+     *            new collection name (not a full namespace)
      * @return the new collection
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public JacksonDBCollection<T, K> rename(String newName) throws MongoException {
+    public JacksonDBCollection<T, K> rename(String newName)
+            throws MongoException {
         return rename(newName, false);
     }
 
     /**
      * renames of this collection to newName
-     *
-     * @param newName    new collection name (not a full namespace)
-     * @param dropTarget if a collection with the new name exists, whether or not to drop it
+     * 
+     * @param newName
+     *            new collection name (not a full namespace)
+     * @param dropTarget
+     *            if a collection with the new name exists, whether or not to
+     *            drop it
      * @return the new collection
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public JacksonDBCollection<T, K> rename(String newName, boolean dropTarget) throws MongoException {
-        return new JacksonDBCollection<T, K>(dbCollection.rename(newName, dropTarget), type, keyType, objectMapper, null, features);
+    public JacksonDBCollection<T, K> rename(String newName, boolean dropTarget)
+            throws MongoException {
+        return new JacksonDBCollection<T, K>(dbCollection.rename(newName,
+                dropTarget), type, keyType, objectMapper, null, features);
     }
 
     /**
-     * calls {@link DBCollection#group(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, java.lang.String, java.lang.String)} with finalize=null
-     *
-     * @param key     - { a : true }
-     * @param cond    - optional condition on query
-     * @param reduce  javascript reduce function
-     * @param initial initial value for first match on a key
+     * calls
+     * {@link DBCollection#group(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, java.lang.String, java.lang.String)}
+     * with finalize=null
+     * 
+     * @param key
+     *            - { a : true }
+     * @param cond
+     *            - optional condition on query
+     * @param reduce
+     *            javascript reduce function
+     * @param initial
+     *            initial value for first match on a key
      * @return The results
-     * @throws MongoException If an error occurred
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @throws MongoException
+     *             If an error occurred
+     * @see <a
+     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
-    public DBObject group(DBObject key, DBObject cond, DBObject initial, String reduce) throws MongoException {
+    public DBObject group(DBObject key, DBObject cond, DBObject initial,
+            String reduce) throws MongoException {
         return group(key, cond, initial, reduce, null);
     }
 
     /**
      * Applies a group operation
-     *
-     * @param key      - { a : true }
-     * @param cond     - optional condition on query
-     * @param reduce   javascript reduce function
-     * @param initial  initial value for first match on a key
-     * @param finalize An optional function that can operate on the result(s) of the reduce function.
+     * 
+     * @param key
+     *            - { a : true }
+     * @param cond
+     *            - optional condition on query
+     * @param reduce
+     *            javascript reduce function
+     * @param initial
+     *            initial value for first match on a key
+     * @param finalize
+     *            An optional function that can operate on the result(s) of the
+     *            reduce function.
      * @return The results
-     * @throws MongoException If an error occurred
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @throws MongoException
+     *             If an error occurred
+     * @see <a
+     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
-    public DBObject group(DBObject key, DBObject cond, DBObject initial, String reduce, String finalize)
-            throws MongoException {
-        GroupCommand cmd = new GroupCommand(dbCollection, key, cond, initial, reduce, finalize);
+    public DBObject group(DBObject key, DBObject cond, DBObject initial,
+            String reduce, String finalize) throws MongoException {
+        GroupCommand cmd = new GroupCommand(dbCollection, key, cond, initial,
+                reduce, finalize);
         return group(cmd);
     }
 
     /**
      * Applies a group operation
-     *
-     * @param cmd the group command
+     * 
+     * @param cmd
+     *            the group command
      * @return The results
      * @throws MongoException
-     * @see <a href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @see <a
+     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      */
     public DBObject group(GroupCommand cmd) {
         return dbCollection.group(cmd);
@@ -1314,8 +1744,9 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * find distinct values for a key
-     *
-     * @param key The key
+     * 
+     * @param key
+     *            The key
      * @return The results
      */
     public List distinct(String key) {
@@ -1324,9 +1755,11 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * find distinct values for a key
-     *
-     * @param key   The key
-     * @param query query to match
+     * 
+     * @param key
+     *            The key
+     * @param query
+     *            query to match
      * @return The results
      */
     public List distinct(String key, DBObject query) {
@@ -1334,84 +1767,134 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * performs a map reduce operation
-     * Runs the command in REPLACE output mode (saves to named collection)
-     *
-     * @param map          map function in javascript code
-     * @param outputTarget optional - leave null if want to use temp collection
-     * @param reduce       reduce function in javascript code
-     * @param query        to match
+     * performs a map reduce operation Runs the command in REPLACE output mode
+     * (saves to named collection)
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
      * @return The output
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     @Deprecated
-    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce, String outputTarget, DBObject query) throws MongoException {
-        return mapReduce(new MapReduceCommand(dbCollection, map, reduce, outputTarget, MapReduceCommand.OutputType.REPLACE, serializeFields(query)));
+    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce,
+            String outputTarget, DBObject query) throws MongoException {
+        return mapReduce(new MapReduceCommand(dbCollection, map, reduce,
+                outputTarget, MapReduceCommand.OutputType.REPLACE,
+                serializeFields(query)));
+    }
+
+    /**
+     * performs a map reduce operation Specify an outputType to control job
+     * execution * INLINE - Return results inline * REPLACE - Replace the output
+     * collection with the job output * MERGE - Merge the job output with the
+     * existing contents of outputTarget * REDUCE - Reduce the job output with
+     * the existing contents of outputTarget
+     * 
+     * @param map
+     *            map function in javascript code
+     * @param outputTarget
+     *            optional - leave null if want to use temp collection
+     * @param outputType
+     *            set the type of job output
+     * @param reduce
+     *            reduce function in javascript code
+     * @param query
+     *            to match
+     * @return The output
+     * @throws MongoException
+     *             If an error occurred
+     */
+    @Deprecated
+    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce,
+            String outputTarget, MapReduceCommand.OutputType outputType,
+            DBObject query) throws MongoException {
+        return mapReduce(new MapReduceCommand(dbCollection, map, reduce,
+                outputTarget, outputType, serializeFields(query)));
     }
 
     /**
      * performs a map reduce operation
-     * Specify an outputType to control job execution
-     * * INLINE - Return results inline
-     * * REPLACE - Replace the output collection with the job output
-     * * MERGE - Merge the job output with the existing contents of outputTarget
-     * * REDUCE - Reduce the job output with the existing contents of
-     * outputTarget
-     *
-     * @param map          map function in javascript code
-     * @param outputTarget optional - leave null if want to use temp collection
-     * @param outputType   set the type of job output
-     * @param reduce       reduce function in javascript code
-     * @param query        to match
-     * @return The output
-     * @throws MongoException If an error occurred
-     */
-    @Deprecated
-    public com.mongodb.MapReduceOutput mapReduce(String map, String reduce, String outputTarget, MapReduceCommand.OutputType outputType, DBObject query)
-            throws MongoException {
-        return mapReduce(new MapReduceCommand(dbCollection, map, reduce, outputTarget, outputType, serializeFields(query)));
-    }
-
-    /**
-     * performs a map reduce operation
-     *
-     * @param command object representing the parameters
+     * 
+     * @param command
+     *            object representing the parameters
      * @return The results
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     @Deprecated
-    public com.mongodb.MapReduceOutput mapReduce(MapReduceCommand command) throws MongoException {
+    public com.mongodb.MapReduceOutput mapReduce(MapReduceCommand command)
+            throws MongoException {
         return dbCollection.mapReduce(command);
     }
 
     /**
      * performs a map reduce operation
-     *
-     * @param command object representing the parameters
+     * 
+     * @param command
+     *            object representing the parameters
      * @return The output
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
     @Deprecated
-    public com.mongodb.MapReduceOutput mapReduce(DBObject command) throws MongoException {
+    public com.mongodb.MapReduceOutput mapReduce(DBObject command)
+            throws MongoException {
         return dbCollection.mapReduce(command);
     }
 
     /**
      * Performs a map reduce operation
-     *
-     * @param command The command to execute
+     * 
+     * @param command
+     *            The command to execute
      * @return The output
-     * @throws MongoException If an error occurred
+     * @throws MongoException
+     *             If an error occurred
      */
-    public <S, L> MapReduceOutput<S, L> mapReduce(MapReduce.MapReduceCommand<S, L> command) throws MongoException {
-        return new MapReduceOutput<S, L>(this, dbCollection.mapReduce(command.build(this)), command.getResultType(),
-                command.getKeyType());
+    public <S, L> MapReduceOutput<S, L> mapReduce(
+            MapReduce.MapReduceCommand<S, L> command) throws MongoException {
+        return new MapReduceOutput<S, L>(this, dbCollection.mapReduce(command
+                .build(this)), command.getResultType(), command.getKeyType());
     }
 
     /**
-     * Return a list of the indexes for this collection.  Each object
-     * in the list is the "info document" from MongoDB
-     *
+     * Performs an aggregation pipeline against this collection.
+     * 
+     * @Param aggregation an Aggregation specifying the operations for the aggregation pipeline, and the return type.
+     * @return an AggregationResult with the result objects mapped to the type specified by the Aggregation.
+     * @throws MongoException
+     *             If an error occurred
+     * @see <a
+     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * @since 2.1.0
+     */
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    public <S> AggregationResult<S> aggregate(Aggregation<S> aggregation)
+            throws MongoException {
+
+        DBObject[] ops = aggregation.getAdditionalOps();
+        DBObject[] additionalOps = new DBObject[ops.length];
+
+        for (int opIdx = 0; opIdx < ops.length; opIdx++) {
+            additionalOps[opIdx] = serializeFields(ops[opIdx]);
+        }
+
+        return new AggregationResult<S>(this, dbCollection.aggregate(serializeFields(aggregation.getInitialOp()), additionalOps), aggregation
+                .getResultType());
+    }
+
+    /**
+     * Return a list of the indexes for this collection. Each object in the list
+     * is the "info document" from MongoDB
+     * 
      * @return list of index documents
      */
     public List<DBObject> getIndexInfo() {
@@ -1420,9 +1903,11 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Drops an index from this collection
-     *
-     * @param keys keys of the index
-     * @throws MongoException If an error occurred
+     * 
+     * @param keys
+     *            keys of the index
+     * @throws MongoException
+     *             If an error occurred
      */
     public void dropIndex(DBObject keys) throws MongoException {
         dbCollection.dropIndex(keys);
@@ -1430,9 +1915,11 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Drops an index from this collection
-     *
-     * @param name name of index to drop
-     * @throws MongoException If an error occurred
+     * 
+     * @param name
+     *            name of index to drop
+     * @throws MongoException
+     *             If an error occurred
      */
     public void dropIndex(String name) throws MongoException {
         dbCollection.dropIndex(name);
@@ -1440,7 +1927,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * gets the collections statistics ("collstats" command)
-     *
+     * 
      * @return the stats
      */
     public CommandResult getStats() {
@@ -1449,7 +1936,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * returns whether or not this is a capped collection
-     *
+     * 
      * @return whether it is capped
      */
     public boolean isCapped() {
@@ -1457,27 +1944,37 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Finds a collection that is prefixed with this collection's name.
-     * A typical use of this might be
-     * <blockquote><pre>
-     *    DBCollection users = mongo.getCollection( "wiki" ).getCollection( "users" );
-     * </pre></blockquote>
-     * Which is equivalent to
-     * <pre><blockquote>
-     *   DBCollection users = mongo.getCollection( "wiki.users" );
-     * </pre></blockquote>
-     *
-     * @param n    the name of the collection to find
-     * @param type The type of the collection
+     * Finds a collection that is prefixed with this collection's name. A
+     * typical use of this might be <blockquote>
+     * 
+     * <pre>
+	 * DBCollection users = mongo.getCollection(&quot;wiki&quot;).getCollection(&quot;users&quot;);
+	 * </pre>
+     * 
+     * </blockquote> Which is equivalent to
+     * 
+     * <pre>
+	 * <blockquote>
+	 *   DBCollection users = mongo.getCollection( "wiki.users" );
+	 * </pre>
+     * 
+     * </blockquote>
+     * 
+     * @param n
+     *            the name of the collection to find
+     * @param type
+     *            The type of the collection
      * @return the matching collection
      */
-    public <S, L> JacksonDBCollection<S, L> getCollection(String n, Class<S> type, Class<L> keyType) {
-        return wrap(getDB().getCollection(getName() + "." + n), type, keyType, objectMapper);
+    public <S, L> JacksonDBCollection<S, L> getCollection(String n,
+            Class<S> type, Class<L> keyType) {
+        return wrap(getDB().getCollection(getName() + "." + n), type, keyType,
+                objectMapper);
     }
 
     /**
      * Returns the name of this collection.
-     *
+     * 
      * @return the name of this collection
      */
     public String getName() {
@@ -1485,8 +1982,9 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Returns the full name of this collection, with the database name as a prefix.
-     *
+     * Returns the full name of this collection, with the database name as a
+     * prefix.
+     * 
      * @return the name of this collection
      */
     public String getFullName() {
@@ -1495,7 +1993,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Returns the database this collection is a member of.
-     *
+     * 
      * @return this collection's database
      */
     public DB getDB() {
@@ -1518,12 +2016,12 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Set the write concern for this collection. Will be used for
-     * writes to this collection. Overrides any setting of write
-     * concern at the DB level. See the documentation for
-     * {@link WriteConcern} for more information.
-     *
-     * @param concern write concern to use
+     * Set the write concern for this collection. Will be used for writes to
+     * this collection. Overrides any setting of write concern at the DB level.
+     * See the documentation for {@link WriteConcern} for more information.
+     * 
+     * @param concern
+     *            write concern to use
      */
     public void setWriteConcern(WriteConcern concern) {
         dbCollection.setWriteConcern(concern);
@@ -1531,7 +2029,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Get the write concern for this collection.
-     *
+     * 
      * @return THe write concern
      */
     public WriteConcern getWriteConcern() {
@@ -1539,11 +2037,12 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Sets the read preference for this collection. Will be used as default
-     * for reads from this collection; overrides DB & Connection level settings.
-     * See the * documentation for {@link ReadPreference} for more information.
-     *
-     * @param preference Read Preference to use
+     * Sets the read preference for this collection. Will be used as default for
+     * reads from this collection; overrides DB & Connection level settings. See
+     * the * documentation for {@link ReadPreference} for more information.
+     * 
+     * @param preference
+     *            Read Preference to use
      */
     public void setReadPreference(ReadPreference preference) {
         dbCollection.setReadPreference(preference);
@@ -1551,7 +2050,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Gets the read preference
-     *
+     * 
      * @return The read preference
      */
     public ReadPreference getReadPreference() {
@@ -1560,8 +2059,9 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * adds a default query option
-     *
-     * @param option The option to add
+     * 
+     * @param option
+     *            The option to add
      */
     public void addOption(int option) {
         dbCollection.addOption(option);
@@ -1569,8 +2069,9 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * sets the default query options
-     *
-     * @param options The options
+     * 
+     * @param options
+     *            The options
      */
     public void setOptions(int options) {
         dbCollection.setOptions(options);
@@ -1585,7 +2086,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * gets the default query options
-     *
+     * 
      * @return The options
      */
     public int getOptions() {
@@ -1594,7 +2095,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Get the type of this collection
-     *
+     * 
      * @return The type
      */
     public JacksonCollectionKey getCollectionKey() {
@@ -1603,27 +2104,36 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Get a collection for loading a reference of the given type
-     *
-     * @param collectionName The name of the collection
-     * @param type           The type of the object
-     * @param keyType        the type of the id
+     * 
+     * @param collectionName
+     *            The name of the collection
+     * @param type
+     *            The type of the object
+     * @param keyType
+     *            the type of the id
      * @return The collection
      */
-    public <T, K> JacksonDBCollection<T, K> getReferenceCollection(String collectionName, JavaType type, JavaType keyType) {
-        return getReferenceCollection(new JacksonCollectionKey(collectionName, type, keyType));
+    public <T, K> JacksonDBCollection<T, K> getReferenceCollection(
+            String collectionName, JavaType type, JavaType keyType) {
+        return getReferenceCollection(new JacksonCollectionKey(collectionName,
+                type, keyType));
     }
 
     /**
      * Get a collection for loading a reference of the given type
-     *
-     * @param collectionKey The key for the collection
+     * 
+     * @param collectionKey
+     *            The key for the collection
      * @return The collection
      */
-    public <T, K> JacksonDBCollection<T, K> getReferenceCollection(JacksonCollectionKey collectionKey) {
-        JacksonDBCollection<T, K> collection = referencedCollectionCache.get(collectionKey);
+    public <T, K> JacksonDBCollection<T, K> getReferenceCollection(
+            JacksonCollectionKey collectionKey) {
+        JacksonDBCollection<T, K> collection = referencedCollectionCache
+                .get(collectionKey);
         if (collection == null) {
-            collection = new JacksonDBCollection<T, K>(getDB().getCollection(collectionKey.getName()),
-                    collectionKey.getType(), collectionKey.getKeyType(), objectMapper, null, features);
+            collection = new JacksonDBCollection<T, K>(getDB().getCollection(
+                    collectionKey.getName()), collectionKey.getType(),
+                    collectionKey.getKeyType(), objectMapper, null, features);
             referencedCollectionCache.put(collectionKey, collection);
         }
         return collection;
@@ -1661,12 +2171,20 @@ public class JacksonDBCollection<T, K> {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
             // This shouldn't happen
-            throw new MongoException("Unknown error occurred converting BSON to object", e);
+            throw new MongoException(
+                    "Unknown error occurred converting BSON to object", e);
         }
         return generator.getDBObject();
     }
 
-    DBObject convertToDbObject(T object) throws MongoException {
+    /**
+     * Convert an object into a DBObject using the Jackson ObjectMapper for this collection.
+     * 
+     * @param object The object to convert
+     * @return a mongo DBObject serialized with the ObjectMapper for this collection.
+     * @throws MongoException
+     */
+    public DBObject convertToDbObject(T object) throws MongoException {
         if (object == null) {
             return null;
         }
@@ -1680,13 +2198,22 @@ public class JacksonDBCollection<T, K> {
                 throw new MongoJsonMappingException(e);
             } catch (IOException e) {
                 // This shouldn't happen
-                throw new MongoException("Unknown error occurred converting BSON to object", e);
+                throw new MongoException(
+                        "Unknown error occurred converting BSON to object", e);
             }
             return generator.getDBObject();
         }
     }
 
-    DBObject[] convertToDbObjects(T... objects) throws MongoException {
+    /**
+     * Convert an array of objects to mongo DBObjects using the Jackson ObjectMapper for this
+     * collection.
+     * 
+     * @param objects The array of objects to convert
+     * @return The array of resulting DBObjects in the same order as the received objects.
+     * @throws MongoException
+     */
+    public DBObject[] convertToDbObjects(T... objects) throws MongoException {
         DBObject[] results = new DBObject[objects.length];
         for (int i = 0; i < objects.length; i++) {
             results[i] = convertToDbObject(objects[i]);
@@ -1694,7 +2221,15 @@ public class JacksonDBCollection<T, K> {
         return results;
     }
 
-    T convertFromDbObject(DBObject dbObject) throws MongoException {
+    /**
+     * Convert a DBObject, normally a query result to the object type for this
+     * collection using the Jackson ObjectMapper for this collection.
+     * 
+     * @param dbObject The DBObject to convert
+     * @return A converted instance of the object type of this class.
+     * @throws MongoException
+     */
+    public T convertFromDbObject(DBObject dbObject) throws MongoException {
         if (dbObject == null) {
             return null;
         }
@@ -1702,16 +2237,28 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return (T) objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject, objectMapper), type);
+            return (T) objectMapper.readValue(new BsonObjectTraversingParser(
+                    this, dbObject, objectMapper), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
             // This shouldn't happen
-            throw new MongoException("Unknown error occurred converting BSON to object", e);
+            throw new MongoException(
+                    "Unknown error occurred converting BSON to object", e);
         }
     }
 
-    <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz) throws MongoException {
+    /**
+     * Convert a DBObject into a given class, using the Jackson ObjectMapper
+     * for this collection.
+     * 
+     * @param dbObject The DBObject to convert
+     * @param clazz The class into which we are converting.
+     * @return An instance of the requested class mapped from the DBObject.
+     * @throws MongoException
+     */
+    public <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz)
+            throws MongoException {
         if (dbObject == null) {
             return null;
         }
@@ -1719,33 +2266,59 @@ public class JacksonDBCollection<T, K> {
             return (S) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(this, dbObject, objectMapper), clazz);
+            return objectMapper.readValue(new BsonObjectTraversingParser(this,
+                    dbObject, objectMapper), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
             // This shouldn't happen
-            throw new MongoException("Unknown error occurred converting BSON to object", e);
+            throw new MongoException(
+                    "Unknown error occurred converting BSON to object", e);
         }
     }
 
-    List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
-    	final List<T> results = new ArrayList<T>(dbObjects.length);
-        for (int i = 0; i < dbObjects.length; i++) {
-            results.add(convertFromDbObject(dbObjects[i]));
+    /**
+     * Convert an array of DBObjects into the type for this collection, using the
+     * Jackson ObjectMapper for this collection.
+     * 
+     * @param dbObjects
+     * @return
+     * @throws MongoException
+     */
+    public List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
+        final List<T> results = new ArrayList<T>(dbObjects.length);
+        for (DBObject dbObject : dbObjects) {
+            results.add(convertFromDbObject(dbObject));
         }
         return results;
     }
 
-    DBObject serializeFields(DBObject value) {
+    /**
+     * Serialize the fields of the given object using the object mapper
+     * for this collection.
+     * This will convert POJOs to DBObjects where necessary.
+     * 
+     * @param value The object to serialize the fields of
+     * @return The DBObject, safe for use in a mongo query.
+     */
+    public DBObject serializeFields(DBObject value) {
         return SerializationUtils.serializeFields(objectMapper, value);
     }
 
-    DBObject serializeQuery(DBQuery.Query query) {
+    /**
+     * Serialize the given DBQuery.Query using the object mapper
+     * for this collection.
+     * 
+     * @param query The DBQuery.Query to serialize.
+     * @return The query as a serialized DBObject ready to pass to mongo.
+     */
+    public DBObject serializeQuery(DBQuery.Query query) {
         return SerializationUtils.serializeQuery(objectMapper, type, query);
     }
 
     Object serializeQueryCondition(String key, QueryCondition condition) {
-        return SerializationUtils.serializeQueryCondition(objectMapper, type, key, condition);
+        return SerializationUtils.serializeQueryCondition(objectMapper, type,
+                key, condition);
     }
 
     ObjectMapper getObjectMapper() {

@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,17 +16,28 @@
  */
 package org.mongojack.internal.object;
 
-import com.fasterxml.jackson.core.*;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import org.mongojack.internal.util.VersionUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mongojack.internal.util.VersionUtils;
+
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.SerializableString;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.core.Version;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 
 /**
  * JSON generator that actually generates a BSON object
@@ -70,6 +82,14 @@ public class BsonObjectGenerator extends JsonGenerator {
     public boolean isEnabled(Feature f) {
         return false;
     }
+
+    @Override
+    public int getFeatureMask() {
+        return JsonGenerator.Feature.collectDefaults();
+    }
+
+    @Override
+    public JsonGenerator setFeatureMask(int i) { return this; }
 
     @Override
     public JsonGenerator setCodec(ObjectCodec oc) {
@@ -136,17 +156,20 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
-    public void writeString(char[] text, int offset, int len) throws IOException {
+    public void writeString(char[] text, int offset, int len)
+            throws IOException {
         setValue(new String(text, offset, len));
     }
 
     @Override
-    public void writeRawUTF8String(byte[] text, int offset, int length) throws IOException {
+    public void writeRawUTF8String(byte[] text, int offset, int length)
+            throws IOException {
         setValue(new String(text, offset, length, "UTF-8"));
     }
 
     @Override
-    public void writeUTF8String(byte[] text, int offset, int length) throws IOException {
+    public void writeUTF8String(byte[] text, int offset, int length)
+            throws IOException {
         setValue(new String(text, offset, length, "UTF-8"));
     }
 
@@ -176,17 +199,20 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
-    public void writeRawValue(String text, int offset, int len) throws IOException {
+    public void writeRawValue(String text, int offset, int len)
+            throws IOException {
         setValue(text.substring(offset, offset + len));
     }
 
     @Override
-    public void writeRawValue(char[] text, int offset, int len) throws IOException {
+    public void writeRawValue(char[] text, int offset, int len)
+            throws IOException {
         setValue(new String(text, offset, len));
     }
 
     @Override
-    public void writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) throws IOException {
+    public void writeBinary(Base64Variant b64variant, byte[] data, int offset,
+            int len) throws IOException {
         if (offset != 0 || len != data.length) {
             byte[] subset = new byte[len];
             System.arraycopy(data, offset, subset, 0, len);
@@ -196,7 +222,8 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
-    public int writeBinary(Base64Variant b64variant, InputStream data, int dataLength) throws IOException, JsonGenerationException {
+    public int writeBinary(Base64Variant b64variant, InputStream data,
+            int dataLength) throws IOException, JsonGenerationException {
         throw new UnsupportedOperationException();
     }
 
@@ -231,7 +258,8 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
-    public void writeNumber(String encodedValue) throws IOException, UnsupportedOperationException {
+    public void writeNumber(String encodedValue) throws IOException,
+            UnsupportedOperationException {
         setValue(encodedValue);
     }
 
@@ -251,82 +279,87 @@ public class BsonObjectGenerator extends JsonGenerator {
     }
 
     @Override
-    public void writeFieldName(SerializableString name) throws IOException, JsonGenerationException {
+    public void writeFieldName(SerializableString name) throws IOException,
+            JsonGenerationException {
         writeFieldName(name.getValue());
     }
 
     @Override
-    public void writeString(SerializableString text) throws IOException, JsonGenerationException {
+    public void writeString(SerializableString text) throws IOException,
+            JsonGenerationException {
         setValue(text.getValue());
     }
 
     @Override
-    public void writeTree(TreeNode rootNode) throws IOException, JsonProcessingException {
-        throw new UnsupportedClassVersionError("Writing JSON nodes not supported");
+    public void writeTree(TreeNode rootNode) throws IOException,
+            JsonProcessingException {
+        throw new UnsupportedClassVersionError(
+                "Writing JSON nodes not supported");
     }
 
     @Override
     public void copyCurrentEvent(JsonParser jp) throws IOException {
         JsonToken t = jp.getCurrentToken();
-        switch(t) {
-        case START_OBJECT:
-            writeStartObject();
-            break;
-        case END_OBJECT:
-            writeEndObject();
-            break;
-        case START_ARRAY:
-            writeStartArray();
-            break;
-        case END_ARRAY:
-            writeEndArray();
-            break;
-        case FIELD_NAME:
-            writeFieldName(jp.getCurrentName());
-            break;
-        case VALUE_STRING:
-            if (jp.hasTextCharacters()) {
-                writeString(jp.getTextCharacters(), jp.getTextOffset(), jp.getTextLength());
-            } else {
-                writeString(jp.getText());
-            }
-            break;
-        case VALUE_NUMBER_INT:
-            switch (jp.getNumberType()) {
-            case INT:
-                writeNumber(jp.getIntValue());
+        switch (t) {
+            case START_OBJECT:
+                writeStartObject();
                 break;
-            case BIG_INTEGER:
-                writeNumber(jp.getBigIntegerValue());
+            case END_OBJECT:
+                writeEndObject();
                 break;
-            default:
-                writeNumber(jp.getLongValue());
-            }
-            break;
-        case VALUE_NUMBER_FLOAT:
-            switch (jp.getNumberType()) {
-            case BIG_DECIMAL:
-                writeNumber(jp.getDecimalValue());
+            case START_ARRAY:
+                writeStartArray();
                 break;
-            case FLOAT:
-                writeNumber(jp.getFloatValue());
+            case END_ARRAY:
+                writeEndArray();
                 break;
-            default:
-                writeNumber(jp.getDoubleValue());
-            }
-            break;
-        case VALUE_TRUE:
-            writeBoolean(true);
-            break;
-        case VALUE_FALSE:
-            writeBoolean(false);
-            break;
-        case VALUE_NULL:
-            writeNull();
-            break;
-        case VALUE_EMBEDDED_OBJECT:
-            writeObject(jp.getEmbeddedObject());
-            break;
+            case FIELD_NAME:
+                writeFieldName(jp.getCurrentName());
+                break;
+            case VALUE_STRING:
+                if (jp.hasTextCharacters()) {
+                    writeString(jp.getTextCharacters(), jp.getTextOffset(),
+                            jp.getTextLength());
+                } else {
+                    writeString(jp.getText());
+                }
+                break;
+            case VALUE_NUMBER_INT:
+                switch (jp.getNumberType()) {
+                    case INT:
+                        writeNumber(jp.getIntValue());
+                        break;
+                    case BIG_INTEGER:
+                        writeNumber(jp.getBigIntegerValue());
+                        break;
+                    default:
+                        writeNumber(jp.getLongValue());
+                }
+                break;
+            case VALUE_NUMBER_FLOAT:
+                switch (jp.getNumberType()) {
+                    case BIG_DECIMAL:
+                        writeNumber(jp.getDecimalValue());
+                        break;
+                    case FLOAT:
+                        writeNumber(jp.getFloatValue());
+                        break;
+                    default:
+                        writeNumber(jp.getDoubleValue());
+                }
+                break;
+            case VALUE_TRUE:
+                writeBoolean(true);
+                break;
+            case VALUE_FALSE:
+                writeBoolean(false);
+                break;
+            case VALUE_NULL:
+                writeNull();
+                break;
+            case VALUE_EMBEDDED_OBJECT:
+                writeObject(jp.getEmbeddedObject());
+                break;
         }
     }
 
@@ -342,22 +375,22 @@ public class BsonObjectGenerator extends JsonGenerator {
         }
 
         switch (t) {
-        case START_ARRAY:
-            writeStartArray();
-            while (jp.nextToken() != JsonToken.END_ARRAY) {
-                copyCurrentStructure(jp);
-            }
-            writeEndArray();
-            break;
-        case START_OBJECT:
-            writeStartObject();
-            while (jp.nextToken() != JsonToken.END_OBJECT) {
-                copyCurrentStructure(jp);
-            }
-            writeEndObject();
-            break;
-        default: // others are simple:
-            copyCurrentEvent(jp);
+            case START_ARRAY:
+                writeStartArray();
+                while (jp.nextToken() != JsonToken.END_ARRAY) {
+                    copyCurrentStructure(jp);
+                }
+                writeEndArray();
+                break;
+            case START_OBJECT:
+                writeStartObject();
+                while (jp.nextToken() != JsonToken.END_OBJECT) {
+                    copyCurrentStructure(jp);
+                }
+                writeEndObject();
+                break;
+            default: // others are simple:
+                copyCurrentEvent(jp);
         }
     }
 
@@ -401,6 +434,7 @@ public class BsonObjectGenerator extends JsonGenerator {
             _index = -1;
         }
 
+        @Override
         public Node getParent() {
             return parent;
         }
@@ -430,12 +464,11 @@ public class BsonObjectGenerator extends JsonGenerator {
             object = new BasicDBObject();
         }
 
-        void set(Object value) {
+        @Override void set(Object value) {
             object.put(getCurrentName(), value);
         }
 
-        @Override
-        DBObject get() {
+        @Override DBObject get() {
             return object;
         }
     }
@@ -450,19 +483,18 @@ public class BsonObjectGenerator extends JsonGenerator {
             super(parent, JsonStreamContext.TYPE_ARRAY);
         }
 
-        @Override
-        void set(Object value) {
+        @Override void set(Object value) {
             array.add(value);
         }
 
-        @Override
-        List<Object> get() {
+        @Override List<Object> get() {
             return array;
         }
     }
 
     /**
-     * A node that represents a root value, so for example if a String is serialised, it will just be a String
+     * A node that represents a root value, so for example if a String is
+     * serialised, it will just be a String
      */
     private class RootValueNode extends Node {
         private final Object rootValue;
@@ -472,13 +504,12 @@ public class BsonObjectGenerator extends JsonGenerator {
             this.rootValue = rootValue;
         }
 
-        @Override
-        void set(Object value) {
-            throw new IllegalStateException("Cannot write multiple values to a root value node");
+        @Override void set(Object value) {
+            throw new IllegalStateException(
+                    "Cannot write multiple values to a root value node");
         }
 
-        @Override
-        Object get() {
+        @Override Object get() {
             return rootValue;
         }
     }

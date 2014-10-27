@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +19,8 @@ package org.mongojack.internal.stream;
 import com.mongodb.BasicDBObject;
 
 /**
- * A Jackson DBObject.  Extends BasicDBObject so that it can hold error code fields and similar.
- *
+ * A Jackson DBObject. Extends BasicDBObject so that it can hold error code fields and similar.
+ * 
  * @author James Roper
  * @since 1.1.2
  */
@@ -28,7 +29,7 @@ public class JacksonDBObject<T> extends BasicDBObject {
     private T object;
 
     private Class<?> view;
-  
+
     public JacksonDBObject() {
     }
 
@@ -44,13 +45,13 @@ public class JacksonDBObject<T> extends BasicDBObject {
     public void setObject(T object) {
         this.object = object;
     }
-    
+
     public Class<?> getView() {
-      return view;
+        return view;
     }
 
     public void setView(Class<?> view) {
-      this.view = view;
+        this.view = view;
     }
 
     @Override

@@ -1,12 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
- *
+ * Copyright 2014 devbliss GmbH
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +16,7 @@
  */
 package org.mongojack.internal.stream;
 
+import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -22,20 +24,21 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 
-import java.io.IOException;
-
 /**
  * Problem handler for handling server error properties
- *
+ * 
  * @author James Roper
  * @since 1.1.2
  */
 public class ServerErrorProblemHandler extends DeserializationProblemHandler {
     @Override
-    public boolean handleUnknownProperty(DeserializationContext ctxt, JsonParser jsonParser, JsonDeserializer<?> deserializer,
-                                         Object beanOrClass, String propertyName) throws IOException, JsonProcessingException {
+    public boolean handleUnknownProperty(DeserializationContext ctxt,
+            JsonParser jsonParser, JsonDeserializer<?> deserializer,
+            Object beanOrClass, String propertyName) throws IOException,
+            JsonProcessingException {
         if (jsonParser instanceof DBDecoderBsonParser) {
-            return ((DBDecoderBsonParser) jsonParser).handleUnknownProperty(ctxt, deserializer, beanOrClass, propertyName);
+            return ((DBDecoderBsonParser) jsonParser).handleUnknownProperty(
+                    ctxt, deserializer, beanOrClass, propertyName);
         }
         return false;
     }

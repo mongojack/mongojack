@@ -1,12 +1,6 @@
 Changelog
 =========
 
-unversioned
------------
-
-* Implementation of the mongoDB Aggregation feature
-* Added a how-to-release documentation
-
 2.0.0
 -----
 

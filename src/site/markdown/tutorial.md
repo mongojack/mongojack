@@ -84,7 +84,7 @@ MongoJack also provides an update builder for running updates using the MongoDB 
 
 If you're using references, MongoJack makes it easy to work with them.  You can declare a property to be of type `org.mongojack.DBRef`, which can be instantiated by supplying the ID and the collection name for the reference.  Alternatively, you can supply the class of that reference, if that class is annotated with `@MongoCollection`.  Having loaded the saved object with the reference, you can load the reference by calling `fetch()`:
 
-    @MongoCollection("comments")
+    @MongoCollection(name = "comments")
     public class Comment {
         @Id
         public String id;
