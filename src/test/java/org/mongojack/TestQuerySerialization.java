@@ -27,6 +27,8 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mongojack.DBQuery.Query;
+import org.mongojack.mock.MockObjectWithListOfStrings;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -37,6 +39,9 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 
 public class TestQuerySerialization extends MongoDBTestBase {
 
@@ -126,6 +131,26 @@ public class TestQuerySerialization extends MongoDBTestBase {
 
         assertThat(coll.find().is("items", Arrays.asList(o1)).toArray(),
                 hasSize(1));
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndSingleString() {
+    	MockObjectWithListOfStrings o = new MockObjectWithListOfStrings();
+        Query q = DBQuery.empty();
+        q = q.in("simpleList", "a");
+        DBCollection c1 = getCollection();
+        JacksonDBCollection<MockObjectWithListOfStrings, String> c2  = JacksonDBCollection.wrap(c1, MockObjectWithListOfStrings.class, String.class);
+        c2.find(q);
+    }
+
+    @Test
+    public void testInQueryWithCollectionAndStringArray() {
+    	MockObjectWithListOfStrings o = new MockObjectWithListOfStrings();
+        Query q = DBQuery.empty();
+        q = q.in("simpleList", new String[] { "a" } );
+        DBCollection c1 = getCollection();
+        JacksonDBCollection<MockObjectWithListOfStrings, String> c2  = JacksonDBCollection.wrap(c1, MockObjectWithListOfStrings.class, String.class);
+        c2.find(q);
     }
 
     public static class MockObject {

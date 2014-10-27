@@ -263,11 +263,7 @@
                 <role>developer</role>
             </roles>
             <organization>MongoDB, Inc.</organization>
-<<<<<<< HEAD
         </contributor>        
-=======
-        </contributor>
->>>>>>> mongojack-2.1.0
         <contributor>
             <name>Christopher Exell</name>
             <url>https://github.com/exell-christopher</url>
@@ -275,8 +271,6 @@
                 <role>developer</role>
             </roles>
         </contributor>
-<<<<<<< HEAD
-=======
         <contributor>
             <name>Yun Zhi Lin</name>
             <url>http://www.yunspace.com/</url>
@@ -298,7 +292,6 @@
                 <role>developer</role>
             </roles>
         </contributor>
->>>>>>> mongojack-2.1.0
     </contributors>
 
     <licenses>
