@@ -24,13 +24,12 @@ import java.util.Set;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.mongojack.testing.DbManager;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
-import com.mongodb.ServerAddress;
 
 /**
  * Base class for unit tests that run against MongoDB. Assumes there is a
@@ -56,7 +55,7 @@ public abstract class MongoDBTestBase {
         if (environment.containsKey(dbHostKey)) {
             mongo = new MongoClient(environment.get(dbHostKey));
         } else {
-            mongo = new MongoClient();
+            mongo = new MongoClient("localhost", DbManager.PORT);
         }
 
         db = mongo.getDB("unittest");
