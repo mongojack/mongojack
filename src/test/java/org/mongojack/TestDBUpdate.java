@@ -300,6 +300,6 @@ public class TestDBUpdate extends MongoDBTestBase {
         DBUpdate.Builder builder = new DBUpdate.Builder();
         assertTrue(builder.isEmpty());
         builder.inc("blah");
-        assertTrue(builder.isNotEmpty());
+        assertFalse(builder.isEmpty());
     }
 }
