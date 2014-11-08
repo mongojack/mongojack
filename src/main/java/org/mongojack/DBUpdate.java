@@ -657,5 +657,25 @@ public class DBUpdate {
             return SerializationUtils.serializeDBUpdate(update, objectMapper,
                     javaType);
         }
+
+        /**
+         *
+         * Checks if the update is empty
+         *
+         * @return true if the update is empty
+         */
+        public boolean isEmpty() {
+            return update.isEmpty();
+        }
+
+        /**
+         *
+         * Checks if the update is not empty
+         *
+         * @return true if the update is not empty
+         */
+        public boolean isNotEmpty() {
+            return !update.isEmpty();
+        }
     }
 }
