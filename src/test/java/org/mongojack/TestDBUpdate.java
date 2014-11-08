@@ -294,4 +294,12 @@ public class TestDBUpdate extends MongoDBTestBase {
         assertThat(updated.string, equalTo("other string"));
         assertThat(updated.integer, equalTo(20));
     }
+
+    @Test
+    public void testDBUpdateIsEmpty() {
+        DBUpdate.Builder builder = new DBUpdate.Builder();
+        assertTrue(builder.isEmpty());
+        builder.inc("blah");
+        assertFalse(builder.isEmpty());
+    }
 }
