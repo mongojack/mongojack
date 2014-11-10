@@ -54,6 +54,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>de.flapdoodle.embed</groupId>
+            <artifactId>de.flapdoodle.embed.mongo</artifactId>
+            <version>1.46.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
             <version>1.3</version>
@@ -118,7 +123,22 @@
                     </dependency>
                 </dependencies>
             </plugin>
-
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>2.17</version>
+              <configuration>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>org.mongojack.testing.DbRunListener</value>
+                        </property>
+                    </properties>
+                    <systemPropertyVariables>
+                        <isMaven>true</isMaven>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -139,8 +159,8 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
+
         <extensions>
             <extension>
                 <groupId>com.github.stephenc.wagon</groupId>
