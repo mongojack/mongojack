@@ -313,6 +313,13 @@
                 <role>developer</role>
             </roles>
         </contributor>
+				<contributor>
+            <name>Camilo Bermudez</name>
+            <url>https://github.com/camilobermudez85</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+        </contributor>
     </contributors>
 
     <licenses>
