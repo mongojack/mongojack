@@ -256,7 +256,7 @@ public class MatchAggregation extends AggregatePipelineOperation {
      * @param field The field we match as an non-empty object
      * @return the builder
      */
-    public MatchAggregation in(String field, String... values) {
+    public MatchAggregation in(String field, Object... values) {
         return arrayMatch("$in", field, values);
     }
 
@@ -267,12 +267,12 @@ public class MatchAggregation extends AggregatePipelineOperation {
      * @param field The field we match as an non-empty object
      * @return the builder
      */
-    public MatchAggregation nin(String field, String... values) {
+    public MatchAggregation nin(String field, Object... values) {
 
         return arrayMatch("$nin", field, values);
     }
 
-    private MatchAggregation arrayMatch(String inOrNotInOperator, String field, String... values) {
+    private MatchAggregation arrayMatch(String inOrNotInOperator, String field, Object... values) {
         BasicDBList matchArray = new BasicDBList();
         for (int i = 0; i < values.length; i++) {
             matchArray.add(values[i]);
