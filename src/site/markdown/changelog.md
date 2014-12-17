@@ -1,18 +1,6 @@
 Changelog
 =========
 
-2.1.0
------
-
-_Released 2014.07.29_
-
-* Update dependency versions (by lukelukeluke)
-* Extended Readme to explain Snapshot installations (by abc2mit)
-* Updated mongo-java-driver to newer version (by benmccann)
-* Upgrade Jackson and Bson4Jackson to prevent potential conflicts with Jackson 2.2.X (by yunspace)
-* Implementation of the mongoDB Aggregation feature
-* Added a how-to-release documentation
-
 2.0.0
 -----
 
