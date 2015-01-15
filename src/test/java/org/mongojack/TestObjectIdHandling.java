@@ -260,4 +260,35 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         assertThat(result.getId(), equalTo(id));
         assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
     }
+
+    public static class ByteArrayIdMethods {
+        private byte[] _id;
+
+        @org.mongojack.ObjectId
+        @Id
+        public byte[] getId() {
+            return _id;
+        }
+
+        @org.mongojack.ObjectId
+        @Id
+        public void setId(byte[] key) {
+            _id = key;
+        }
+    }
+
+    @Test
+    public void testByteArrayObjectIdMethods() {
+        ByteArrayIdMethods object = new ByteArrayIdMethods();
+
+        JacksonDBCollection<ByteArrayIdMethods, byte[]> coll = getCollection(ByteArrayIdMethods.class, byte[].class);
+
+        coll.insert(object);
+        byte[] id = coll.findOne().getId();
+        // Check that it's a valid object id
+        new ObjectId(id);
+        ByteArrayIdMethods result = coll.findOneById(id);
+        assertThat(result.getId(), equalTo(id));
+        assertThat(((ObjectId)coll.getDbCollection().findOne().get("_id")).toByteArray(), equalTo(id));
+    }
 }

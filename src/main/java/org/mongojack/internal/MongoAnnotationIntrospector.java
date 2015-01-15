@@ -23,9 +23,12 @@ import org.mongojack.ObjectId;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.introspect.Annotated;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.NopAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.databind.PropertyName;
+
+import java.lang.reflect.Type;
 
 /**
  * Annotation introspector that supports @ObjectId's
@@ -80,11 +83,18 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         return null;
     }
 
+    private Type getTypeForAnnotated(Annotated a) {
+        if (a instanceof AnnotatedMethod) {
+            return ((AnnotatedMethod)a).getGenericParameterType(0);
+        } else {
+            return a.getGenericType();
+        }
+    }
+
     @Override
     public Object findDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            return findObjectIdDeserializer(typeFactory.constructType(am
-                    .getGenericType()));
+            return findObjectIdDeserializer(typeFactory.constructType(getTypeForAnnotated(am)));
         }
         return null;
     }
@@ -92,7 +102,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public JsonDeserializer findContentDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            JavaType type = typeFactory.constructType(am.getGenericType());
+            JavaType type = typeFactory.constructType(getTypeForAnnotated(am));
             if (type.isCollectionLikeType()) {
                 return findObjectIdDeserializer(type.containedType(0));
             } else if (type.isMapLikeType()) {
