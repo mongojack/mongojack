@@ -21,6 +21,8 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -293,5 +295,13 @@ public class TestDBUpdate extends MongoDBTestBase {
         MockObject updated = coll.findOneById("blah");
         assertThat(updated.string, equalTo("other string"));
         assertThat(updated.integer, equalTo(20));
+    }
+
+    @Test
+    public void testDBUpdateIsEmpty() {
+        DBUpdate.Builder builder = new DBUpdate.Builder();
+        assertTrue(builder.isEmpty());
+        builder.inc("blah");
+        assertFalse(builder.isEmpty());
     }
 }

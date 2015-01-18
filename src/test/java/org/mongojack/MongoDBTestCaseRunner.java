@@ -28,6 +28,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
+import org.mongojack.testing.DbManager;
 
 /**
  * Runner that runs the tests through different permutations of configurations
@@ -147,6 +148,21 @@ public class MongoDBTestCaseRunner extends Suite {
         @Override
         protected Statement classBlock(RunNotifier notifier) {
             return childrenInvoker(notifier);
+        }
+    }
+
+    @Override
+    public void run(final RunNotifier notifier) {
+        // Maven instantiates the DbRunListener directly via the Surefire plugin
+        // If we're running in Eclipse then we start and stop the DB here since there
+        // doesn't appear to be an easy way to use a RunListener in Eclipse
+        String isMaven = System.getProperty("isMaven");
+        if (isMaven == null) {
+            DbManager.startDb();
+        }
+        super.run(notifier);
+        if (isMaven == null) {
+            DbManager.stopDb();
         }
     }
 

@@ -17,6 +17,10 @@ package org.mongojack;
 
 import com.mongodb.DBObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * A Generic Aggregation object that allows the aggregation operations,
  * and the return type of the AggregationResult to be specified.
@@ -48,5 +52,12 @@ public class Aggregation<T> {
 
     public DBObject[] getAdditionalOps() {
         return additionalOps;
+    }
+
+    public List<DBObject> getAllOps() {
+        List<DBObject> allOps = new ArrayList<DBObject>();
+        allOps.add(initialOp);
+        allOps.addAll(Arrays.asList(additionalOps));
+        return allOps;
     }
 }
