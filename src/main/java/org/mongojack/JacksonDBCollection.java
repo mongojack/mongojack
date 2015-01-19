@@ -1037,7 +1037,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      *             If an error occurred
      */
-    public final void createIndex(final DBObject keys) throws MongoException {
+    public void createIndex(DBObject keys) throws MongoException {
         dbCollection.createIndex(keys);
     }
 
@@ -1065,7 +1065,7 @@ public class JacksonDBCollection<T, K> {
      *            name of field to index on
      */
     @Deprecated
-    public final void ensureIndex(final String name) {
+    public void ensureIndex(String name) {
         ensureIndex(new BasicDBObject(name, 1));
     }
 
@@ -1078,7 +1078,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     @Deprecated
-    public final void ensureIndex(final DBObject keys) throws MongoException {
+    public void ensureIndex(DBObject keys) throws MongoException {
         dbCollection.ensureIndex(keys);
     }
 
@@ -1128,7 +1128,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     @Deprecated
-    public void ensureIndex(final DBObject keys, final DBObject optionsIN)
+    public void ensureIndex(DBObject keys, DBObject optionsIN)
             throws MongoException {
         dbCollection.ensureIndex(keys, optionsIN);
     }
@@ -1207,7 +1207,7 @@ public class JacksonDBCollection<T, K> {
      *            fields to return
      * @return a cursor to iterate over results
      */
-    public final org.mongojack.DBCursor<T> find(DBObject query, DBObject keys) {
+    public org.mongojack.DBCursor<T> find(DBObject query, DBObject keys) {
         return new org.mongojack.DBCursor<T>(this, dbCollection.find(
                 serializeFields(query), keys));
     }
@@ -1228,7 +1228,7 @@ public class JacksonDBCollection<T, K> {
      *            fields to return
      * @return a cursor to iterate over results
      */
-    public final org.mongojack.DBCursor<T> find(DBQuery.Query query,
+    public org.mongojack.DBCursor<T> find(DBQuery.Query query,
             DBObject keys) {
         return new org.mongojack.DBCursor<T>(this, dbCollection.find(
                 serializeQuery(query), keys));
@@ -1241,7 +1241,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      *             If an error occurred
      */
-    public final org.mongojack.DBCursor<T> find() throws MongoException {
+    public org.mongojack.DBCursor<T> find() throws MongoException {
         return new org.mongojack.DBCursor<T>(this, dbCollection.find());
     }
 
@@ -1450,7 +1450,7 @@ public class JacksonDBCollection<T, K> {
      *            needed
      * @return The result
      */
-    public final WriteResult<T, K> save(T object) {
+    public WriteResult<T, K> save(T object) {
         return save(object, getWriteConcern());
     }
 
