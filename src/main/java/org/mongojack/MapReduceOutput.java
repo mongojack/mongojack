@@ -78,6 +78,52 @@ public class MapReduceOutput<T, K> {
         return outputCollection;
     }
 
+    /**
+     * Get the amount of time, in milliseconds, that it took to run this map reduce.
+     *
+     * @return an int representing the number of milliseconds it took to run the map reduce operation
+     */
+    public int getDuration() {
+        return output.getDuration();
+    }
+
+    /**
+     * Get the number of documents that were input into the map reduce operation
+     *
+     * @return the number of documents that read while processing this map reduce
+     */
+    public int getInputCount() {
+        return output.getInputCount();
+    }
+
+    /**
+     * Get the number of documents generated as a result of this map reduce
+     *
+     * @return the number of documents output by the map reduce
+     */
+    public int getOutputCount() {
+        return output.getOutputCount();
+    }
+
+    /**
+     * Get the number of messages emitted from the provided map function.
+     *
+     * @return the number of items emitted from the map function
+     */
+    public int getEmitCount() {
+        return output.getEmitCount();
+    }
+
+    /**
+     * Gets the raw command result of the operation.
+     *
+     * @return a CommandResult representing the output of the map-reduce in its raw form from the server.
+     * @deprecated It is not recommended to access the command result returned by the server as the format can change between releases. This
+     * has been replaced with a series of specific getters for the values on the CommandResult (
+     * getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue to return an {@code
+     * Iterable<T>}, that should be used to obtain the results of the map-reduce.
+     */
+    @Deprecated
     public CommandResult getCommandResult() {
         return output.getCommandResult();
     }
@@ -86,6 +132,13 @@ public class MapReduceOutput<T, K> {
         return output.getCommand();
     }
 
+    /**
+     * Get the server that the  command was run on.
+     *
+     * @return a ServerAddress of the server that the command ran against.
+     * @deprecated this method will be removed in a future release.  There is no replacement for it.
+     */
+    @Deprecated
     public ServerAddress getServerUsed() {
         return output.getServerUsed();
     }
