@@ -63,7 +63,7 @@ public class ObjectIdSerializer extends JsonSerializer {
             if (id == null) {
                 return null;
             }
-            return new com.mongodb.DBRef(null, dbRef.getCollectionName(), id);
+            return new com.mongodb.DBRef(dbRef.getCollectionName(), id);
         } else if (value instanceof ObjectId) {
             return value;
         } else {

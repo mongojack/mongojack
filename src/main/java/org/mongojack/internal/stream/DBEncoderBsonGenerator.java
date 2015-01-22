@@ -50,13 +50,9 @@ public class DBEncoderBsonGenerator extends BsonGenerator {
             DBRef dbRef = (DBRef) value;
             writeStartObject();
             writeFieldName("$ref");
-            writeString(dbRef.getRef());
+            writeString(dbRef.getCollectionName());
             writeFieldName("$id");
             writeObject(dbRef.getId());
-            if (dbRef.getDB() != null) {
-                writeFieldName("$db");
-                writeString(dbRef.getDB().getName());
-            }
             writeEndObject();
         } else {
             super._writeSimpleObject(value);
