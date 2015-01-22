@@ -311,7 +311,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
      * the database
      * 
      * @return The number of get mores
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public int numGetMores() {
         return cursor.numGetMores();
     }
@@ -320,7 +322,9 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
      * gets a simpleList containing the number of items received in each batch
      * 
      * @return The sizes of each batch
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public List<Integer> getSizes() {
         return cursor.getSizes();
     }
