@@ -29,9 +29,9 @@ public class TestDBSort extends MongoDBTestBase {
     @Before
     public void setUp() {
         coll = getCollection(MockObject.class, String.class);
-        coll.save(new MockObject("1", "b", 10));
-        coll.save(new MockObject("2", "a", 30));
-        coll.save(new MockObject("3", "a", 20));
+        coll.insert(new MockObject("1", "b", 10));
+        coll.insert(new MockObject("2", "a", 30));
+        coll.insert(new MockObject("3", "a", 20));
     }
 
     private void assertOrder(Iterable<MockObject> results, String... order) {

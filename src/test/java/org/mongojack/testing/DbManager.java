@@ -1,8 +1,5 @@
 package org.mongojack.testing;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
-
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
@@ -11,6 +8,7 @@ import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
+import java.io.IOException;
 
 /**
  * @author Ben McCann (benmccann.com)
@@ -26,7 +24,7 @@ public class DbManager {
 
     try {
         IMongodConfig mongodConfig = new MongodConfigBuilder()
-            .version(Version.Main.V2_4)
+            .version(Version.Main.V2_6)
             .net(new Net(PORT, Network.localhostIsIPv6()))
             .build();
 
