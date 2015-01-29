@@ -489,9 +489,11 @@ public class DBQuery {
             return put(
                     field,
                     QueryOperators.MOD,
-                    new CollectionQueryCondition(Arrays.<QueryCondition>asList(
-                        new SimpleQueryCondition(mod, false),
-                        new SimpleQueryCondition(value)), false));
+                    new CollectionQueryCondition(
+                        Arrays.<QueryCondition>asList(
+                            new SimpleQueryCondition(mod, false),
+                            new SimpleQueryCondition(value)),
+                        false));
         }
 
         /**
