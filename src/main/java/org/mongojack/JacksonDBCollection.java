@@ -1070,7 +1070,7 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * calls {@link DBCollection#ensureIndex(com.mongodb.DBObject, com.mongodb.DBObject)} with default options
+     * calls {@link DBCollection#createIndex(com.mongodb.DBObject, com.mongodb.DBObject)} with default options
      * 
      * @param keys
      *            an object with a key set of the fields desired for the index
@@ -1079,11 +1079,11 @@ public class JacksonDBCollection<T, K> {
      */
     @Deprecated
     public void ensureIndex(DBObject keys) throws MongoException {
-        dbCollection.ensureIndex(keys);
+        dbCollection.createIndex(keys);
     }
 
     /**
-     * calls {@link DBCollection#ensureIndex(com.mongodb.DBObject, java.lang.String, boolean)} with unique=false
+     * calls {@link DBCollection#createIndex(com.mongodb.DBObject, java.lang.String, boolean)} with unique=false
      * 
      * @param keys
      *            fields to use for index
@@ -1114,7 +1114,7 @@ public class JacksonDBCollection<T, K> {
     @Deprecated
     public void ensureIndex(DBObject keys, String name, boolean unique)
             throws MongoException {
-        dbCollection.ensureIndex(keys, name, unique);
+        dbCollection.createIndex(keys, name, unique);
     }
 
     /**
@@ -1130,7 +1130,7 @@ public class JacksonDBCollection<T, K> {
     @Deprecated
     public void ensureIndex(DBObject keys, DBObject optionsIN)
             throws MongoException {
-        dbCollection.ensureIndex(keys, optionsIN);
+        dbCollection.createIndex(keys, optionsIN);
     }
 
     /**

@@ -27,12 +27,22 @@ import org.bson.types.ObjectId;
 public class ObjectIdConvertor {
 
     public static ObjectId convert(de.undercouch.bson4jackson.types.ObjectId objectId) {
-        return new ObjectId(objectId.getTime(), objectId.getMachine(), objectId.getInc());
+        return ObjectId.createFromLegacyFormat(objectId.getTime(), objectId.getMachine(), objectId.getInc());
     }
 
     public static de.undercouch.bson4jackson.types.ObjectId convert(ObjectId objectId) {
-        return new de.undercouch.bson4jackson.types.ObjectId(objectId.getTimeSecond(), objectId.getMachine(),
-                objectId.getInc());
+        byte[] bytes = objectId.toByteArray();
+
+        return new de.undercouch.bson4jackson.types.ObjectId(makeInt(bytes[0], bytes[1], bytes[2], bytes[3]),
+                                                             makeInt(bytes[4], bytes[5], bytes[6], bytes[7]),
+                                                             makeInt(bytes[8], bytes[9], bytes[10], bytes[11]));
+    }
+
+    private static int makeInt(final byte b3, final byte b2, final byte b1, final byte b0) {
+        return (((b3) << 24) |
+                ((b2 & 0xff) << 16) |
+                ((b1 & 0xff) << 8) |
+                ((b0 & 0xff)));
     }
 
 }

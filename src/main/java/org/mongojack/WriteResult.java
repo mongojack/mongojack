@@ -173,7 +173,10 @@ public class WriteResult<T, K> {
      * Gets the last result from getLastError()
      * 
      * @return The last error
+     * @deprecated Use the appropriate {@code WriteConcern} and rely on the write operation to throw an exception on failure.  For
+     * successful writes, use the helper methods to retrieve specific values from the write response.
      */
+    @Deprecated
     public CommandResult getCachedLastError() {
         return writeResult.getCachedLastError();
 
@@ -184,7 +187,9 @@ public class WriteResult<T, K> {
      * getLastError()
      * 
      * @return The last write concern.
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public WriteConcern getLastConcern() {
         return writeResult.getLastConcern();
 
@@ -195,7 +200,10 @@ public class WriteResult<T, K> {
      * concern=null
      * 
      * @return The last error
+     * @deprecated Use the appropriate {@code WriteConcern} and allow the write operation to throw an exception on failure.  For
+     * successful writes, use the helper methods to retrieve specific values from the write response.
      */
+    @Deprecated
     public synchronized CommandResult getLastError() {
         return writeResult.getLastError();
     }
@@ -209,7 +217,10 @@ public class WriteResult<T, K> {
      * @param concern
      *            the concern
      * @return The last error for the concern
+     * @deprecated Use the appropriate {@code WriteConcern} and rely on the write operation to throw an exception on failure.  For
+     * successful writes, use the helper methods to retrieve specific values from the write response.
      */
+    @Deprecated
     public synchronized CommandResult getLastError(WriteConcern concern) {
         return writeResult.getLastError(concern);
     }
@@ -218,7 +229,10 @@ public class WriteResult<T, K> {
      * Gets the error String ("err" field)
      * 
      * @return The error string
+     * @deprecated There should be no reason to use this method.  The error message will be in the exception thrown for an
+     * unsuccessful write operation.
      */
+    @Deprecated
     public String getError() {
         return writeResult.getError();
     }
@@ -234,12 +248,35 @@ public class WriteResult<T, K> {
     }
 
     /**
+     * Gets the _id value of an upserted document that resulted from this write.  Note that for MongoDB servers prior to version 2.6,
+     * this method will return null unless the _id of the upserted document was of type ObjectId.
+     *
+     * @return the value of the _id of an upserted document
+     */
+    public Object getUpsertedId() {
+        return writeResult.getUpsertedId();
+    }
+
+
+    /**
+     * Returns true if this write resulted in an update of an existing document.
+     *
+     * @return whether the write resulted in an update of an existing document.
+     */
+    public boolean isUpdateOfExisting() {
+        return writeResult.isUpdateOfExisting();
+    }
+
+    /**
      * Gets a field
      * 
      * @param name
      *            field name
      * @return The value
+     * @deprecated There should be no reason to use this method.  To get specific fields from a successful write,
+     * use the helper methods provided.  Any error-related fields will be in the exception thrown for an unsuccessful write operation.
      */
+    @Deprecated
     public Object getField(String name) {
         return writeResult.getField(name);
     }
@@ -249,7 +286,9 @@ public class WriteResult<T, K> {
      * not called automatically
      * 
      * @return if it's lazy
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public boolean isLazy() {
         return writeResult.isLazy();
     }

@@ -56,8 +56,7 @@ public class DBRefSerializer extends MongoSerializer<DBRef> {
         if (value == null) {
             bgen.writeNull();
         } else {
-            bgen.writeObject(new com.mongodb.DBRef(null, value
-                    .getCollectionName(), value.getId()));
+            bgen.writeObject(new com.mongodb.DBRef(value.getCollectionName(), value.getId()));
         }
     }
 

@@ -217,7 +217,9 @@ public class MapReduce {
          * @param extra
          *            The extra arguments
          * @return this command
+         * @deprecated  use the specific setter methods
          */
+        @Deprecated
         public MapReduceCommand<T, K> setExtra(DBObject extra) {
             this.extra = extra;
             return this;
