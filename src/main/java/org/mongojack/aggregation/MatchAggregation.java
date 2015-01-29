@@ -126,12 +126,10 @@ public class MatchAggregation extends AggregatePipelineOperation {
     /**
      * Add a two value comparison to the match
      * 
-     * eg. greaterThanOrLessThan(x,A,B) = A < x || x < B
-     * 
      * @param field the field in the doc we are comparing
-     * @param greaterThanValue check to see if the field is > this value
-     * @param lessThanValue check to see if the field is < this value
-     * @return
+     * @param greaterThanValue check to see if the field is greater than this value
+     * @param lessThanValue check to see if the field is less than this value
+     * @return A MatchAggregation
      */
     public MatchAggregation greaterThanOrLessThan(String field, Object greaterThanValue, Object lessThanValue) {
         BasicDBList list = new BasicDBList();
@@ -144,12 +142,10 @@ public class MatchAggregation extends AggregatePipelineOperation {
     /**
      * Add a two value comparison to the match
      * 
-     * eg. greaterThanEqualOrLessThanEqual(x,A,B) = A <= x || x <= B
-     * 
      * @param field the field in the doc we are comparing
-     * @param greaterThanValue check to see if the field is >= this value
-     * @param lessThanValue check to see if the field is <= this value
-     * @return
+     * @param greaterThanValue check to see if the field is greater or equal than this value
+     * @param lessThanValue check to see if the field is less or equal than this value
+     * @return A MatchAggregation
      */
     public MatchAggregation greaterThanEqualOrLessThanEqual(String field, Object greaterThanValue, Object lessThanValue) {
         BasicDBList list = new BasicDBList();
@@ -162,12 +158,10 @@ public class MatchAggregation extends AggregatePipelineOperation {
     /**
      * Add a two value comparison to the match
      * 
-     * eg. greaterThanAndLessThan(x,A,B) = A < x < B
-     * 
      * @param field the field in the doc we are comparing
-     * @param greaterThanValue check to see if the field is > this value
-     * @param lessThanValue check to see if the field is < this value
-     * @return
+     * @param greaterThanValue check to see if the field is greater than this value
+     * @param lessThanValue check to see if the field is less than this value
+     * @return A MatchAggregation
      */
     public MatchAggregation greaterThanAndLessThan(String field, Object greaterThanValue, Object lessThanValue) {
         return binaryComparison(field, "$gt", greaterThanValue, "$lt", lessThanValue);
@@ -176,12 +170,10 @@ public class MatchAggregation extends AggregatePipelineOperation {
     /**
      * Add a two value comparison to the match
      * 
-     * eg. greaterThanEqualAndLessThanEqual(x,A,B) : A <= x <= B
-     * 
      * @param field the field in the doc we are comparing
-     * @param greaterThanValue check to see if the field is >= this value
-     * @param lessThanValue check to see if the field is <= this value
-     * @return
+     * @param greaterThanValue check to see if the field is greater or equal than this value
+     * @param lessThanValue check to see if the field is less or equal than this value
+     * @return A MatchAggregation
      */
     public MatchAggregation greaterThanEqualAndLessThanEqual(String field, Object greaterThanValue, Object lessThanValue) {
         return binaryComparison(field, "$gte", greaterThanValue, "$lte", lessThanValue);
@@ -190,12 +182,10 @@ public class MatchAggregation extends AggregatePipelineOperation {
     /**
      * Add a two value comparison to the match
      * 
-     * eg. greaterThanEqualAndLessThanEqual(x,A,B) : A < x <= B
-     * 
      * @param field the field in the doc we are comparing
-     * @param greaterThanValue check to see if the field is > this value
-     * @param lessThanValue check to see if the field is <= this value
-     * @return
+     * @param greaterThanValue check to see if the field is greater than this value
+     * @param lessThanValue check to see if the field is less or equal than this value
+     * @return A MatchAggregation
      */
     public MatchAggregation greaterThanAndLessThanEqual(String field, Object greaterThanValue, Object lessThanValue) {
         return binaryComparison(field, "$gt", greaterThanValue, "$lte", lessThanValue);
@@ -204,12 +194,10 @@ public class MatchAggregation extends AggregatePipelineOperation {
     /**
      * Add a two value comparison to the match
      * 
-     * eg. greaterThanEqualAndLessThan(x,A,B) : A <= x < B
-     * 
      * @param field the field in the doc we are comparing
-     * @param greaterThanValue check to see if the field is >= this value
-     * @param lessThanValue check to see if the field is < this value
-     * @return
+     * @param greaterThanValue check to see if the field is greater than= this value
+     * @param lessThanValue check to see if the field is less than this value
+     * @return A MatchAggregation
      */
     public MatchAggregation greaterThanEqualAndLessThan(String field, Object greaterThanValue, Object lessThanValue) {
         return binaryComparison(field, "$gte", greaterThanValue, "$lt", lessThanValue);
