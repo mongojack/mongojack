@@ -143,8 +143,7 @@ public class SerializationUtils {
             QueryCondition condition = field.getValue();
             serializedQuery.put(
                     key,
-                    serializeQueryCondition(serializerProvider, serializer,
-                            key, condition));
+                    serializeQueryCondition(serializerProvider, serializer, key, condition));
         }
         return serializedQuery;
     }
@@ -189,8 +188,7 @@ public class SerializationUtils {
         } else {
             CompoundQueryCondition compound = (CompoundQueryCondition) condition;
             if (!key.startsWith("$")) {
-                serializer = findQuerySerializer(false, key,
-                        serializerProvider, serializer);
+                serializer = findQuerySerializer(false, key, serializerProvider, serializer);
             }
             return serializeQuery(serializerProvider, serializer,
                     compound.getQuery());

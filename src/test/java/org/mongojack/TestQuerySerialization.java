@@ -31,6 +31,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.DBQuery.Query;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -73,8 +74,9 @@ public class TestQuerySerialization extends MongoDBTestBase {
         DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
         JacksonDBCollection<MockObjectWithList, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithList.class, String.class);
         List<String> x = new ArrayList<String>();
+        x.add("a");
         x.add("b");
-        Query q = DBQuery.empty().in("simpleList", x);
+        Query q = DBQuery.in("simpleList", x);
         c2.find(q);
     }
     
@@ -156,7 +158,10 @@ public class TestQuerySerialization extends MongoDBTestBase {
 
     static class MockObjectWithList {
 
+        @Id
         private String _id;
+
+        @JsonProperty
         private List<String> simpleList;
 
         public String get_id() {
