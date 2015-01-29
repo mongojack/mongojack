@@ -135,7 +135,7 @@ public class SerializationUtils {
     }
 
     private static DBObject serializeQuery(
-            SerializerProvider serializerProvider, JsonSerializer serializer,
+            SerializerProvider serializerProvider, JsonSerializer<?> serializer,
             DBQuery.Query query) {
         DBObject serializedQuery = new BasicDBObject();
         for (Map.Entry<String, QueryCondition> field : query.conditions()) {
@@ -153,14 +153,14 @@ public class SerializationUtils {
             JavaType type, String key, QueryCondition condition) {
         SerializerProvider serializerProvider = JacksonAccessor
                 .getSerializerProvider(objectMapper);
-        JsonSerializer serializer = JacksonAccessor.findValueSerializer(
+        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
                 serializerProvider, type);
         return serializeQueryCondition(serializerProvider, serializer, key,
                 condition);
     }
 
     private static Object serializeQueryCondition(
-            SerializerProvider serializerProvider, JsonSerializer serializer,
+            SerializerProvider serializerProvider, JsonSerializer<?> serializer,
             String key, QueryCondition condition) {
         if (condition instanceof SimpleQueryCondition) {
             SimpleQueryCondition simple = (SimpleQueryCondition) condition;
@@ -340,7 +340,7 @@ public class SerializationUtils {
                 .getSerializerProvider(objectMapper);
         BasicDBObject dbObject = new BasicDBObject();
 
-        JsonSerializer serializer = null;
+        JsonSerializer<?> serializer = null;
 
         for (Map.Entry<String, Map<String, UpdateOperationValue>> op : update
                 .entrySet()) {
@@ -355,7 +355,7 @@ public class SerializationUtils {
                                 serializerProvider, javaType);
                     }
 
-                    JsonSerializer fieldSerializer = findUpdateSerializer(field
+                    JsonSerializer<?> fieldSerializer = findUpdateSerializer(field
                             .getValue().isTargetCollection(), field.getKey(),
                             serializerProvider, serializer);
                     if (fieldSerializer != null) {
@@ -385,7 +385,7 @@ public class SerializationUtils {
     }
 
     private static Object serializeUpdateField(UpdateOperationValue value,
-            JsonSerializer serializer, SerializerProvider serializerProvider,
+            JsonSerializer<?> serializer, SerializerProvider serializerProvider,
             String op, String field) {
         if (value instanceof MultiUpdateOperationValue) {
             List<Object> results = new ArrayList<Object>();
@@ -416,7 +416,7 @@ public class SerializationUtils {
 
     private static JsonSerializer<?> findUpdateSerializer(
             boolean targetIsCollection, String fieldPath,
-            SerializerProvider serializerProvider, JsonSerializer serializer) {
+            SerializerProvider serializerProvider, JsonSerializer<?> serializer) {
         if (serializer instanceof BeanSerializerBase) {
             JsonSerializer<?> fieldSerializer = serializer;
             // Iterate through the components of the field name
@@ -430,7 +430,7 @@ public class SerializationUtils {
                 if (field.equals("$") || field.matches("\\d+")) {
                     // The current serializer must be a collection
                     if (fieldSerializer instanceof ContainerSerializer) {
-                        JsonSerializer contentSerializer = ((ContainerSerializer) fieldSerializer)
+                        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
                                 .getContentSerializer();
                         if (contentSerializer == null) {
                             // Work it out
@@ -495,7 +495,7 @@ public class SerializationUtils {
 
     private static JsonSerializer<?> findQuerySerializer(
             boolean targetIsCollection, String fieldPath,
-            SerializerProvider serializerProvider, JsonSerializer serializer) {
+            SerializerProvider serializerProvider, JsonSerializer<?> serializer) {
         if (serializer instanceof BeanSerializerBase
                 || serializer instanceof MapSerializer) {
             JsonSerializer<?> fieldSerializer = serializer;
@@ -513,7 +513,7 @@ public class SerializationUtils {
                 // First step into the collection if there is one
                 if (!isIndex) {
                     while (fieldSerializer instanceof ContainerSerializer) {
-                        JsonSerializer contentSerializer = ((ContainerSerializer) fieldSerializer)
+                        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
                                 .getContentSerializer();
                         if (contentSerializer == null) {
                             // Work it out
@@ -531,7 +531,7 @@ public class SerializationUtils {
 
                 if (isIndex) {
                     if (fieldSerializer instanceof ContainerSerializer) {
-                        JsonSerializer contentSerializer = ((ContainerSerializer) fieldSerializer)
+                        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
                                 .getContentSerializer();
                         if (contentSerializer == null) {
                             // Work it out
