@@ -475,6 +475,7 @@ public class DBQuery {
 
         /**
          * The field, modulo the given mod argument, is equal to the value
+         * { field: { $mod: [ divisor, remainder ] } }
          * 
          * @param field
          *            The field to compare
@@ -488,10 +489,9 @@ public class DBQuery {
             return put(
                     field,
                     QueryOperators.MOD,
-                    new CollectionQueryCondition(Arrays
-                            .<QueryCondition> asList(new SimpleQueryCondition(
-                                    mod, false),
-                                    new SimpleQueryCondition(value)), false));
+                    new CollectionQueryCondition(Arrays.<QueryCondition>asList(
+                        new SimpleQueryCondition(mod, false),
+                        new SimpleQueryCondition(value)), false));
         }
 
         /**
@@ -639,8 +639,7 @@ public class DBQuery {
             for (Object value : values) {
                 conditions.add(new SimpleQueryCondition(value));
             }
-            return put(field, op,
-                    new CollectionQueryCondition(conditions, true));
+            return put(field, op, new CollectionQueryCondition(conditions, true));
         }
 
         protected abstract Q putGroup(String op, Query... expressions);
