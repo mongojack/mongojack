@@ -182,7 +182,7 @@ public class SerializationUtils {
             List<Object> serializedConditions = new ArrayList<Object>();
             for (QueryCondition item : coll.getValues()) {
                 serializedConditions.add(serializeQueryCondition(
-                        serializerProvider, serializer, "$", item));
+                        serializerProvider, serializer, "$in".equals(key) ? "" : "$", item));
             }
             return serializedConditions;
         } else {
