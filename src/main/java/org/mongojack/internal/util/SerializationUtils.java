@@ -25,10 +25,17 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bson.types.ObjectId;
+import org.mongojack.Aggregation;
+import org.mongojack.Aggregation.Expression;
+import org.mongojack.Aggregation.Group.Accumulator;
+import org.mongojack.Aggregation.Pipeline;
+import org.mongojack.Aggregation.Pipeline.Stage;
+import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
 import org.mongojack.MongoJsonMappingException;
@@ -50,8 +57,11 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+
+import de.flapdoodle.embed.process.collections.Collections;
 
 /**
  * Utilities for helping with serialisation
@@ -590,5 +600,91 @@ public class SerializationUtils {
         } else {
             return null;
         }
+    }
+
+    public static List<DBObject> serializePipeline(ObjectMapper objectMapper, JavaType type, Pipeline<?> pipeline) {
+        SerializerProvider serializerProvider = JacksonAccessor
+                .getSerializerProvider(objectMapper);
+        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
+                serializerProvider, type);
+        List<DBObject> serializedPipeline = Collections.newArrayList();
+        for (Pipeline.Stage<?> stage: pipeline.stages()) {
+            serializedPipeline.add(serializePipelineStage(serializerProvider, serializer, stage));
+        }
+        return serializedPipeline;
+    }
+
+    private static DBObject serializePipelineStage(
+            SerializerProvider serializerProvider, JsonSerializer<?> serializer,
+            Pipeline.Stage<?> stage) {
+        if (stage instanceof Aggregation.Limit) {
+            return new BasicDBObject("$limit", ((Aggregation.Limit) stage).limit());
+        }
+        if (stage instanceof Aggregation.Skip) {
+            return new BasicDBObject("$skip", ((Aggregation.Skip) stage).skip());
+        }
+        if (stage instanceof Aggregation.Sort) {
+            return new BasicDBObject("$sort", ((Aggregation.Sort) stage).builder());
+        }
+        if (stage instanceof Aggregation.Unwind) {
+            return new BasicDBObject("$unwind", ((Object) ((Aggregation.Unwind) stage).path()).toString());
+        }
+        if (stage instanceof Aggregation.Match) {
+            return new BasicDBObject("$match", serializeQuery(serializerProvider, serializer,
+                    ((Aggregation.Match) stage).query()));
+        }
+        if (stage instanceof Aggregation.Project) {
+            ProjectionBuilder builder = ((Aggregation.Project) stage).builder();
+            BasicDBObject object = new BasicDBObject();
+            for (Entry<String, Object> entry : builder.entrySet()) {
+                if (entry.getValue() instanceof Expression<?>) {
+                    object.append(entry.getKey(),
+                            serializeExpression(serializerProvider, serializer, (Expression<?>) entry.getValue()));
+                } else {
+                    object.append(entry.getKey(), entry.getValue());
+                }
+            }
+            return new BasicDBObject("$project", object);
+        }
+        if (stage instanceof Aggregation.Group) {
+            Aggregation.Group group = (Aggregation.Group) stage;
+            BasicDBObject object = new BasicDBObject("_id", serializeExpression(serializerProvider, serializer, group.key()));
+            for (Map.Entry<String, Aggregation.Group.Accumulator> field : group.calculatedFields()) {
+                object.append(field.getKey(), serializeAccumulator(serializerProvider, serializer, field.getValue()));
+            }
+            return new BasicDBObject("$group", object);
+        }
+        throw new IllegalArgumentException(stage.getClass().getName());
+    }
+
+    private static DBObject serializeAccumulator(SerializerProvider serializerProvider, JsonSerializer<?> serializer, Accumulator accumulator) {
+        return new BasicDBObject(accumulator.operator.name(),
+                serializeExpression(serializerProvider, serializer, accumulator.expression));
+    }
+
+    private static Object serializeExpression(SerializerProvider serializerProvider, JsonSerializer<?> serializer, Expression<?> expression) {
+        if (expression instanceof Aggregation.FieldPath) {
+            return ((Aggregation.FieldPath) expression).toString();
+        }
+        if (expression instanceof Aggregation.Literal<?>) {
+            return new BasicDBObject("$literal", ((Aggregation.Literal<?>) expression).value());
+        }
+        if (expression instanceof Aggregation.ExpressionObject) {
+            BasicDBObject object = new BasicDBObject();
+            for (Entry<String, Expression<?>> property : ((Aggregation.ExpressionObject) expression).properties()) {
+                object.append(property.getKey(),
+                        serializeExpression(serializerProvider, serializer, property.getValue()));
+            }
+            return object;
+        }
+        if (expression instanceof Aggregation.OperatorExpression) {
+            Aggregation.OperatorExpression<?> oe = (Aggregation.OperatorExpression<?>) expression;
+            BasicDBList operands = new BasicDBList();
+            for (Expression<?> e : oe.operands()) {
+                operands.add(serializeExpression(serializerProvider, serializer, e));
+            }
+            return new BasicDBObject(oe.operator(), operands);
+        }
+        throw new IllegalArgumentException(expression.getClass().getName());
     }
 }

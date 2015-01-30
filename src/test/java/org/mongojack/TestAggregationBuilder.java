@@ -15,22 +15,32 @@
  */
 package org.mongojack;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongojack.aggregation.AggregationBuilder;
-import org.mongojack.aggregation.GroupAggregation;
-import org.mongojack.aggregation.LimitAggregation;
-import org.mongojack.aggregation.MatchAggregation;
-import org.mongojack.aggregation.ProjectAggregation;
-import org.mongojack.aggregation.SortAggregation;
-import org.mongojack.aggregation.UnwindAggregation;
+import org.mongojack.Aggregation.Expression;
+import org.mongojack.Aggregation.Group;
+import org.mongojack.Aggregation.Pipeline;
+import org.mongojack.Aggregation.Project;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectAggregationResult;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mongodb.MongoException;
+
+import de.flapdoodle.embed.process.collections.Collections;
+
 public class TestAggregationBuilder extends MongoDBTestBase {
+    private static final DateFormat ISO_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
     private JacksonDBCollection<MockObject, String> coll;
 
     @Before
@@ -45,10 +55,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("bar", 101));
         coll.insert(new MockObject("bar", 102));
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.group(new GroupAggregation("string").withSum("integer", "integer")).sort(new SortAggregation().descending("string"));
+        Pipeline<?> pipeline = Aggregation.group("string").set("integer", Group.sum("integer")).sort(DBSort.desc("string"));
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(2, aggregationResult.results().size());
 
@@ -67,11 +76,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("bar", 101));
         coll.insert(new MockObject("bar", 102));
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.match(new MatchAggregation("string", "foo"))
-                .group(new GroupAggregation("string").withMin("integer", "integer"));
+        Pipeline<?> pipeline = Aggregation.match(DBQuery.is("string", "foo")).group("string").set("integer", Group.min("integer"));
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(1, aggregationResult.results().size());
         Assert.assertEquals("foo", aggregationResult.results().get(0)._id);
@@ -86,11 +93,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("bar", 101));
         coll.insert(new MockObject("bar", 102));
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.group(new GroupAggregation("string").withSum("integer", "integer"))
-                .project(new ProjectAggregation().set("integer", "string"));
+        Pipeline<?> pipeline = Aggregation.group("string").set("integer", Group.sum("integer")).project("string", Expression.path("integer"));
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(2, aggregationResult.results().size());
         Assert.assertEquals("203", aggregationResult.results().get(0).string);
@@ -108,11 +113,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
 
         coll.insert(mock);
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.unwind(new UnwindAggregation("simpleList"))
-                .group(new GroupAggregation("string").withSum("integer", "integer"));
+        Pipeline<?> pipeline = Aggregation.unwind("simpleList").group("string").set("integer", Group.sum("integer"));
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(1, aggregationResult.results().size());
         Assert.assertEquals(15, aggregationResult.results().get(0).integer.intValue());
@@ -127,11 +130,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("baz", 1));
         coll.insert(new MockObject("qux", 1));
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.group(new GroupAggregation("string"))
-                .limit(new LimitAggregation(2));
+        Pipeline<?> pipeline = Aggregation.group("string").limit(2);
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(2, aggregationResult.results().size());
 
@@ -145,10 +146,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("baz", 3));
         coll.insert(new MockObject("qux", 4));
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.match(new MatchAggregation().greaterThan("integer", 2));
+        Pipeline<?> pipeline = Aggregation.match(DBQuery.greaterThan("integer", 2));
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(2, aggregationResult.results().size());
         for (MockObjectAggregationResult mockObjectAggregationResult : aggregationResult.results()) {
@@ -165,15 +165,50 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("baz", 3));
         coll.insert(new MockObject("qux", 4));
 
-        AggregationBuilder<MockObjectAggregationResult> builder = new AggregationBuilder<MockObjectAggregationResult>();
-        builder.match(new MatchAggregation().in("string", "foo", "baz"));
+        Pipeline<?> pipeline = Aggregation.match(DBQuery.in("string", "foo", "baz"));
 
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(builder.build(MockObjectAggregationResult.class));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
         Assert.assertEquals(2, aggregationResult.results().size());
         for (MockObjectAggregationResult mockObjectAggregationResult : aggregationResult.results()) {
             Assert.assertTrue(mockObjectAggregationResult.string.equals("foo") ||  mockObjectAggregationResult.string.equals("baz"));
         }
 
+    }
+
+    static class User {
+        @Id String name;
+        @JsonProperty Date joined;
+        @JsonProperty List<String> likes;
+
+        User(String name, Date joined, List<String> likes) {
+            this.name = name;
+            this.joined = joined;
+            this.likes = likes;
+        }
+    }
+
+    @Test
+    public void testOperatorExpressions() throws MongoException, ParseException {
+        // based on http://docs.mongodb.org/manual/tutorial/aggregation-with-user-preference-data/
+        JacksonDBCollection<User, String> users = getCollection(User.class, String.class);
+        users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Collections.newArrayList("golf", "racquetball")));
+        users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Collections.newArrayList("tennis", "golf", "swimming")));
+
+        Pipeline pipeline = new Pipeline<Expression<?>>(Project
+                .field("month_joined", Expression.month(Expression.date("joined")))
+                .set("name", Expression.path("_id"))
+                .excludeId())
+                .sort(DBSort.asc("month_joined"));
+        List<Object> results = users.aggregate(pipeline, Object.class).results();
+        Assert.assertEquals(2, results.size());
+        Map<String, Object> firstResult = (Map<String, Object>) results.get(0);
+        Assert.assertEquals(3, firstResult.get("month_joined"));
+        Assert.assertEquals("jane", firstResult.get("name"));
+        Assert.assertEquals(2, firstResult.keySet().size());
+        Map<String, Object> secondResult = (Map<String, Object>) results.get(1);
+        Assert.assertEquals(7, secondResult.get("month_joined"));
+        Assert.assertEquals("joe", secondResult.get("name"));
+        Assert.assertEquals(2, secondResult.keySet().size());
     }
 }
