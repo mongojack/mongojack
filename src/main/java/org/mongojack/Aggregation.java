@@ -620,7 +620,7 @@ public class Aggregation<T> {
         }
 
         public static Expression<Number> mod(Expression<Number> number1, Expression<Number> number2) {
-            return new OperatorExpression<Number>("$divide", number1, number2);
+            return new OperatorExpression<Number>("$mod", number1, number2);
         }
 
         public static Expression<Number> multiply(Expression<Number>... numbers) {
