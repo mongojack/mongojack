@@ -1888,6 +1888,11 @@ public class JacksonDBCollection<T, K> {
                 .getResultType());
     }
 
+    public <S> AggregationResult<S> aggregate(Aggregation.Pipeline<?> pipeline, Class<S> resultType)
+            throws MongoException {
+        return new AggregationResult<S>(this, dbCollection.aggregate(serializePipeline(pipeline)), resultType);
+    }
+
     /**
      * Return a list of the indexes for this collection. Each object in the list
      * is the "info document" from MongoDB
@@ -2316,6 +2321,10 @@ public class JacksonDBCollection<T, K> {
     Object serializeQueryCondition(String key, QueryCondition condition) {
         return SerializationUtils.serializeQueryCondition(objectMapper, type,
                 key, condition);
+    }
+
+    public List<DBObject> serializePipeline(Aggregation.Pipeline<?> pipeline) {
+        return SerializationUtils.serializePipeline(objectMapper, type, pipeline);
     }
 
     ObjectMapper getObjectMapper() {
