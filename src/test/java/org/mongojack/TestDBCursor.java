@@ -18,12 +18,14 @@ package org.mongojack;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
@@ -70,5 +72,13 @@ public class TestDBCursor extends MongoDBTestBase {
                 .sort(new BasicDBObject("integer", 1)).toArray();
         assertThat(results, contains(o1, o2, o3));
         assertThat(results, hasSize(3));
+    }
+
+    @Test @Ignore
+    public void testPutGroup() {
+        DBCursor<MockObject> cursor = coll.find(DBQuery.and(DBQuery.exists("string")));
+        String queryBefore = cursor.getQuery().toString();
+        assertThat(cursor.and(DBQuery.lessThan("integer", 20)).getQuery().toString(),
+                not(equalTo(queryBefore)));
     }
 }
