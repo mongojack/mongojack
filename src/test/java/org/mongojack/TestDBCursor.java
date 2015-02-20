@@ -25,7 +25,6 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
@@ -74,7 +73,7 @@ public class TestDBCursor extends MongoDBTestBase {
         assertThat(results, hasSize(3));
     }
 
-    @Test @Ignore
+    @Test
     public void testPutGroup() {
         DBCursor<MockObject> cursor = coll.find(DBQuery.and(DBQuery.exists("string")));
         String queryBefore = cursor.getQuery().toString();
