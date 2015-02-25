@@ -519,6 +519,10 @@ public class Aggregation<T> {
             return new FieldPath<Integer>(path);
         }
 
+        public static Expression<List<?>> list(String... path) {
+            return new FieldPath<List<?>>(path);
+        }
+
         public static Expression<Number> number(String... path) {
             return new FieldPath<Number>(path);
         }
