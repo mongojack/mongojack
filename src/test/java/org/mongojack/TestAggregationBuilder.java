@@ -19,6 +19,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -186,6 +187,38 @@ public class TestAggregationBuilder extends MongoDBTestBase {
             this.joined = joined;
             this.likes = likes;
         }
+    }
+
+    @Test
+    public void testSize() {
+        MockObject foo = new MockObject("foo", 1);
+        foo.simpleList = Arrays.asList(new String[] {"one", "two"});
+        coll.insert(foo);
+
+        MockObject bar = new MockObject("bar", 2);
+        bar.simpleList = Arrays.asList(new String[] {"uno", "dos", "tres"});
+        coll.insert(bar);
+
+        MockObject baz = new MockObject("baz", 3);
+        baz.simpleList = Arrays.asList(new String[] {});
+        coll.insert(baz);
+
+        Pipeline<?> pipeline = Aggregation.project("integer", Expression.size(Expression.list("simpleList")));
+        System.err.println("pipeline: " + coll.serializePipeline(pipeline));
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
+
+        Assert.assertEquals(3, aggregationResult.results().size());
+        Assert.assertEquals(2, aggregationResult.results().get(0).integer.intValue());
+        Assert.assertEquals(3, aggregationResult.results().get(1).integer.intValue());
+        Assert.assertEquals(0, aggregationResult.results().get(2).integer.intValue());
+
+        coll.insert(new MockObject("bat", 4)); // simpleList does not exist
+        pipeline = Aggregation.project("integer",
+                Expression.size(Expression.ifNull(Expression.list("simpleList"),
+                        Expression.literal(Collections.newArrayList()))));
+        aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
+        Assert.assertEquals(4, aggregationResult.results().size());
+        Assert.assertEquals(0, aggregationResult.results().get(3).integer.intValue());
     }
 
     @Test
