@@ -458,7 +458,7 @@ public class SerializationUtils {
                 } else if (fieldSerializer instanceof BeanSerializerBase) {
                     BeanPropertyWriter writer = JacksonAccessor
                             .findPropertyWriter(
-                                    (BeanSerializerBase) serializer, field);
+                                    (BeanSerializerBase) fieldSerializer, field);
                     if (writer != null) {
                         fieldSerializer = writer.getSerializer();
                         if (fieldSerializer == null) {
