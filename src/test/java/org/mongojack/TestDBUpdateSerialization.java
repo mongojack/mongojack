@@ -17,11 +17,14 @@
 package org.mongojack;
 
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +42,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class TestDBUpdateSerialization extends MongoDBTestBase {
 
     private JacksonDBCollection<MockObject, String> coll;
+    private JacksonDBCollection<NestedRepeatedAttributeName, String> coll2;
 
     @Before
     public void setUp() {
@@ -153,6 +157,27 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         assertThat(coll.findOneById("id").map, equalTo(map));
     }
 
+    // Test to detect presence of issue https://github.com/devbliss/mongojack/issues/98
+    @Test
+    public void testUpdateOfNestedRepeatedAttributeName() {
+        coll2 = getCollection(NestedRepeatedAttributeName.class, String.class);
+
+        Date d1 = new Date(10000L);
+        Date d2 = new Date(20000L);
+    	
+        NestedRepeatedAttributeName original = new NestedRepeatedAttributeName();
+        original.inner.timestamp = d1;
+        original.timestamp       = 30000;
+
+        coll2.insert(original);
+        coll2.updateById(original._id, DBUpdate.set("inner.timestamp", d2));
+
+        NestedRepeatedAttributeName updated = coll2.findOneById(original._id);
+        assertThat(updated, notNullValue());
+        assertThat(updated.inner.timestamp, equalTo(d2));
+        assertThat(updated.timestamp, equalTo(original.timestamp));
+    }
+
     public static class MockObject {
         public String _id = "id";
         @JsonSerialize(using = FooToBarSerializer.class)
@@ -181,5 +206,14 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
                 jgen.writeString(value);
             }
         }
+    }
+    
+    public static class NestedRepeatedAttributeName {
+        public static class Inner {
+            public Date timestamp;
+        }
+        public String _id = "id";
+        public Inner inner = new Inner();
+        public long timestamp;
     }
 }
