@@ -24,7 +24,7 @@ public class DbManager {
 
     try {
         IMongodConfig mongodConfig = new MongodConfigBuilder()
-            .version(Version.Main.V2_6)
+            .version(Version.Main.V3_0)
             .net(new Net(PORT, Network.localhostIsIPv6()))
             .build();
 
