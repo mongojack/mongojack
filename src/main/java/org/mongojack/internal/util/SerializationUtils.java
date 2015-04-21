@@ -39,6 +39,7 @@ import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
 import org.mongojack.MongoJsonMappingException;
+import org.mongojack.internal.MongoJackModule;
 import org.mongojack.internal.ObjectIdSerializer;
 import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.query.CollectionQueryCondition;
@@ -57,6 +58,7 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -363,7 +365,7 @@ public class SerializationUtils {
 
                     JsonSerializer<?> fieldSerializer = findUpdateSerializer(field
                             .getValue().isTargetCollection(), field.getKey(),
-                            serializerProvider, serializer);
+                            serializerProvider, serializer, objectMapper.getTypeFactory(), field.getValue().getValue().getClass());
                     if (fieldSerializer != null) {
                         value = serializeUpdateField(field.getValue(),
                                 fieldSerializer, serializerProvider,
@@ -422,7 +424,7 @@ public class SerializationUtils {
 
     private static JsonSerializer<?> findUpdateSerializer(
             boolean targetIsCollection, String fieldPath,
-            SerializerProvider serializerProvider, JsonSerializer<?> serializer) {
+            SerializerProvider serializerProvider, JsonSerializer<?> serializer, TypeFactory typeFactory, Class<?> valueClass) {
         if (serializer instanceof BeanSerializerBase) {
             JsonSerializer<?> fieldSerializer = serializer;
             // Iterate through the components of the field name
@@ -460,10 +462,16 @@ public class SerializationUtils {
                     if (writer != null) {
                         fieldSerializer = writer.getSerializer();
                         if (fieldSerializer == null) {
+                        	JavaType writerType = writer.getType();
+                        	JavaType valueType  = writerType;
+                        	if (writerType.getRawClass().isAssignableFrom(valueClass)) {
+                        		valueType = typeFactory.constructSpecializedType(writerType, valueClass);
+                        	}
+                        	
                             // Do a generic lookup
                             fieldSerializer = JacksonAccessor
                                     .findValueSerializer(serializerProvider,
-                                            writer.getType());
+                                            valueType);
                         }
                     } else {
                         // Give up
