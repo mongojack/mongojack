@@ -16,12 +16,10 @@
  */
 package org.mongojack;
 
+import com.mongodb.DBObject;
+
 import java.util.ArrayList;
 import java.util.Collection;
-
-import com.mongodb.CommandResult;
-import com.mongodb.DBObject;
-import com.mongodb.ServerAddress;
 
 /**
  * Represents the result of a Map/Reduce operation
@@ -114,33 +112,8 @@ public class MapReduceOutput<T, K> {
         return output.getEmitCount();
     }
 
-    /**
-     * Gets the raw command result of the operation.
-     *
-     * @return a CommandResult representing the output of the map-reduce in its raw form from the server.
-     * @deprecated It is not recommended to access the command result returned by the server as the format can change between releases. This
-     * has been replaced with a series of specific getters for the values on the CommandResult (
-     * getDuration, getEmitCount, getOutputCount, getInputCount).  The method {@code results()} will continue to return an {@code
-     * Iterable<T>}, that should be used to obtain the results of the map-reduce.
-     */
-    @Deprecated
-    public CommandResult getCommandResult() {
-        return output.getCommandResult();
-    }
-
     public DBObject getCommand() {
         return output.getCommand();
-    }
-
-    /**
-     * Get the server that the  command was run on.
-     *
-     * @return a ServerAddress of the server that the command ran against.
-     * @deprecated this method will be removed in a future release.  There is no replacement for it.
-     */
-    @Deprecated
-    public ServerAddress getServerUsed() {
-        return output.getServerUsed();
     }
 
     @Override

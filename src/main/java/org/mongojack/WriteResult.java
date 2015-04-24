@@ -170,74 +170,6 @@ public class WriteResult<T, K> {
     }
 
     /**
-     * Gets the last result from getLastError()
-     * 
-     * @return The last error
-     * @deprecated Use the appropriate {@code WriteConcern} and rely on the write operation to throw an exception on failure.  For
-     * successful writes, use the helper methods to retrieve specific values from the write response.
-     */
-    @Deprecated
-    public CommandResult getCachedLastError() {
-        return writeResult.getCachedLastError();
-
-    }
-
-    /**
-     * Gets the last {@link com.mongodb.WriteConcern} used when calling
-     * getLastError()
-     * 
-     * @return The last write concern.
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public WriteConcern getLastConcern() {
-        return writeResult.getLastConcern();
-
-    }
-
-    /**
-     * calls {@link WriteResult#getLastError(com.mongodb.WriteConcern)} with
-     * concern=null
-     * 
-     * @return The last error
-     * @deprecated Use the appropriate {@code WriteConcern} and allow the write operation to throw an exception on failure.  For
-     * successful writes, use the helper methods to retrieve specific values from the write response.
-     */
-    @Deprecated
-    public synchronized CommandResult getLastError() {
-        return writeResult.getLastError();
-    }
-
-    /**
-     * This method does following: - returns the existing CommandResult if
-     * concern is null or less strict than the concern it was obtained with -
-     * otherwise attempts to obtain a CommandResult by calling getLastError with
-     * the concern
-     * 
-     * @param concern
-     *            the concern
-     * @return The last error for the concern
-     * @deprecated Use the appropriate {@code WriteConcern} and rely on the write operation to throw an exception on failure.  For
-     * successful writes, use the helper methods to retrieve specific values from the write response.
-     */
-    @Deprecated
-    public synchronized CommandResult getLastError(WriteConcern concern) {
-        return writeResult.getLastError(concern);
-    }
-
-    /**
-     * Gets the error String ("err" field)
-     * 
-     * @return The error string
-     * @deprecated There should be no reason to use this method.  The error message will be in the exception thrown for an
-     * unsuccessful write operation.
-     */
-    @Deprecated
-    public String getError() {
-        return writeResult.getError();
-    }
-
-    /**
      * Gets the "n" field, which contains the number of documents affected in
      * the write operation.
      * 
@@ -265,32 +197,6 @@ public class WriteResult<T, K> {
      */
     public boolean isUpdateOfExisting() {
         return writeResult.isUpdateOfExisting();
-    }
-
-    /**
-     * Gets a field
-     * 
-     * @param name
-     *            field name
-     * @return The value
-     * @deprecated There should be no reason to use this method.  To get specific fields from a successful write,
-     * use the helper methods provided.  Any error-related fields will be in the exception thrown for an unsuccessful write operation.
-     */
-    @Deprecated
-    public Object getField(String name) {
-        return writeResult.getField(name);
-    }
-
-    /**
-     * Returns whether or not the result is lazy, meaning that getLastError was
-     * not called automatically
-     * 
-     * @return if it's lazy
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public boolean isLazy() {
-        return writeResult.isLazy();
     }
 
     @Override

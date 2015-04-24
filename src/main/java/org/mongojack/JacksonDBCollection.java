@@ -1134,14 +1134,6 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Clears all indices that have not yet been applied to this collection.
-     */
-    @Deprecated
-    public void resetIndexCache() {
-        dbCollection.resetIndexCache();
-    }
-
-    /**
      * Set hint fields for this collection (to optimize queries).
      * 
      * @param lst
@@ -1830,21 +1822,6 @@ public class JacksonDBCollection<T, K> {
      */
     @Deprecated
     public com.mongodb.MapReduceOutput mapReduce(MapReduceCommand command)
-            throws MongoException {
-        return dbCollection.mapReduce(command);
-    }
-
-    /**
-     * performs a map reduce operation
-     * 
-     * @param command
-     *            object representing the parameters
-     * @return The output
-     * @throws MongoException
-     *             If an error occurred
-     */
-    @Deprecated
-    public com.mongodb.MapReduceOutput mapReduce(DBObject command)
             throws MongoException {
         return dbCollection.mapReduce(command);
     }

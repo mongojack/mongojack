@@ -307,29 +307,6 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     }
 
     /**
-     * gets the number of times, so far, that the cursor retrieved a batch from
-     * the database
-     * 
-     * @return The number of get mores
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public int numGetMores() {
-        return cursor.numGetMores();
-    }
-
-    /**
-     * gets a simpleList containing the number of items received in each batch
-     * 
-     * @return The sizes of each batch
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public List<Integer> getSizes() {
-        return cursor.getSizes();
-    }
-
-    /**
      * Returns the number of objects through which the cursor has iterated.
      * 
      * @return the number of objects seen

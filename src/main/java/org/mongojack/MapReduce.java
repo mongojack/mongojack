@@ -250,11 +250,6 @@ public class MapReduce {
                 command.setScope(scope);
             }
             command.setVerbose(verbose);
-            if (extra != null) {
-                for (String key : extra.keySet()) {
-                    command.addExtraOption(key, extra.get(key));
-                }
-            }
             return command;
         }
 
