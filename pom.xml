@@ -57,7 +57,7 @@
         <dependency>
             <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo</artifactId>
-            <version>1.47.4-SNAPSHOT</version>
+            <version>1.47.3</version>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
