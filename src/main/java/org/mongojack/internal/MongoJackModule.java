@@ -56,7 +56,7 @@ public class MongoJackModule extends Module {
 
     @Override
     public Version version() {
-        return new Version(1, 0, 0, null);
+        return new Version(1, 0, 0, null, "org.mongojack", "mongojack");
     }
 
     @Override
