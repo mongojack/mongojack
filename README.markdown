@@ -16,6 +16,10 @@ The MongoDB Jackson Mapper users mailing list is hosted [here](http://groups.goo
 Quick start
 -----------
 
+### Mongo driver compatibility
+
+Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver. The next released version will be compatible with the 3.x series mongo-java-driver.
+
 ### Installation
 
 #### Using Maven
@@ -24,7 +28,7 @@ The quickest and easiest way to start using MongoJack is to use Maven. To do tha
     <dependency>
         <groupId>org.mongojack</groupId>
         <artifactId>mongojack</artifactId>
-        <version>2.1.0-SNAPSHOT</version>
+        <version>2.3.0</version>
     </dependency>
 
 You will also have to tell Maven to use the snapshot repository. To do that, add the following above the `<build />` element and as a subelement of `<project />`:
