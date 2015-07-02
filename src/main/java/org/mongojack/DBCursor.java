@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -64,7 +65,7 @@ import com.mongodb.ServerAddress;
  * @since 1.0
  */
 public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
-        Iterator<T>, Iterable<T> {
+        Iterator<T>, Iterable<T>, Closeable {
     private final com.mongodb.DBCursor cursor;
     private final JacksonDBCollection<T, ?> jacksonDBCollection;
 
