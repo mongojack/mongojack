@@ -26,8 +26,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mongojack.internal.CalendarSerializer;
+import org.mongojack.internal.object.BsonObjectGenerator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 /**
@@ -42,7 +42,7 @@ public class CalendarSerializerTest {
     @Mock
     private SerializerProvider serializerProvider;
     @Mock
-    private JsonGenerator jsonGenerator;
+    private BsonObjectGenerator jsonGenerator;
     @Mock
     private Calendar calendar;
 
