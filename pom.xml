@@ -9,7 +9,7 @@
 
     <groupId>org.mongojack</groupId>
     <artifactId>mongojack</artifactId>
-    <version>2.3.2-SNAPSHOT</version>
+    <version>2.4.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <name>MongoJack</name>
@@ -238,16 +238,16 @@
             <organization>devbliss GmbH</organization>
             <organizationUrl>https://devbliss.com</organizationUrl>
         </developer>
+        <developer>
+            <name>Ben McCann</name>
+            <roles>
+                <role>Maintainer</role>
+            </roles>
+            <organizationUrl>https://www.benmccannn.com</organizationUrl>
+        </developer>
     </developers>
 
     <contributors>
-        <contributor>
-            <name>Ben McCann</name>
-            <url>http://www.benmccann.com/</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
         <contributor>
             <name>Christian Riedel</name>
             <url>https://github.com/criedel</url>
@@ -400,21 +400,21 @@
     </profiles>
 
     <scm>
-        <url>https://github.com/devbliss/mongojack</url>
-        <connection>scm:git://github.com/devbliss/mongojack.git</connection>
-        <developerConnection>scm:git:git@github.com:devbliss/mongojack.git</developerConnection>
+        <url>https://github.com/mongojack/mongojack</url>
+        <connection>scm:git://github.com/mongojack/mongojack.git</connection>
+        <developerConnection>scm:git:git@github.com:mongojack/mongojack.git</developerConnection>
     </scm>
 
     <distributionManagement>
         <site>
             <id>github-project-site</id>
-            <url>gitsite:git@github.com/devbliss/mongojack.git</url>
+            <url>gitsite:git@github.com/mongojack/mongojack.git</url>
         </site>
     </distributionManagement>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/devbliss/mongojack/issues/</url>
+        <url>https://github.com/mongojack/mongojack/issues/</url>
     </issueManagement>
 
     <reporting>
