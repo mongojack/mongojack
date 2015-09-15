@@ -31,19 +31,6 @@ The quickest and easiest way to start using MongoJack is to use Maven. To do tha
         <version>2.5.0</version>
     </dependency>
 
-You will also have to tell Maven to use the snapshot repository. To do that, add the following above the `<build />` element and as a subelement of `<project />`:
-
-    <repositories>
-        <repository>
-            <id>oss-sonatype</id>
-            <name>oss-sonatype</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-
 ### Writing code
 
 Inserting objects is done like this:
