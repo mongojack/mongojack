@@ -80,6 +80,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!-- Necessary because according to the docs, site filtering doesn't work for properties with dots in them -->
+        <siteProjectVersion>${project.version}</siteProjectVersion>
+        <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
     </properties>
 
     <build>
@@ -98,9 +101,35 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.18.1</version>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
                 <configuration>
+                    <reportPlugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-project-info-reports-plugin</artifactId>
+                            <version>2.8.1</version>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <version>2.10.3</version>
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.doxia</groupId>
+                        <artifactId>doxia-module-markdown</artifactId>
+                        <version>1.6</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <version>2.18.1</version>
+              <configuration>
                     <properties>
                         <property>
                             <name>listener</name>
@@ -114,6 +143,13 @@
             </plugin>
         </plugins>
 
+        <extensions>
+            <extension>
+                <groupId>com.github.stephenc.wagon</groupId>
+                <artifactId>wagon-gitsite</artifactId>
+                <version>0.5</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
@@ -121,6 +157,31 @@
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
                     <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>
+                                            org.apache.felix
+                                        </groupId>
+                                        <artifactId>
+                                            maven-bundle-plugin
+                                        </artifactId>
+                                        <versionRange>
+                                            [2.5.3,)
+                                        </versionRange>
+                                        <goals>
+                                            <goal>manifest</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore />
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
