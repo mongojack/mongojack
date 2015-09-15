@@ -121,3 +121,23 @@ Of course, if you really want to control things and Jackson's annotations aren't
     myObjectMapper.withModule(org.mongojack.internal.MongoJackModule.INSTANCE);
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
             String.class, myObjectMapper);
+
+Releasing
+-----------
+
+Make sure you have the file `~/.m2/settings.xml`:
+
+    <settings>
+      <servers>
+        <server>
+          <id>sonatype-nexus-staging</id>
+          <username></username>
+          <password></password>
+        </server>
+      </servers>
+    </settings>
+
+Now run the following:
+
+    mvn release:prepare
+    mvn release:perform
