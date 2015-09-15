@@ -34,13 +34,13 @@ import com.mongodb.QueryOperators;
 
 /**
  * Builder for MongoDB queries.
- * <p/>
+ * <p>
  * The primary way in which this case is used is by calling the below methods on {@link DBCursor}, which is an instance
  * if the Builder. The static methods on this class may be used when passing in expressions to and(), or() etc.
- * <p/>
+ * <p>
  * Any values that are not basic objects (numbers, Strings, booleans, collections etc) that are passed in are attempted
  * to be serialised using Jackson.
- * <p/>
+ * <p>
  * Caution needs to be taken when querying entries that are objectIds. The mapper is at this stage unaware whether a
  * field is stored as an ObjectId or not, so you must pass in any values that are stored as ObjectId as type
  * {@link org.bson.types.ObjectId}.

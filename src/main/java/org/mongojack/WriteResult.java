@@ -21,10 +21,8 @@ import java.util.List;
 
 import org.mongojack.internal.stream.JacksonDBObject;
 
-import com.mongodb.CommandResult;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
-import com.mongodb.WriteConcern;
 
 /**
  * This class lets you access the results of the previous write. if you have
@@ -54,7 +52,7 @@ public class WriteResult<T, K> {
     /**
      * Get the object that was saved. This will contain the updated ID if the ID
      * was generated.
-     * <p/>
+     * <p>
      * Note, this operation is a little expensive because it has to deserialise the object. If you just want the ID,
      * call getSavedId() instead.
      * 
@@ -72,10 +70,10 @@ public class WriteResult<T, K> {
     /**
      * Get the objects that were saved. These will contain the updated IDs if
      * the IDs were generated.
-     * <p/>
+     * <p>
      * This operation only works if object serialization is used. If stream serialization is used, the IDs are generated
      * by the database, and cannot be known.
-     * <p/>
+     * <p>
      * Note, this operation is a little expensive because it has to deserialise the objects. If you just want the IDs,
      * call getSavedIds() instead.
      * 

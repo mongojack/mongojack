@@ -1174,7 +1174,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Queries for an object in this collection.
-     * <p/>
+     * <p>
      * <p>
      * An empty DBObject will match every document in the collection. Regardless of fields specified, the _id fields are
      * always returned.
@@ -1182,16 +1182,13 @@ public class JacksonDBCollection<T, K> {
      * <p>
      * An example that returns the "x" and "_id" fields for every document in the collection that has an "x" field:
      * </p>
-     * <blockquote>
      * 
      * <pre>
 	 * BasicDBObject keys = new BasicDBObject();
 	 * keys.put("x", 1);
-	 * <p/>
+	 *
 	 * DBCursor cursor = collection.find(new BasicDBObject(), keys);
 	 * </pre>
-     * 
-     * </blockquote>
      * 
      * @param query
      *            object for which to search
@@ -1206,7 +1203,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Queries for an object in this collection.
-     * <p/>
+     * <p>
      * <p>
      * An empty DBObject will match every document in the collection. Regardless of fields specified, the _id fields are
      * always returned.
@@ -1844,7 +1841,7 @@ public class JacksonDBCollection<T, K> {
     /**
      * Performs an aggregation pipeline against this collection.
      * 
-     * @Param aggregation an Aggregation specifying the operations for the aggregation pipeline, and the return type.
+     * @param aggregation an Aggregation specifying the operations for the aggregation pipeline, and the return type.
      * @return an AggregationResult with the result objects mapped to the type specified by the Aggregation.
      * @throws MongoException
      *             If an error occurred
@@ -1933,11 +1930,8 @@ public class JacksonDBCollection<T, K> {
      * </blockquote> Which is equivalent to
      * 
      * <pre>
-	 * <blockquote>
 	 *   DBCollection users = mongo.getCollection( "wiki.users" );
 	 * </pre>
-     * 
-     * </blockquote>
      * 
      * @param n
      *            the name of the collection to find
@@ -2017,7 +2011,7 @@ public class JacksonDBCollection<T, K> {
 
     /**
      * Sets the read preference for this collection. Will be used as default for
-     * reads from this collection; overrides DB & Connection level settings. See
+     * reads from this collection; overrides DB &amp; Connection level settings. See
      * the * documentation for {@link ReadPreference} for more information.
      * 
      * @param preference

@@ -34,7 +34,7 @@ import com.mongodb.ServerAddress;
  * An iterator over database results. This class is not threadsafe and is
  * intended to be used from a single thread or synchronized. Doing a <code>find()</code> query on a collection returns a
  * <code>DBCursor</code> thus
- * <p/>
+ * <p>
  * <blockquote>
  * 
  * <pre>
@@ -44,7 +44,7 @@ import com.mongodb.ServerAddress;
  * </pre>
  * 
  * </blockquote>
- * <p/>
+ * <p>
  * <p>
  * <b>Warning:</b> Calling <code>toArray</code> or <code>length</code> on a DBCursor will irrevocably turn it into an
  * array. This means that, if the cursor was iterating over ten million results (which it was lazily fetching from the
@@ -52,7 +52,7 @@ import com.mongodb.ServerAddress;
  * that there are a reasonable number of results using <code>skip()</code> and <code>limit()</code>.
  * <p>
  * For example, to get an array of the 1000-1100th elements of a cursor, use
- * <p/>
+ * <p>
  * <blockquote>
  * 
  * <pre>
@@ -158,7 +158,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
      * 
      * @param indexName
      *            the name of an index
-     * @return same JacksonDBCursor<T>t for chaining operations
+     * @return this DBCursor for chaining operations
      */
     public DBCursor<T> hint(String indexName) {
         cursor.hint(indexName);
@@ -174,7 +174,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
      * always effectively snapshotted. Currently, snapshot mode may not be used
      * with sorting or explicit hints.
      * 
-     * @return same JacksonDBCursor<T> for chaining operations
+     * @return this DBCursor for chaining operations
      */
     public DBCursor<T> snapshot() {
         cursor.snapshot();
@@ -198,7 +198,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     /**
      * Limits the number of elements returned. Note: parameter <tt>n</tt> should
      * be positive, although a negative value is supported for legacy reason.
-     * Passing a negative value will call {@link DBCursor <T>#batchSize(int)} which is the preferred method.
+     * Passing a negative value will call {@link DBCursor#batchSize(int)} which is the preferred method.
      * 
      * @param n
      *            the number of elements to return
@@ -212,16 +212,16 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     /**
      * Limits the number of elements returned in one batch. A cursor typically
      * fetches a batch of result objects and store them locally.
-     * <p/>
+     * <p>
      * If <tt>batchSize</tt> is positive, it represents the size of each batch of objects retrieved. It can be adjusted
      * to optimize performance and limit data transfer.
-     * <p/>
+     * <p>
      * If <tt>batchSize</tt> is negative, it will limit of number objects returned, that fit within the max batch size
      * limit (usually 4MB), and cursor will be closed. For example if <tt>batchSize</tt> is -10, then the server will
      * return a maximum of 10 documents and as many as can fit in 4MB, then close the cursor. Note that this feature is
      * different from limit() in that documents must fit within a maximum size, and it removes the need to send a
      * request to close the cursor server-side.
-     * <p/>
+     * <p>
      * The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next
      * batch retrieval.
      * 

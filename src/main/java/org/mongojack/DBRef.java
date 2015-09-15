@@ -77,7 +77,7 @@ public class DBRef<T, K> {
     /**
      * Fetch the object. Should only be called for references that have been returned by the mapper, will return null
      * otherwise.
-     * <p/>
+     * <p>
      * Deserialisation is done by the ObjectMapper that fetched the object that this reference belongs to.
      * 
      * @return If this DBRef was returned by the mapper, the referenced object, if it exists, or null
@@ -89,9 +89,9 @@ public class DBRef<T, K> {
     /**
      * Fetch only the given fields of the object. Should only be called for references that have been returned by the
      * mapper, will return null otherwise.
-     * <p/>
+     * <p>
      * Deserialisation is done by the ObjectMapper that fetched the object that this reference belongs to.
-     * <p/>
+     * <p>
      * Unlike the <code>fetch()</code> method, calls to this are not cached.
      * 
      * @param fields The fields to fetch
