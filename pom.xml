@@ -405,12 +405,14 @@
         <developerConnection>scm:git:git@github.com:mongojack/mongojack.git</developerConnection>
     </scm>
 
+    <!--
     <distributionManagement>
         <site>
             <id>github-project-site</id>
-            <url>gitsite:git@github.com/mongojack/mongojack.git</url>
+            <url>gitsite:git@github.com/devbliss/mongojack.git</url>
         </site>
     </distributionManagement>
+    -->
 
     <issueManagement>
         <system>GitHub</system>
