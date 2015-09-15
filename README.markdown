@@ -18,7 +18,7 @@ Quick start
 
 ### Mongo driver compatibility
 
-Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver. Version 2.5.0 and later are compatible only with the 3.x series mongo-driver.
+Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver. Version 2.5.0 and later are compatible only with the 3.x series mongodb-driver.
 
 ### Installation
 
