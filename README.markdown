@@ -26,9 +26,9 @@ Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-dri
 The quickest and easiest way to start using MongoJack is to use Maven. To do that, add the following to your dependencies list:
 
     <dependency>
-        <groupId>org.mongojack</groupId>
-        <artifactId>mongojack</artifactId>
-        <version>2.5.0</version>
+      <groupId>org.mongojack</groupId>
+      <artifactId>mongojack</artifactId>
+      <version>2.5.1</version>
     </dependency>
 
 ### Writing code
