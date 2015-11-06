@@ -42,7 +42,7 @@ public class ObjectIdDeserializers {
             if (object == null) {
                 return null;
             } else if (object instanceof ObjectId) {
-                return object.toString();
+                return ((ObjectId) object).toHexString();
             } else if (object instanceof DBRef) {
                 Object id = ((DBRef) object).getId();
                 if (!(id instanceof ObjectId)) {
@@ -50,7 +50,7 @@ public class ObjectIdDeserializers {
                             "Expected an ObjectId id in the DBRef to deserialise to string, but found "
                                     + id.getClass());
                 }
-                return id.toString();
+                return ((ObjectId) id).toHexString();
             } else {
                 throw ctxt.instantiationException(String.class,
                         "Expected an ObjectId to deserialise to string, but found "
