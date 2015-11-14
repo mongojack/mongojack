@@ -18,7 +18,7 @@ Quick start
 
 ### Mongo driver compatibility
 
-Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver. The next released version will be compatible with the 3.x series mongo-java-driver.
+Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver. Version 2.5.0 and later are compatible only with the 3.x series mongodb-driver.
 
 ### Installation
 
@@ -26,23 +26,10 @@ Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-dri
 The quickest and easiest way to start using MongoJack is to use Maven. To do that, add the following to your dependencies list:
 
     <dependency>
-        <groupId>org.mongojack</groupId>
-        <artifactId>mongojack</artifactId>
-        <version>2.3.0</version>
+      <groupId>org.mongojack</groupId>
+      <artifactId>mongojack</artifactId>
+      <version>2.5.1</version>
     </dependency>
-
-You will also have to tell Maven to use the snapshot repository. To do that, add the following above the `<build />` element and as a subelement of `<project />`:
-
-    <repositories>
-        <repository>
-            <id>oss-sonatype</id>
-            <name>oss-sonatype</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 
 ### Writing code
 
@@ -121,3 +108,27 @@ Of course, if you really want to control things and Jackson's annotations aren't
     myObjectMapper.withModule(org.mongojack.internal.MongoJackModule.INSTANCE);
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
             String.class, myObjectMapper);
+
+Releasing
+-----------
+
+This section is relevant only for project maintainers.
+
+NOTE: [do not release from any location which load balances outgoing HTTP requests between internet connections](https://issues.sonatype.org/browse/OSSRH-6262)
+
+Make sure you have the file `~/.m2/settings.xml`:
+
+    <settings>
+      <servers>
+        <server>
+          <id>sonatype-nexus-staging</id>
+          <username></username>
+          <password></password>
+        </server>
+      </servers>
+    </settings>
+
+Now run the following:
+
+    mvn release:prepare
+    mvn release:perform
