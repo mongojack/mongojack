@@ -236,7 +236,7 @@ public class Aggregation<T> {
 
         @Override
         public Group set(Map<String, Accumulator> calculatedFields) {
-            calculatedFields.putAll(calculatedFields);
+            this.calculatedFields.putAll(calculatedFields);
             return this;
         }
 
