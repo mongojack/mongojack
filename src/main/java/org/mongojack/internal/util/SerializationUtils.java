@@ -61,8 +61,6 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
-import de.flapdoodle.embed.process.collections.Collections;
-
 /**
  * Utilities for helping with serialisation
  */
@@ -607,7 +605,7 @@ public class SerializationUtils {
                 .getSerializerProvider(objectMapper);
         JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
                 serializerProvider, type);
-        List<DBObject> serializedPipeline = Collections.newArrayList();
+        List<DBObject> serializedPipeline = new ArrayList<DBObject>();
         for (Pipeline.Stage<?> stage: pipeline.stages()) {
             serializedPipeline.add(serializePipelineStage(serializerProvider, serializer, stage));
         }
