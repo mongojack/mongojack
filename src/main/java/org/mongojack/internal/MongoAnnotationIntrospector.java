@@ -83,8 +83,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public Object findDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            return findObjectIdDeserializer(typeFactory.constructType(am
-                    .getGenericType()));
+            return findObjectIdDeserializer(typeFactory.constructType(am.getType()));
         }
         return null;
     }
@@ -92,7 +91,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     @Override
     public JsonDeserializer findContentDeserializer(Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
-            JavaType type = typeFactory.constructType(am.getGenericType());
+            JavaType type = typeFactory.constructType(am.getType());
             if (type.isCollectionLikeType()) {
                 return findObjectIdDeserializer(type.containedType(0));
             } else if (type.isMapLikeType()) {
