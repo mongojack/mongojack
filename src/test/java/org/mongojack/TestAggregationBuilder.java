@@ -56,7 +56,7 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("bar", 101));
         coll.insert(new MockObject("bar", 102));
 
-        Pipeline<?> pipeline = Aggregation.group("string").set("integer", Group.sum("integer")).sort(DBSort.desc("string"));
+        Pipeline<?> pipeline = Aggregation.group("string").set("integer", Group.sum("integer")).sort(DBSort.asc("_id"));
 
         AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 
@@ -94,7 +94,7 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("bar", 101));
         coll.insert(new MockObject("bar", 102));
 
-        Pipeline<?> pipeline = Aggregation.group("string").set("integer", Group.sum("integer")).project("string", Expression.path("integer"));
+        Pipeline<?> pipeline = Aggregation.group("string").set("integer", Group.sum("integer")).project("string", Expression.path("integer")).sort(DBSort.asc("_id"));
 
         AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
 

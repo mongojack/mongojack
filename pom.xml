@@ -56,7 +56,7 @@
         <dependency>
             <groupId>de.flapdoodle.embed</groupId>
             <artifactId>de.flapdoodle.embed.mongo</artifactId>
-            <version>1.47.3</version>
+            <version>1.50.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -347,7 +347,7 @@
         </contributor>
         <contributor>
             <name>Luke Palmer</name>
-            <url>http://www.lukepalmer.net</url>
+            <url>https://github.com/lukepalmer</url>
             <roles>
                 <role>developer</role>
             </roles>
