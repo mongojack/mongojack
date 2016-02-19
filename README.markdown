@@ -125,6 +125,10 @@ Make sure you have the file `~/.m2/settings.xml`:
           <username></username>
           <password></password>
         </server>
+        <server>
+          <id>github-project-site</id>
+          <username>git</username>
+        </server>
       </servers>
     </settings>
 
@@ -132,3 +136,8 @@ Now run the following:
 
     mvn release:prepare
     mvn release:perform
+
+To deploy the latest version of the website:
+
+    mvn site:site
+    mvn site:deploy
