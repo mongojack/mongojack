@@ -1,3 +1,5 @@
 org.mongojack
+org.mongojack.internal.stream
 org.mongojack.internal.util
 org.mongojack.mock
+org.mongojack.testing
