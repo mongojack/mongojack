@@ -72,6 +72,13 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
         assertThat(saved.custom.value2, equalTo("world"));
     }
 
+    @Test
+    public void customObjectMapperShouldBeAbleToDeserializeObjectId() throws Exception {
+        ObjectMapper mapper = createObjectMapper();
+        final org.bson.types.ObjectId objectId = new org.bson.types.ObjectId();
+        assertThat(mapper.writeValueAsString(objectId), equalTo(objectId.toHexString()));
+    }
+
     public static class MockObject {
         @Id
         @ObjectId
