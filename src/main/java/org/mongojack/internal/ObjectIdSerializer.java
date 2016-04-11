@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
  * @author James Roper
  * @since 1.0
  */
-public class ObjectIdSerializer extends JsonSerializer {
+public class ObjectIdSerializer extends EmbeddedObjectSerializer {
     @Override
     public void serialize(Object value, JsonGenerator jgen,
             SerializerProvider provider) throws IOException,
@@ -42,11 +42,20 @@ public class ObjectIdSerializer extends JsonSerializer {
         if (value instanceof Iterable) {
             jgen.writeStartArray();
             for (Object item : (Iterable) value) {
-                jgen.writeObject(serialiseObject(item));
+                writeObject(serialiseObject(item), jgen);
             }
             jgen.writeEndArray();
         } else {
-            jgen.writeObject(serialiseObject(value));
+            writeObject(serialiseObject(value), jgen);
+        }
+    }
+
+    private void writeObject(Object value, JsonGenerator jgen)
+            throws IOException, JsonMappingException {
+        if (value instanceof ObjectId) {
+            writeEmbeddedObject(value, jgen);
+        } else {
+            jgen.writeObject(value);
         }
     }
 

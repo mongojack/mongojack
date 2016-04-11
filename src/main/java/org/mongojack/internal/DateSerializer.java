@@ -16,24 +16,16 @@
  */
 package org.mongojack.internal;
 
-import java.io.IOException;
 import java.util.Date;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 
 /**
  * Serialises dates as BSON dates. Basically this just requires writing it as an
  * object rather than a long.
  * 
  * @author James Roper
+ * @author Kevin D. Keck
  * @since 1.2
  */
-public class DateSerializer extends JsonSerializer<Date> {
-    @Override
-    public void serialize(Date value, JsonGenerator jgen,
-            SerializerProvider provider) throws IOException {
-        jgen.writeObject(value);
-    }
+public class DateSerializer extends EmbeddedObjectSerializer<Date> {
+    // override nothing
 }

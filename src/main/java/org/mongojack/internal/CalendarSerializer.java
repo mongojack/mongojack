@@ -16,23 +16,15 @@
  */
 package org.mongojack.internal;
 
-import java.io.IOException;
 import java.util.Calendar;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
 
 /**
  * Serializes calendars
  * 
  * @author James Roper
+ * @author Kevin D. Keck
  * @since 1.2
  */
-public class CalendarSerializer extends JsonSerializer<Calendar> {
-    @Override
-    public void serialize(Calendar value, JsonGenerator jgen,
-            SerializerProvider provider) throws IOException {
-        jgen.writeObject(value);
-    }
+public class CalendarSerializer extends EmbeddedObjectSerializer<Calendar> {
+    // override nothing
 }
