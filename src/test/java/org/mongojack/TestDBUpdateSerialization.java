@@ -20,6 +20,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mongojack.TestDBUpdateSerialization.NestedIdFieldWithDifferentType.NESTED_ID_FIELD_VALUE;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -176,6 +177,22 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         assertThat(updated.inner.timestamp, equalTo(d2));
         assertThat(updated.timestamp, equalTo(original.timestamp));
     }
+    
+    // Test to detect presence of issue https://github.com/devbliss/mongojack/issues/127
+    @Test
+    public void testUpdateOfNestedIdFieldWithDifferentType() {
+        JacksonDBCollection<NestedIdFieldWithDifferentType, String> collection = getCollection(NestedIdFieldWithDifferentType.class, String.class);
+        
+        NestedIdFieldWithDifferentType original = new NestedIdFieldWithDifferentType();
+        
+        collection.insert(original);
+        String newValue = "new value";
+        collection.update(DBQuery.is("nested._id", NESTED_ID_FIELD_VALUE), DBUpdate.set("value", newValue));
+        
+        NestedIdFieldWithDifferentType updated = collection.findOneById(original._id);
+        assertThat(updated, notNullValue());
+        assertThat(updated.value, equalTo(newValue));
+    }
 
     public static class MockObject {
         public String _id = "id";
@@ -214,5 +231,17 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         public String _id = "id";
         public Inner inner = new Inner();
         public long timestamp;
+    }
+    
+    public static class NestedIdFieldWithDifferentType {
+        public static final String DEFAULT_VALUE = "default-value";
+        public static final Date NESTED_ID_FIELD_VALUE = new Date();
+        
+        public static class Nested {
+            public Date _id = NESTED_ID_FIELD_VALUE;
+        }
+        public String _id = "id";
+        public Nested nested = new Nested();
+        public String value = DEFAULT_VALUE;
     }
 }
