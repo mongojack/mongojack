@@ -157,7 +157,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         assertThat(coll.findOneById("id").map, equalTo(map));
     }
 
-    // Test to detect presence of issue https://github.com/devbliss/mongojack/issues/98
+    // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/98
     @Test
     public void testUpdateOfNestedRepeatedAttributeName() {
         coll2 = getCollection(NestedRepeatedAttributeName.class, String.class);
@@ -178,7 +178,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         assertThat(updated.timestamp, equalTo(original.timestamp));
     }
     
-    // Test to detect presence of issue https://github.com/devbliss/mongojack/issues/127
+    // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/127
     @Test
     public void testUpdateOfNestedIdFieldWithDifferentType() {
         JacksonDBCollection<NestedIdFieldWithDifferentType, String> collection = getCollection(NestedIdFieldWithDifferentType.class, String.class);
