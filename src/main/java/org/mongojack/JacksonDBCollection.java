@@ -765,8 +765,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     public WriteResult<T, K> removeById(K id) throws MongoException {
-        return new WriteResult<T, K>(this,
-                dbCollection.remove(createIdQuery(id)));
+        return remove(createIdQuery(id));
     }
 
     /**
