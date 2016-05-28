@@ -137,6 +137,8 @@ Now run the following:
     mvn release:prepare
     mvn release:perform
 
+Then log into oss.sonatype.org, close the repository, and release the repository.
+
 To deploy the latest version of the website:
 
     mvn site:site
