@@ -506,8 +506,7 @@ public class DBQuery {
          * @return the query
          */
         public Q all(String field, Collection<?> values) {
-            return put(field, QueryOperators.ALL, new SimpleQueryCondition(
-                    values));
+            return put(field, QueryOperators.ALL, values);
         }
 
         /**
