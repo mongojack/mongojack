@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockEmbeddedObject;
+import org.mongojack.mock.MockEmbeddedObject.MockEmbeddedListElement;
 import org.mongojack.mock.MockObject;
 
 import com.mongodb.MongoException;
@@ -318,6 +319,21 @@ public class TestDBQuery extends MongoDBTestBase {
     }
 
     @Test
+    public void testAllEmbeddedPositive() throws Exception {
+        MockObject mockObject = insertMockObjectWithEmbedded();
+        DBCursor<MockObject> cursor = coll.find().all("object.objectList.id", 1, 2);
+        assertThat(cursor.hasNext(), equalTo(true));
+        assertThat(cursor.next(), equalTo(mockObject));
+    }
+
+    @Test
+    public void testAllEmbeddedNegative() throws Exception {
+        insertMockObjectWithEmbedded();
+        DBCursor<MockObject> cursor = coll.find().all("object.objectList.id", 1, 99, 2);
+        assertThat(cursor.hasNext(), equalTo(false));
+    }
+
+    @Test
     public void testElemMatchPositive() throws Exception {
         MockObject mockObject = insertMockObjectWithComplexList();
         DBCursor<MockObject> cursor = coll.find().elemMatch("complexList",
@@ -387,6 +403,10 @@ public class TestDBQuery extends MongoDBTestBase {
         MockEmbeddedObject embeddedObject = new MockEmbeddedObject();
         embeddedObject.value = "hello";
         embeddedObject.list = Arrays.asList("a", "b", "c");
+        embeddedObject.objectList = Arrays.asList(
+            new MockEmbeddedListElement(1),
+            new MockEmbeddedListElement(2),
+            new MockEmbeddedListElement(3));
         mockObject.object = embeddedObject;
         coll.insert(mockObject);
         return mockObject;

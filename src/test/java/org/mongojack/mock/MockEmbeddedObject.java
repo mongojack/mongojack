@@ -22,8 +22,51 @@ import java.util.List;
  * Embedded object
  */
 public class MockEmbeddedObject {
+
+    public static class MockEmbeddedListElement {
+        public MockEmbeddedListElement() {}
+
+        public MockEmbeddedListElement(int id) {
+            this.id = id;
+        }
+
+        public Integer id;
+
+        @Override
+        public String toString() {
+            return "MockEmbeddedListElement{" +
+                    "id='" + id + '\'' +
+                    '}';
+        }
+
+        @Override
+        public int hashCode() {
+            return id != null ? id.hashCode() : 0;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            MockEmbeddedListElement that = (MockEmbeddedListElement) o;
+
+            if (id != null ? !id.equals(that.id) : that.id != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+    }
+
     public String value;
     public List<String> list;
+    public List<MockEmbeddedListElement> objectList;
 
     public MockEmbeddedObject() {
     }
@@ -37,6 +80,7 @@ public class MockEmbeddedObject {
         return "MockEmbeddedObject{" +
                 "value='" + value + '\'' +
                 ", list=" + list +
+                ", objectList=" + objectList +
                 '}';
     }
 
@@ -54,6 +98,9 @@ public class MockEmbeddedObject {
         if (list != null ? !list.equals(that.list) : that.list != null) {
             return false;
         }
+        if (objectList != null ? !objectList.equals(that.objectList) : that.objectList != null) {
+            return false;
+        }
         if (value != null ? !value.equals(that.value) : that.value != null) {
             return false;
         }
@@ -65,6 +112,7 @@ public class MockEmbeddedObject {
     public int hashCode() {
         int result = value != null ? value.hashCode() : 0;
         result = 31 * result + (list != null ? list.hashCode() : 0);
+        result = 31 * result + (objectList != null ? objectList.hashCode() : 0);
         return result;
     }
 }
