@@ -18,6 +18,7 @@ package org.mongojack.internal;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 import org.bson.types.ObjectId;
 
@@ -35,5 +36,6 @@ public class MongoJackSerializers extends SimpleSerializers {
         addSerializer(ObjectId.class, new ObjectIdSerializer());
         addSerializer(Date.class, new DateSerializer());
         addSerializer(Calendar.class, new CalendarSerializer());
+        addSerializer(UUID.class, new UUIDSerializer());
     }
 }

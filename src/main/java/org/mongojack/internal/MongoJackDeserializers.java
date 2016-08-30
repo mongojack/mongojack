@@ -18,6 +18,7 @@ package org.mongojack.internal;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 import org.mongojack.DBRef;
 
@@ -38,6 +39,7 @@ public class MongoJackDeserializers extends SimpleDeserializers {
     public MongoJackDeserializers() {
         addDeserializer(Date.class, new DateDeserializer());
         addDeserializer(Calendar.class, new CalendarDeserializer());
+        addDeserializer(UUID.class, new UUIDDeserializer());
     }
 
     @Override

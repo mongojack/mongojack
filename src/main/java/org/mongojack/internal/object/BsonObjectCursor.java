@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bson.BSONObject;
 import org.bson.types.ObjectId;
@@ -212,6 +213,8 @@ abstract class BsonObjectCursor extends JsonStreamContext {
         } else if (o instanceof DBRef) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else if (o instanceof Date) {
+            return JsonToken.VALUE_EMBEDDED_OBJECT;
+        } else if (o instanceof UUID) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
         } else if (o instanceof byte[]) {
             return JsonToken.VALUE_EMBEDDED_OBJECT;
