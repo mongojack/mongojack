@@ -34,7 +34,6 @@ import org.mongojack.Aggregation;
 import org.mongojack.Aggregation.Expression;
 import org.mongojack.Aggregation.Group.Accumulator;
 import org.mongojack.Aggregation.Pipeline;
-import org.mongojack.Aggregation.Pipeline.Stage;
 import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
@@ -174,7 +173,7 @@ public class SerializationUtils {
             if (!simple.requiresSerialization() || simple.getValue() == null) {
                 return simple.getValue();
             } else {
-                if (!key.startsWith("$")) {
+                if (!isOperator(key)) {
                     serializer = findQuerySerializer(false, key,
                             serializerProvider, serializer);
                 }
@@ -183,7 +182,7 @@ public class SerializationUtils {
             }
         } else if (condition instanceof CollectionQueryCondition) {
             CollectionQueryCondition coll = (CollectionQueryCondition) condition;
-            if (!key.startsWith("$")) {
+            if (!isOperator(key)) {
                 serializer = findQuerySerializer(coll.targetIsCollection(),
                         key, serializerProvider, serializer);
             }
@@ -196,12 +195,16 @@ public class SerializationUtils {
         } else {
             CompoundQueryCondition compound = (CompoundQueryCondition) condition;
             if (!key.startsWith("$")) {
-                serializer = findQuerySerializer(false, key, serializerProvider, serializer);
+                serializer = findQuerySerializer(compound.targetIsCollection(), key, serializerProvider, serializer);
             }
             return serializeQuery(serializerProvider, serializer,
                     compound.getQuery());
         }
     }
+
+	private static boolean isOperator(String key) {
+		return key.startsWith("$");
+	}
 
     private static Object serializeQueryField(Object value,
             JsonSerializer serializer, SerializerProvider serializerProvider,

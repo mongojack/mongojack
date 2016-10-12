@@ -56,6 +56,9 @@ public class TestQuerySerialization extends MongoDBTestBase {
     public void testSimpleEquals() {
         coll.save(new MockObject());
         String id = coll.findOne().id;
+        // with DBCursor
+        assertNotNull(coll.find().is("_id", id).next());
+        // with DBQuery
         assertNotNull(coll.findOne(DBQuery.is("_id", id)));
     }
 
@@ -63,9 +66,14 @@ public class TestQuerySerialization extends MongoDBTestBase {
     public void testIn() {
         coll.save(new MockObject());
         String id = coll.findOne().id;
+        // with DBCursor
         assertThat(
                 coll.find()
                         .in("_id", id, new org.bson.types.ObjectId().toString())
+                        .toArray(), hasSize(1));
+        // with DBQuery
+        assertThat(
+                coll.find(DBQuery.in("_id", id, new org.bson.types.ObjectId().toString()))
                         .toArray(), hasSize(1));
     }
 
@@ -79,7 +87,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         Query q = DBQuery.in("simpleList", x);
         c2.find(q);
     }
-    
+
     @Test
     public void testLessThan() {
         MockObject o = new MockObject();
@@ -88,7 +96,10 @@ public class TestQuerySerialization extends MongoDBTestBase {
         // Ensure that the serializer actually worked
         assertThat((Integer) coll.getDbCollection().findOne().get("i"),
                 equalTo(15));
+        // with DBCursor
         assertThat(coll.find().lessThan("i", 12).toArray(), hasSize(1));
+        // with DBQuery
+        assertThat(coll.find(DBQuery.lessThan("i", 12)).toArray(), hasSize(1));
     }
 
     @Test
@@ -97,6 +108,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.i = 5;
         coll.save(o);
         // Ensure that the serializer actually worked
+        // with DBCursor
         assertThat(
                 coll.find()
                         .and(DBQuery.lessThan("i", 12),
@@ -106,6 +118,13 @@ public class TestQuerySerialization extends MongoDBTestBase {
                 coll.find()
                         .and(DBQuery.lessThan("i", 12),
                                 DBQuery.greaterThan("i", 9)).toArray(),
+                hasSize(0));
+        // with DBQuery
+        assertThat(
+            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 4))).toArray(),
+                hasSize(1));
+        assertThat(
+            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 9))).toArray(),
                 hasSize(0));
     }
 
@@ -118,7 +137,10 @@ public class TestQuerySerialization extends MongoDBTestBase {
         coll.save(o);
 
         // Ensure that the serializer actually worked
+        // with DBCursor
         assertThat(coll.find().all("items", o1).toArray(), hasSize(1));
+        // with DBQuery
+        assertThat(coll.find(DBQuery.all("items", o1)).toArray(), hasSize(1));
     }
 
     @Test
@@ -129,7 +151,10 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.items = Arrays.asList(o1);
         coll.save(o);
 
+        // with DBCursor
         assertThat(coll.find().is("items._id", o1.id).toArray(), hasSize(1));
+        // with DBQuery
+        assertThat(coll.find(DBQuery.is("items._id", o1.id)).toArray(), hasSize(1));
     }
 
     @Test
@@ -140,7 +165,11 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.items = Arrays.asList(o1);
         coll.save(o);
 
+        // with DBCursor
         assertThat(coll.find().is("items", Arrays.asList(o1)).toArray(),
+                hasSize(1));
+        // with DBQuery
+        assertThat(coll.find(DBQuery.is("items", Arrays.asList(o1))).toArray(),
                 hasSize(1));
     }
 
