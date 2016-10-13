@@ -22,14 +22,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongojack.DBQuery.Query;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -41,7 +39,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.mongodb.DBCollection;
 
 public class TestQuerySerialization extends MongoDBTestBase {
 
@@ -69,15 +66,22 @@ public class TestQuerySerialization extends MongoDBTestBase {
                         .toArray(), hasSize(1));
     }
 
-    @Test @Ignore // This test needs to be fixed
+    @Test @Ignore("Fixed with GH-142")
     public void testIn_collectionOfStrings() {
-        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
-        JacksonDBCollection<MockObjectWithList, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithList.class, String.class);
-        List<String> x = new ArrayList<String>();
-        x.add("a");
-        x.add("b");
-        Query q = DBQuery.in("simpleList", x);
-        c2.find(q);
+        JacksonDBCollection<MockObjectWithList, String> collection = getCollection(MockObjectWithList.class, String.class);
+        MockObjectWithList o = new MockObjectWithList();
+        o.simpleList = Arrays.asList("a");
+        collection.save(o);
+        assertThat(collection.find(DBQuery.in("simpleList", Arrays.asList("a", "b"))).toArray(), hasSize(1));
+    }
+    
+    @Test
+    public void testIs_collectionOfStrings() {
+        JacksonDBCollection<MockObjectWithList, String> collection = getCollection(MockObjectWithList.class, String.class);
+        MockObjectWithList o = new MockObjectWithList();
+        o.simpleList = Arrays.asList("a");
+        collection.save(o);
+        assertThat(collection.find(DBQuery.is("simpleList", "a")).toArray(), hasSize(1));
     }
     
     @Test

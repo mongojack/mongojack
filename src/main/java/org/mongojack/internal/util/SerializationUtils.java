@@ -57,6 +57,8 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
+import com.fasterxml.jackson.databind.ser.std.StaticListSerializerBase;
+import com.fasterxml.jackson.databind.ser.std.StringSerializer;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
@@ -177,6 +179,23 @@ public class SerializationUtils {
                 if (!key.startsWith("$")) {
                     serializer = findQuerySerializer(false, key,
                             serializerProvider, serializer);
+                    // If we have a SimpleQueryCondition for a field that represents a Collection
+                    // we should use the serializer of the collection element to serializer the single value.
+                    // This e.g. is the case when doing a DBQuery.is query on a collection field
+                    if (serializer != null && serializer.handledType() != null && Collection.class.isAssignableFrom(serializer.handledType())) {
+                        if (serializer instanceof StaticListSerializerBase) {
+                            // How do we get the used serializer here?
+                            // Subclasses of StaticListSerializerBase (currently?) only handle
+                            // String elements, so we naively use a StringSerializer here, but the
+                            // StaticListSerializerBase also supports a custom serializer to which
+                            // we don't have access to...
+                            serializer = new StringSerializer();
+                        } else if (serializer instanceof ContainerSerializer) {
+                            serializer = ((ContainerSerializer) serializer).getContentSerializer();
+                        } else {
+                            throw new IllegalStateException();
+                        }
+                    }
                 }
                 return serializeQueryField(simple.getValue(), serializer,
                         serializerProvider, key);
