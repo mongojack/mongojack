@@ -180,7 +180,7 @@ public class SerializationUtils {
                     serializer = findQuerySerializer(false, key,
                             serializerProvider, serializer);
                     // If we have a SimpleQueryCondition for a field that represents a Collection
-                    // we should use the serializer of the collection element to serializer the single value.
+                    // we should use the serializer of the collection element to serialize the single value.
                     // This e.g. is the case when doing a DBQuery.is query on a collection field
                     if (serializer != null && serializer.handledType() != null && Collection.class.isAssignableFrom(serializer.handledType())) {
                         if (serializer instanceof StaticListSerializerBase) {
