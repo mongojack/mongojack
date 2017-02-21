@@ -359,6 +359,16 @@
                 <role>developer</role>
             </roles>
         </contributor>
+        <contributor>
+            <name>Thomas Simon</name>
+            <email>thomas.simon@actility.com</email>
+            <url>https://github.com/Tomuss</url>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <organization>Actility</organization>
+            <organizationUrl>https://www.actility.com/</organizationUrl>
+        </contributor>
     </contributors>
 
     <licenses>
