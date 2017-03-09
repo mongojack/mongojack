@@ -27,6 +27,7 @@ import org.mongojack.Aggregation.Expression;
 import org.mongojack.Aggregation.Group;
 import org.mongojack.Aggregation.Pipeline;
 import org.mongojack.Aggregation.Project;
+import org.mongojack.mock.MockEmbeddedObject;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectAggregationResult;
 
@@ -191,6 +192,21 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         	MockObject object = iterator.next();
         	Assert.assertTrue(object.string.equals("baz") || object.string.equals("qux"));
         }
+    }
+    
+    @Test
+    public void testProjectArrayElemAt() {
+    	MockObject object = new MockObject();
+    	object.simpleList = new ArrayList<String>();
+    	object.simpleList.add("foo");
+    	object.simpleList.add("bar");
+        coll.insert(object);
+
+        Pipeline<?> pipeline = Aggregation.project("string", Expression.arrayElemAt(Expression.list("simpleList"), Expression.literal(1)));
+
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
+
+        Assert.assertEquals("bar", aggregationResult.results().get(0).string);
     }
 
     static class User {

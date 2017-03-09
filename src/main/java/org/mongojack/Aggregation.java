@@ -678,6 +678,10 @@ public class Aggregation<T> {
         public static Expression<Integer> size(Expression<List<?>> array) {
             return new OperatorExpression<Integer>("$size", array);
         }
+        
+        public static <T> Expression<T> arrayElemAt(Expression<List<?>> expression, Expression<Integer> index) {
+            return new OperatorExpression<T>("$arrayElemAt", expression, index);
+        }
 
         // Date Operator Expressions
 
