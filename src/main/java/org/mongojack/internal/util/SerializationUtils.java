@@ -652,6 +652,9 @@ public class SerializationUtils {
             }
             return new BasicDBObject("$group", object);
         }
+        if (stage instanceof Aggregation.Out) {
+        	return new BasicDBObject("$out", ((Object) ((Aggregation.Out) stage).collectionName()));
+        }
         throw new IllegalArgumentException(stage.getClass().getName());
     }
 
