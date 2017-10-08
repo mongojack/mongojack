@@ -27,7 +27,6 @@ import org.mongojack.Aggregation.Expression;
 import org.mongojack.Aggregation.Group;
 import org.mongojack.Aggregation.Pipeline;
 import org.mongojack.Aggregation.Project;
-import org.mongojack.mock.MockEmbeddedObject;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectAggregationResult;
 

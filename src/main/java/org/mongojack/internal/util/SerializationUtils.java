@@ -34,7 +34,6 @@ import org.mongojack.Aggregation;
 import org.mongojack.Aggregation.Expression;
 import org.mongojack.Aggregation.Group.Accumulator;
 import org.mongojack.Aggregation.Pipeline;
-import org.mongojack.Aggregation.Pipeline.Stage;
 import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
