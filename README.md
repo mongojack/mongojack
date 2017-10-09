@@ -28,7 +28,7 @@ The quickest and easiest way to start using MongoJack is to use Maven. To do tha
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>2.7.0</version>
+      <version>2.8.0</version>
     </dependency>
 
 ### Writing code
