@@ -339,7 +339,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
     @Override
     public T next() throws MongoException {
         executed();
-        current = jacksonDBCollection.convertFromDbObject(cursor.next());
+        current = JacksonDBCollection.convertFromDbObject(cursor.next(), jacksonDBCollection);
         return current;
     }
 
@@ -403,7 +403,8 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
         if (max > all.size()) {
             List<DBObject> objects = cursor.toArray(max);
             for (int i = all.size(); i < objects.size(); i++) {
-                all.add(jacksonDBCollection.convertFromDbObject(objects.get(i)));
+                all.add(JacksonDBCollection.convertFromDbObject(objects.get(i),
+                                                                jacksonDBCollection));
             }
         }
         return all;

@@ -88,7 +88,7 @@ public class WriteResult<T, K> {
                             "Saved object retrieval not supported when using stream serialization");
                 }
             }
-            objects = jacksonDBCollection.convertFromDbObjects(dbObjects);
+            objects = JacksonDBCollection.convertFromDbObjects(jacksonDBCollection, dbObjects);
         }
         return objects;
     }
