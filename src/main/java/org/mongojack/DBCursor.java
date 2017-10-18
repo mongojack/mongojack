@@ -403,8 +403,7 @@ public class DBCursor<T> extends DBQuery.AbstractBuilder<DBCursor<T>> implements
         if (max > all.size()) {
             List<DBObject> objects = cursor.toArray(max);
             for (int i = all.size(); i < objects.size(); i++) {
-                all.add(JacksonDBCollection.convertFromDbObject(objects.get(i),
-                                                                jacksonDBCollection));
+                all.add(JacksonDBCollection.convertFromDbObject(objects.get(i), jacksonDBCollection));
             }
         }
         return all;
