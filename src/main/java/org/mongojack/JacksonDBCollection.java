@@ -2286,6 +2286,16 @@ public class JacksonDBCollection<T, K> {
         }
     }
 
+    /**
+     * This method provides a static method to convert a DBObject into a given class. If the ObjectMapper is null, use a
+     * default ObjectMapper
+     * 
+     * @param dbObject
+     * @param clazz
+     * @param objectMapper
+     * @return
+     * @throws MongoException
+     */
     public static <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz, ObjectMapper objectMapper) throws MongoException {
         if (dbObject == null) {
             return null;
