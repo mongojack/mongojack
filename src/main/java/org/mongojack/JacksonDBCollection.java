@@ -297,8 +297,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     public WriteResult<T, K> insert(T object) throws MongoException {
-        DBObject dbObject = convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION),
-                                              view, objectMapper);
+        DBObject dbObject = convertToDbObject(object);
         return new WriteResult<T, K>(this, dbCollection.insert(dbObject),
                 dbObject);
     }
@@ -318,8 +317,7 @@ public class JacksonDBCollection<T, K> {
      */
     public WriteResult<T, K> insert(T object, WriteConcern concern)
             throws MongoException {
-        DBObject dbObject = convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION),
-                                              view, objectMapper);
+        DBObject dbObject = convertToDbObject(object);
         return new WriteResult<T, K>(this, dbCollection.insert(dbObject,
                 concern), dbObject);
     }
@@ -336,8 +334,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     public WriteResult<T, K> insert(T... objects) throws MongoException {
-        DBObject[] dbObjects = convertToDbObjects(isEnabled(Feature.USE_STREAM_SERIALIZATION),
-                                                  view, objectMapper, objects);
+        DBObject[] dbObjects = convertToDbObjects(objects);
         return new WriteResult<T, K>(this, dbCollection.insert(dbObjects),
                 dbObjects);
     }
@@ -357,8 +354,7 @@ public class JacksonDBCollection<T, K> {
      */
     public WriteResult<T, K> insert(WriteConcern concern, T... objects)
             throws MongoException {
-        DBObject[] dbObjects = convertToDbObjects(isEnabled(Feature.USE_STREAM_SERIALIZATION),
-                                                  view, objectMapper, objects);
+        DBObject[] dbObjects = convertToDbObjects(objects);
         return new WriteResult<T, K>(this, dbCollection.insert(concern,
                 dbObjects), dbObjects);
     }
@@ -625,10 +621,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     public WriteResult<T, K> updateById(K id, T object) throws MongoException {
-        return update(createIdQuery(id),
-                      convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION),
-                                        view, objectMapper),
-                      false,
+        return update(createIdQuery(id), convertToDbObject(object), false,
                 false);
     }
 
@@ -797,9 +790,9 @@ public class JacksonDBCollection<T, K> {
      */
     public T findAndModify(DBObject query, DBObject fields, DBObject sort,
             boolean remove, DBObject update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort,
-                                                              remove, update, returnNew, upsert),
-                                   this, objectMapper, type);
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeFields(query), fields, sort, remove, update,
+                returnNew, upsert));
     }
 
     /**
@@ -824,10 +817,9 @@ public class JacksonDBCollection<T, K> {
      */
     public T findAndModify(DBObject query, DBObject fields, DBObject sort,
             boolean remove, T update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection
-                .findAndModify(serializeFields(query), fields, sort, remove,
-                               convertToBasicDbObject(update), returnNew, upsert), this,
-                                   objectMapper, type);
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeFields(query), fields, sort, remove,
+                convertToBasicDbObject(update), returnNew, upsert));
     }
 
     /**
@@ -852,10 +844,9 @@ public class JacksonDBCollection<T, K> {
      */
     public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort,
             boolean remove, T update, boolean returnNew, boolean upsert) {
-        return convertFromDbObject(dbCollection
-                .findAndModify(serializeQuery(query), fields, sort, remove,
-                               convertToBasicDbObject(update), returnNew, upsert), this,
-                                   objectMapper, type);
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeQuery(query), fields, sort, remove,
+                convertToBasicDbObject(update), returnNew, upsert));
     }
 
     /**
@@ -881,10 +872,9 @@ public class JacksonDBCollection<T, K> {
     public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort,
             boolean remove, DBUpdate.Builder update, boolean returnNew,
             boolean upsert) {
-        return convertFromDbObject(dbCollection
-                .findAndModify(serializeQuery(query), fields, sort, remove,
-                               update.serialiseAndGet(objectMapper, type), returnNew, upsert), this,
-                                   objectMapper, type);
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeQuery(query), fields, sort, remove,
+                update.serialiseAndGet(objectMapper, type), returnNew, upsert));
     }
 
     /**
@@ -910,7 +900,9 @@ public class JacksonDBCollection<T, K> {
     public T findAndModify(DBObject query, DBObject fields, DBObject sort,
             boolean remove, DBUpdate.Builder update, boolean returnNew,
             boolean upsert) {
-        return convertFromDbObject(dbCollection.findAndModify(serializeFields(query), fields, sort, remove, update.serialiseAndGet(objectMapper, type), returnNew, upsert), this, objectMapper, type);
+        return convertFromDbObject(dbCollection.findAndModify(
+                serializeFields(query), fields, sort, remove,
+                update.serialiseAndGet(objectMapper, type), returnNew, upsert));
     }
 
     /**
@@ -1464,8 +1456,7 @@ public class JacksonDBCollection<T, K> {
      */
     public WriteResult<T, K> save(T object, WriteConcern concern)
             throws MongoException {
-        DBObject dbObject = convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION),
-                                              view, objectMapper);
+        DBObject dbObject = convertToDbObject(object);
         return new WriteResult<T, K>(this,
                 dbCollection.save(dbObject, concern), dbObject);
     }
@@ -2165,28 +2156,11 @@ public class JacksonDBCollection<T, K> {
      * @return a mongo DBObject serialized with the ObjectMapper for this collection.
      * @throws MongoException
      */
-    public static <T> DBObject convertToDbObject(T object) throws MongoException {
-        return convertToDbObject(object, Feature.USE_STREAM_SERIALIZATION.isEnabledByDefault(),
-                                 null, DEFAULT_OBJECT_MAPPER);
-    }
-
-    /**
-     * Convert an object into a DBObject using the Jackson ObjectMapper for this collection.
-     * 
-     * @param object The object to convert
-     * @param whether to use the stream serialization
-     * @param view object to use
-     * @param object mapper to use
-     * @return a mongo DBObject serialized with the ObjectMapper for this collection.
-     * @throws MongoException
-     */
-    public static <T> DBObject convertToDbObject(T object, boolean useStreamSerialization,
-                                                 Class<?> view, ObjectMapper objectMapper)
-            throws MongoException {
+    public DBObject convertToDbObject(T object) throws MongoException {
         if (object == null) {
             return null;
         }
-        if (useStreamSerialization) {
+        if (isEnabled(Feature.USE_STREAM_SERIALIZATION)) {
             return new JacksonDBObject<T>(object, view);
         } else {
             BsonObjectGenerator generator = new BsonObjectGenerator();
@@ -2211,7 +2185,7 @@ public class JacksonDBCollection<T, K> {
      * @return The array of resulting DBObjects in the same order as the received objects.
      * @throws MongoException
      */
-    public static <T> DBObject[] convertToDbObjects(T... objects) throws MongoException {
+    public DBObject[] convertToDbObjects(T... objects) throws MongoException {
         DBObject[] results = new DBObject[objects.length];
         for (int i = 0; i < objects.length; i++) {
             results[i] = convertToDbObject(objects[i]);
@@ -2220,71 +2194,14 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Convert an array of objects to mongo DBObjects using the Jackson ObjectMapper for this
-     * collection.
-     * 
-     * @param whether to use the stream serialization
-     * @param view object to use
-     * @param object mapper to use
-     * @param objects The array of objects to convert
-     * @return The array of resulting DBObjects in the same order as the received objects.
-     * @throws MongoException
-     */
-    public static <T> DBObject[] convertToDbObjects(boolean useStreamSerialization,
-                                                    Class<?> view, ObjectMapper objectMapper,
-                                                    T... objects)
-            throws MongoException {
-        DBObject[] results = new DBObject[objects.length];
-        for (int i = 0; i < objects.length; i++) {
-            results[i] = convertToDbObject(objects[i], useStreamSerialization, view, objectMapper);
-        }
-        return results;
-    }
-
-    /**
-     * Convert a DBObject into a given class.
+     * Convert a DBObject, normally a query result to the object type for this
+     * collection using the Jackson ObjectMapper for this collection.
      * 
      * @param dbObject The DBObject to convert
-     * @param clazz The class into which we are converting.
-     * @return An instance of the requested class mapped from the DBObject.
-     * @throws MongoException
-     */
-    public static <T> T convertFromDbObject(DBObject dbObject, Class<T> type) {
-        return convertFromDbObject(dbObject, null, DEFAULT_OBJECT_MAPPER,
-                                   DEFAULT_OBJECT_MAPPER.constructType(type));
-    }
-
-    /**
-     * Convert a DBObject, normally a query result to the object type for this collection using the
-     * Jackson ObjectMapper for this collection.
-     * 
-     * @param dbObject The DBObject to convert
-     * @param clazz The class into which we are converting.
-     * @return An instance of the requested class mapped from the DBObject.
-     * @throws MongoException
-     */
-    public static <T> T convertFromDbObject(DBObject dbObject,
-                                            JacksonDBCollection<T, ?> jacksonDBCollection) {
-        return convertFromDbObject(dbObject, jacksonDBCollection, jacksonDBCollection.objectMapper,
-                                   jacksonDBCollection.type);
-    }
-
-    /**
-     * Convert a DBObject, normally a query result to the object type for this collection using the
-     * Jackson ObjectMapper for this collection.
-     * 
-     * @param dbObject The DBObject to convert
-     * @param jacksonDBCollection The jacksonDBCollection to use in the conversion process
-     * @param objectMapper The ObjectMapper to use for deserialization
-     * @param type The JavaType this is being coverted to
      * @return A converted instance of the object type of this class.
      * @throws MongoException
      */
-    public static <T> T convertFromDbObject(DBObject dbObject,
-                                            JacksonDBCollection<T, ?> jacksonDBCollection,
-                                            ObjectMapper objectMapper,
-                                            JavaType type)
-            throws MongoException {
+    public T convertFromDbObject(DBObject dbObject) throws MongoException {
         if (dbObject == null) {
             return null;
         }
@@ -2292,10 +2209,8 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper
-                    .<T>readValue(new BsonObjectTraversingParser(jacksonDBCollection, dbObject,
-                                                                 objectMapper),
-                                              type);
+            return (T) objectMapper.readValue(new BsonObjectTraversingParser(
+                    this, dbObject, objectMapper), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
@@ -2306,56 +2221,46 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
-     * Convert an array of DBObjects into the class type.
+     * Convert a DBObject into a given class, using the Jackson ObjectMapper
+     * for this collection.
      * 
-     * @param clazz
-     * @param dbObjects
-     * @return
+     * @param dbObject The DBObject to convert
+     * @param clazz The class into which we are converting.
+     * @return An instance of the requested class mapped from the DBObject.
      * @throws MongoException
      */
-    public static <T> List<T> convertFromDbObjects(Class<T> clazz, DBObject... dbObjects)
+    public <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz)
             throws MongoException {
-        return convertFromDbObjects(null,
-                                    DEFAULT_OBJECT_MAPPER,
-                                    DEFAULT_OBJECT_MAPPER.constructType(clazz),
-                                    dbObjects);
+        if (dbObject == null) {
+            return null;
+        }
+        if (dbObject instanceof JacksonDBObject) {
+            return (S) ((JacksonDBObject) dbObject).getObject();
+        }
+        try {
+            return objectMapper.readValue(new BsonObjectTraversingParser(this,
+                    dbObject, objectMapper), clazz);
+        } catch (JsonMappingException e) {
+            throw new MongoJsonMappingException(e);
+        } catch (IOException e) {
+            // This shouldn't happen
+            throw new MongoException(
+                    "Unknown error occurred converting BSON to object", e);
+        }
     }
 
     /**
-     * Convert an array of DBObjects into the type for this collection, using the Jackson
-     * ObjectMapper for this collection.
+     * Convert an array of DBObjects into the type for this collection, using the
+     * Jackson ObjectMapper for this collection.
      * 
-     * @param jacksonDBCollection
      * @param dbObjects
      * @return
      * @throws MongoException
      */
-    public static <T> List<T> convertFromDbObjects(JacksonDBCollection<T, ?> jacksonDBCollection,
-                                                   DBObject... dbObjects) {
-        return convertFromDbObjects(jacksonDBCollection,
-                                    jacksonDBCollection.objectMapper,
-                                    jacksonDBCollection.type,
-                                    dbObjects);
-    }
-
-    /**
-     * Convert an array of DBObjects into the type for this collection, using the Jackson
-     * ObjectMapper for this collection.
-     * 
-     * @param jacksonDBCollection
-     * @param objectMapper
-     * @param type
-     * @param dbObjects
-     * @return
-     * @throws MongoException
-     */
-    public static <T> List<T> convertFromDbObjects(JacksonDBCollection<T, ?> jacksonDBCollection,
-                                               ObjectMapper objectMapper,
-                                               JavaType type, DBObject... dbObjects)
-            throws MongoException {
+    public List<T> convertFromDbObjects(DBObject... dbObjects) throws MongoException {
         final List<T> results = new ArrayList<T>(dbObjects.length);
         for (DBObject dbObject : dbObjects) {
-            results.add(convertFromDbObject(dbObject, jacksonDBCollection, objectMapper, type));
+            results.add(convertFromDbObject(dbObject));
         }
         return results;
     }
