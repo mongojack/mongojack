@@ -379,6 +379,13 @@
       <organization>Actility</organization>
       <organizationUrl>https://www.actility.com/</organizationUrl>
     </contributor>
+    <contributor>
+      <name>Christopher O'Grady</name>
+      <url>https://github.com/cfogrady</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
   </contributors>
 
   <licenses>

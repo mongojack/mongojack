@@ -2178,6 +2178,43 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * This method provides a static way to convert an object into a DBObject. Defaults will be used for all parameters
+     * left null.
+     * 
+     * @param object The object to convert
+     * @param useStreamSerialization Whether to use stream Serialization. (Default false)
+     * @param view The Jackson View to use in serialization. (Default null)
+     * @param objectMapper The specific Jackson ObjectMapper to use. (Default MongoJack ObjectMapper)
+     * @return
+     */
+    public static <T> DBObject convertToDbObject(T object, Boolean useStreamSerialization, Class<?> view, ObjectMapper objectMapper) {
+        if (object == null) {
+            return null;
+        }
+        if (useStreamSerialization == null) {
+            useStreamSerialization = Feature.USE_STREAM_SERIALIZATION.isEnabledByDefault();
+        }
+        if (objectMapper == null) {
+            objectMapper = DEFAULT_OBJECT_MAPPER;
+        }
+        if (useStreamSerialization) {
+            return new JacksonDBObject<T>(object, view);
+        } else {
+            BsonObjectGenerator generator = new BsonObjectGenerator();
+            try {
+                objectMapper.writerWithView(view).writeValue(generator, object);
+            } catch (JsonMappingException e) {
+                throw new MongoJsonMappingException(e);
+            } catch (IOException e) {
+                // This shouldn't happen
+                throw new MongoException(
+                        "Unknown error occurred converting BSON to object", e);
+            }
+            return generator.getDBObject();
+        }
+    }
+
+    /**
      * Convert an array of objects to mongo DBObjects using the Jackson ObjectMapper for this
      * collection.
      * 
@@ -2239,6 +2276,27 @@ public class JacksonDBCollection<T, K> {
         }
         try {
             return objectMapper.readValue(new BsonObjectTraversingParser(this,
+                    dbObject, objectMapper), clazz);
+        } catch (JsonMappingException e) {
+            throw new MongoJsonMappingException(e);
+        } catch (IOException e) {
+            // This shouldn't happen
+            throw new MongoException(
+                    "Unknown error occurred converting BSON to object", e);
+        }
+    }
+
+    public static <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz, ObjectMapper objectMapper) throws MongoException {
+        if (dbObject == null) {
+            return null;
+        }
+        if (objectMapper == null)
+            objectMapper = DEFAULT_OBJECT_MAPPER;
+        if (dbObject instanceof JacksonDBObject) {
+            return (S) ((JacksonDBObject) dbObject).getObject();
+        }
+        try {
+            return objectMapper.readValue(new BsonObjectTraversingParser(null,
                     dbObject, objectMapper), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
