@@ -2157,24 +2157,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      */
     public DBObject convertToDbObject(T object) throws MongoException {
-        if (object == null) {
-            return null;
-        }
-        if (isEnabled(Feature.USE_STREAM_SERIALIZATION)) {
-            return new JacksonDBObject<T>(object, view);
-        } else {
-            BsonObjectGenerator generator = new BsonObjectGenerator();
-            try {
-                objectMapper.writerWithView(view).writeValue(generator, object);
-            } catch (JsonMappingException e) {
-                throw new MongoJsonMappingException(e);
-            } catch (IOException e) {
-                // This shouldn't happen
-                throw new MongoException(
-                        "Unknown error occurred converting BSON to object", e);
-            }
-            return generator.getDBObject();
-        }
+        return JacksonDBCollection.convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION), view, objectMapper);
     }
 
     /**
