@@ -668,7 +668,7 @@ public class JacksonMongoCollection<T> {
      * @param sort
      *            sort to apply before picking first document
      * @param update
-     *            update to apply
+     *            update to apply. This must contain only update operators
      * @param returnNew
      *            if true, the updated document is returned, otherwise the old
      *            document is returned (or it would be lost forever)
@@ -678,54 +678,6 @@ public class JacksonMongoCollection<T> {
      */
     public T findAndModify(Document query, Document fields, Document sort, Document update, boolean returnNew, boolean upsert) {
         return mongoCollection.findOneAndUpdate(serializeFields(query), update, new FindOneAndUpdateOptions().returnDocument(returnNew
-                ? ReturnDocument.AFTER
-                : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert));
-    }
-
-    /**
-     * Finds the first document in the query and updates it.
-     * 
-     * @param query
-     *            query to match
-     * @param fields
-     *            fields to be returned
-     * @param sort
-     *            sort to apply before picking first document
-     * @param update
-     *            update to apply
-     * @param returnNew
-     *            if true, the updated document is returned, otherwise the old
-     *            document is returned (or it would be lost forever)
-     * @param upsert
-     *            do upsert (insert if document not present)
-     * @return the object
-     */
-    public T findAndModify(Document query, Document fields, Document sort, T update, boolean returnNew, boolean upsert) {
-        return this.findAndModify(query, fields, sort, convertToDocument(update), returnNew, upsert);
-    }
-
-    /**
-     * Finds the first document in the query and updates it.
-     * 
-     * @param query
-     *            query to match
-     * @param fields
-     *            fields to be returned
-     * @param sort
-     *            sort to apply before picking first document
-     * @param update
-     *            update to apply
-     * @param returnNew
-     *            if true, the updated document is returned, otherwise the old
-     *            document is returned (or it would be lost forever)
-     * @param upsert
-     *            do upsert (insert if document not present)
-     * @return the object
-     */
-    public T findAndModify(DBQuery.Query query, Document fields, Document sort, T update, boolean returnNew, boolean upsert) {
-
-        return mongoCollection.findOneAndUpdate(serializeQuery(query), convertToDocument(update), new FindOneAndUpdateOptions().returnDocument(
-                returnNew
                 ? ReturnDocument.AFTER
                 : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert));
     }

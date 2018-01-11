@@ -101,26 +101,4 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
     }
 
-    @Test
-    public void testFindAndModifyWithParameterizedType() {
-        coll.insert(new MockObject("ten", 10));
-
-        MockObject init = coll.findOne(DBQuery.is("string", "ten").is(
-                "integer", 10));
-
-        MockObject result1 = coll.findAndModify(DBQuery.is("_id", init._id),
-                null, null, new MockObject("twenty", 20), true, true);
-        assertThat(result1.integer, equalTo(20));
-        assertThat(result1.string, equalTo("twenty"));
-
-        MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null,
-                null, new MockObject("id2", "thirty", 30), true, true);
-        assertThat(result2._id, equalTo("id2"));
-        assertThat(result2.integer, equalTo(30));
-        assertThat(result2.string, equalTo("thirty"));
-
-        coll.removeById("id1");
-        coll.removeById("id2");
-    }
-
 }
