@@ -58,7 +58,6 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
-import com.mongodb.BasicDBList;
 
 /**
  * Utilities for helping with serialisation

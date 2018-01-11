@@ -37,8 +37,6 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.Version;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 
 /**
  * JSON generator that actually generates a bson Document object

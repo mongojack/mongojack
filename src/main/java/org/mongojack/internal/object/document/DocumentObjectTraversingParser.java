@@ -20,10 +20,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.bson.BSONObject;
 import org.bson.Document;
-import org.mongojack.JacksonDBCollection;
-import org.mongojack.internal.JacksonDBCollectionProvider;
 import org.mongojack.internal.util.VersionUtils;
 
 import com.fasterxml.jackson.core.Base64Variant;
@@ -35,7 +32,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.base.ParserMinimalBase;
-import com.mongodb.BasicDBObject;
 
 /**
  * Parses a BSONObject by traversing it. This class was copied from

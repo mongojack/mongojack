@@ -18,62 +18,35 @@ package org.mongojack;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.bson.BsonObjectId;
-import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
-import org.mongojack.internal.FetchableDBRef;
-import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
-import org.mongojack.internal.object.BsonObjectGenerator;
-import org.mongojack.internal.object.BsonObjectTraversingParser;
 import org.mongojack.internal.object.document.DocumentObjectGenerator;
 import org.mongojack.internal.object.document.DocumentObjectTraversingParser;
 import org.mongojack.internal.query.QueryCondition;
-import org.mongojack.internal.stream.JacksonDBObject;
-import org.mongojack.internal.stream.JacksonDecoderFactory;
-import org.mongojack.internal.stream.JacksonEncoderFactory;
 import org.mongojack.internal.util.DocumentSerializationUtils;
-import org.mongojack.internal.util.IdHandler;
-import org.mongojack.internal.util.IdHandlerFactory;
-import org.mongojack.mock.MockObject;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.BasicDBObject;
-import com.mongodb.CommandResult;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
-import com.mongodb.GroupCommand;
-import com.mongodb.MapReduceCommand;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
-import com.mongodb.QueryBuilder;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MapReduceIterable;
-import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-
-import javax.annotation.Generated;
-import java.util.Collections;
 
 /**
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated
@@ -1154,22 +1127,6 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
-     * Convert an array of objects to mongo Documents using the Jackson ObjectMapper for this
-     * collection.
-     * 
-     * @param objects The array of objects to convert
-     * @return The array of resulting DBObjects in the same order as the received objects.
-     * @throws MongoException
-     */
-    private Document[] convertToDocuments(@SuppressWarnings("unchecked") T... objects) throws MongoException {
-        Document[] results = new Document[objects.length];
-        for (int i = 0; i < objects.length; i++) {
-            results[i] = convertToDocument(objects[i]);
-        }
-        return results;
-    }
-
-    /**
      * Convert a Document, normally a query result to the object type for this
      * collection using the Jackson ObjectMapper for this collection.
      * 
@@ -1207,22 +1164,6 @@ public class JacksonMongoCollection<T> {
             throw new MongoException(
                     "Unknown error occurred converting BSON to object", e);
         }
-    }
-
-    /**
-     * Convert an array of DBObjects into the type for this collection, using the
-     * Jackson ObjectMapper for this collection.
-     * 
-     * @param dbObjects
-     * @return
-     * @throws MongoException
-     */
-    private List<T> convertFromDocuments(Document... documents) throws MongoException {
-        final List<T> results = new ArrayList<T>(documents.length);
-        for (Document document : documents) {
-            results.add(convertFromDocument(document));
-        }
-        return results;
     }
 
     /**
