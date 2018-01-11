@@ -20,10 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bson.Document;
 import org.mongojack.internal.update.ComplexUpdateOperationValue;
 import org.mongojack.internal.update.MultiUpdateOperationValue;
 import org.mongojack.internal.update.SingleUpdateOperationValue;
 import org.mongojack.internal.update.UpdateOperationValue;
+import org.mongojack.internal.util.DocumentSerializationUtils;
 import org.mongojack.internal.util.SerializationUtils;
 
 import com.fasterxml.jackson.databind.JavaType;
@@ -655,6 +657,19 @@ public class DBUpdate {
         public DBObject serialiseAndGet(ObjectMapper objectMapper,
                 JavaType javaType) {
             return SerializationUtils.serializeDBUpdate(update, objectMapper,
+                    javaType);
+        }
+
+        /**
+         * Serialise the values of the query and get them
+         * 
+         * @param objectMapper
+         *            The object mapper to use to serialise values
+         * @return The object
+         */
+        public Document serialiseAndGetAsDocument(ObjectMapper objectMapper,
+                JavaType javaType) {
+            return DocumentSerializationUtils.serializeDBUpdate(update, objectMapper,
                     javaType);
         }
 
