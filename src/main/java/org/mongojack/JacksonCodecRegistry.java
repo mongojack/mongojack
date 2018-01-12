@@ -3,18 +3,12 @@ package org.mongojack;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.internal.stream.JacksonDecoder;
 import org.mongojack.internal.stream.JacksonEncoder;
-
-import javax.swing.text.Document;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This is an experimental JacksonCodecRegistry for use with the Mongo 3.0+ java driver. It has only undergone basic
@@ -28,7 +22,6 @@ public class JacksonCodecRegistry implements CodecRegistry {
     protected static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule
             .configure(new ObjectMapper());
 
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<>();
     private final ObjectMapper objectMapper;
     private final Class<?> view;
     private CodecRegistry codecRegistry;
@@ -39,7 +32,6 @@ public class JacksonCodecRegistry implements CodecRegistry {
         }
         this.objectMapper = objectMapper;
         this.view = view;
-        codecs.put(Document.class, new DocumentCodec());
         codecRegistry = MongoClient.getDefaultCodecRegistry();
     }
 

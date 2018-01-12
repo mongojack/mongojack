@@ -288,11 +288,11 @@ public class JacksonMongoCollection<T> {
     public UpdateResult updateOne(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, WriteConcern concern) throws MongoException,
             MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), update.serialiseAndGetAsDocument(objectMapper, type),
+            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
                     new UpdateOptions().upsert(
                             upsert));
         } else {
-            return mongoCollection.updateOne(serializeQuery(query), update.serialiseAndGetAsDocument(objectMapper, type),
+            return mongoCollection.updateOne(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
                     new UpdateOptions().upsert(
                             upsert));
         }
@@ -321,11 +321,11 @@ public class JacksonMongoCollection<T> {
     public UpdateResult updateMany(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, WriteConcern concern) throws MongoException,
             MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateMany(serializeQuery(query), update.serialiseAndGetAsDocument(objectMapper, type),
+            return mongoCollection.withWriteConcern(concern).updateMany(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
                     new UpdateOptions().upsert(
                             upsert));
         } else {
-            return mongoCollection.updateMany(serializeQuery(query), update.serialiseAndGetAsDocument(objectMapper, type), new UpdateOptions().upsert(
+            return mongoCollection.updateMany(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type), new UpdateOptions().upsert(
                     upsert));
         }
 
@@ -489,7 +489,7 @@ public class JacksonMongoCollection<T> {
     public UpdateResult updateById(Object _id, DBUpdate.Builder update)
             throws MongoException, MongoWriteException, MongoWriteConcernException {
         return this.update(createIdQuery(_id),
-                update.serialiseAndGetAsDocument(objectMapper, type));
+                update.serializeAndGetAsDocument(objectMapper, type));
     }
 
     /**
@@ -674,7 +674,7 @@ public class JacksonMongoCollection<T> {
      * @return the object
      */
     public T findAndModify(DBQuery.Query query, Document fields, Document sort, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
-        return mongoCollection.findOneAndUpdate(serializeQuery(query), update.serialiseAndGetAsDocument(objectMapper, type),
+        return mongoCollection.findOneAndUpdate(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
                 new FindOneAndUpdateOptions().returnDocument(
                         returnNew
                                 ? ReturnDocument.AFTER
@@ -701,7 +701,7 @@ public class JacksonMongoCollection<T> {
      */
     public T findAndModify(Document query, Document fields, Document sort, DBUpdate.Builder update, boolean returnNew,
             boolean upsert) {
-        return mongoCollection.findOneAndUpdate(serializeFields(query), update.serialiseAndGetAsDocument(objectMapper, type),
+        return mongoCollection.findOneAndUpdate(serializeFields(query), update.serializeAndGetAsDocument(objectMapper, type),
                 new FindOneAndUpdateOptions().returnDocument(
                         returnNew
                                 ? ReturnDocument.AFTER

@@ -667,7 +667,7 @@ public class DBUpdate {
          *            The object mapper to use to serialise values
          * @return The object
          */
-        public Document serialiseAndGetAsDocument(ObjectMapper objectMapper,
+        public Document serializeAndGetAsDocument(ObjectMapper objectMapper,
                 JavaType javaType) {
             return DocumentSerializationUtils.serializeDBUpdate(update, objectMapper,
                     javaType);
