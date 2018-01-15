@@ -109,6 +109,50 @@ Of course, if you really want to control things and Jackson's annotations aren't
     JacksonDBCollection<MyObject, String> coll = JacksonDBCollection.wrap(DBCollection dbCollection, MyObject.class,
             String.class, myObjectMapper);
 
+Using Mongo Java 3.0+ API
+-----------
+MongoJack now supports usage of the java mongo driver's 3.0 API. There are two ways to use this feature.
+
+1) Use the JacksonCodecRegistry class
+2) Use the JacksonMongoCollection class
+
+### Using JacksonCodecRegistry
+The java mongo 3.0 and higher driver supports the usage of codecs to map to specific types. MongoJack provides a Codec Registry which can be used for this purpose. Some example code making use of the JacksonCodecRegistry can be seen below:
+	
+	MongoClient mongo = new MongoClient();
+	MongoDatabase mongoDatabase = mongo.getDatabase(testDatabaseName);
+	JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry();
+	jacksonCodecRegistry.addCodecForClass(MyObject.class);
+	MongoCollection<?> coll = mongoDatabase.getCollection("testCollection");
+	MongoCollection<MyObject> collection = coll.withDocumentClass(MyObject.class).withCodecRegistry(jacksonCodecRegistry);
+
+The first two lines above get the database using the mongo driver. The third line constructs a new JacksonCodecRegistry. The fourth line tells the JacksonCodecRegistry to create a codec that will use Jackson for serialifation/deserialization for the class MyObject. The fifth line gets a MongoCollection from the MongoDatabase, and the sixth tells the MongoCollection to use  the MyObject class and work with the JacksonCodecRegsitry setup on lines three and four. JacksonCodecRegistry includes the default Mongo codecs, so it will also be capable of serializing and deserializing the Document and other default classes.
+
+### Using JacksonMongoCollection
+JacksonMongoCollection attempts to mimic most of the functionality of the JacksonDBCollection, while using the newer driver API. To use a JacksonMongoCollection the user will first need to initialize it using the builder.
+
+	JacksonMongoCollection<MyObject> collection = JacksonMongoCollection.<MyObject> builder().withView(MyView.class).build(collection, MyObject.class);
+	
+The builder pattern allows us to pass in optional parameters like a view without having 10 different constructors. The build method requires the MongoCollection to be wrapped, and the type that this should use for serialization and deserialization. This automatically creates the appropriate JacksonCodecRegistry internally.
+
+Usage largely follow the same pattern as the JacksonDBCollection with a few exceptions.
+
+Old:
+	
+	MockObject o1 = new MockObject("1", "ten", 10);
+	MockObject o2 = new MockObject("2", "ten", 10);
+	coll.insert(o1, o2, new MockObject("twenty", 20));
+	List<MockObject> results = collection.find(new BasicDBObject("string", "ten")).toArray();
+
+New:
+
+	MockObject o1 = new MockObject("1", "ten", 10);
+	MockObject o2 = new MockObject("2", "ten", 10);
+	coll.insert(o1, o2, new MockObject("twenty", 20));
+	List<MockObject> results = collection.find(new Document("string", "ten")).into(new ArrayList<>());
+ 
+The biggest difference is that Documents are used instead of DBObjects. MongoJacks DBQuery, DBUpdate, and Aggregation helpers should all still work with the new JacksonMongoCollection. There are some methods which have been removed because they don't make sense with the mongo java driver's new API, or are no longer exposed through MongoCollection like they previously were with DBCollection.
+
 Releasing
 -----------
 
