@@ -22,9 +22,9 @@ import javax.annotation.Generated;
 
 public class JacksonEncoder<T> implements Encoder<T> {
 
-    private Class<T> clazz;
-    private Class<?> view;
-    private ObjectMapper objectMapper;
+    private final Class<T> clazz;
+    private final Class<?> view;
+    private final ObjectMapper objectMapper;
 
     @Generated("SparkTools")
     public JacksonEncoder(Class<T> clazz, Class<?> view, ObjectMapper objectMapper) {
