@@ -194,7 +194,7 @@ public class SerializationUtils {
             return serializedConditions;
         } else {
             CompoundQueryCondition compound = (CompoundQueryCondition) condition;
-            if (!key.startsWith("$")) {
+            if (!isOperator(key)) {
                 serializer = findQuerySerializer(compound.targetIsCollection(), key, serializerProvider, serializer);
             }
             return serializeQuery(serializerProvider, serializer,
