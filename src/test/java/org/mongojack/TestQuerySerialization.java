@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.DBQuery.Query;
 
@@ -69,7 +68,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
                         .toArray(), hasSize(1));
     }
 
-    @Test @Ignore // This test needs to be fixed
+    @Test
     public void testIn_collectionOfStrings() {
         DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
         JacksonDBCollection<MockObjectWithList, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithList.class, String.class);
