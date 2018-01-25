@@ -375,9 +375,10 @@ public class SerializationUtils {
                 } else {
                     value = field.getValue().getValue();
                 }
-                if (op.getKey().equals("$addToSet")
+                if ((op.getKey().equals("$addToSet") || op.getKey().equals("$push"))
                         && field.getValue() instanceof MultiUpdateOperationValue) {
                     // Add to set needs $each for multi values
+                    // Same for $push with MultiUpdateOperation
                     opObject.put(field.getKey(), new BasicDBObject("$each",
                             value));
                 } else {

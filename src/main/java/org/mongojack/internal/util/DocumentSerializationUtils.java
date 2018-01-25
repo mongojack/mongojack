@@ -375,9 +375,10 @@ public class DocumentSerializationUtils {
                 } else {
                     value = field.getValue().getValue();
                 }
-                if (op.getKey().equals("$addToSet")
+                if ((op.getKey().equals("$addToSet") || op.getKey().equals("$push"))
                         && field.getValue() instanceof MultiUpdateOperationValue) {
                     // Add to set needs $each for multi values
+                    // Same for $push with MultiUpdateOperation
                     opObject.put(field.getKey(), new Document("$each",
                             value));
                 } else {
@@ -392,52 +393,7 @@ public class DocumentSerializationUtils {
     public static Document serializeDBUpdateAsDocument(
             Map<String, Map<String, UpdateOperationValue>> update,
             ObjectMapper objectMapper, JavaType javaType) {
-        SerializerProvider serializerProvider = JacksonAccessor
-                .getSerializerProvider(objectMapper);
-        Document dbObject = new Document();
-
-        JsonSerializer<?> serializer = null;
-
-        for (Map.Entry<String, Map<String, UpdateOperationValue>> op : update
-                .entrySet()) {
-            Document opObject = new Document();
-            for (Map.Entry<String, UpdateOperationValue> field : op.getValue()
-                    .entrySet()) {
-                Object value;
-                if (field.getValue().requiresSerialization()) {
-
-                    if (serializer == null) {
-                        serializer = JacksonAccessor.findValueSerializer(
-                                serializerProvider, javaType);
-                    }
-
-                    JsonSerializer<?> fieldSerializer = findUpdateSerializer(field
-                            .getValue().isTargetCollection(), field.getKey(),
-                            serializerProvider, serializer);
-                    if (fieldSerializer != null) {
-                        value = serializeUpdateField(field.getValue(),
-                                fieldSerializer, serializerProvider,
-                                op.getKey(), field.getKey());
-                    } else {
-                        // Try default serializers
-                        value = serializeField(objectMapper, field.getValue()
-                                .getValue());
-                    }
-                } else {
-                    value = field.getValue().getValue();
-                }
-                if (op.getKey().equals("$addToSet")
-                        && field.getValue() instanceof MultiUpdateOperationValue) {
-                    // Add to set needs $each for multi values
-                    opObject.put(field.getKey(), new Document("$each",
-                            value));
-                } else {
-                    opObject.put(field.getKey(), value);
-                }
-            }
-            dbObject.append(op.getKey(), opObject);
-        }
-        return dbObject;
+        return serializeDBUpdate(update, objectMapper, javaType);
     }
 
     private static Object serializeUpdateField(UpdateOperationValue value,

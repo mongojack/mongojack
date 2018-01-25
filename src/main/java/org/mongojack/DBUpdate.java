@@ -395,7 +395,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pushAll(String field, Object... values) {
-            return addOperation("$pushAll", field,
+            return addOperation("$push", field,
                     new MultiUpdateOperationValue(true, true, values));
         }
 
@@ -410,7 +410,7 @@ public class DBUpdate {
          * @return this object
          */
         public Builder pushAll(String field, List<?> values) {
-            return addOperation("$pushAll", field,
+            return addOperation("$push", field,
                     new MultiUpdateOperationValue(true, true, values));
         }
 
