@@ -18,11 +18,13 @@ package org.mongojack;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.bson.Document;
@@ -84,6 +86,12 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.insert(new MockObject("id1", "ten", 10));
         coll.insert(new MockObject("id2", "ten", 10));
 
+        MockObject mockObject3 = new MockObject("id3", "ten", 10);
+        mockObject3.simpleList = new ArrayList<>();
+        mockObject3.simpleList.add("a");
+        mockObject3.simpleList.add("b");
+        coll.insert(mockObject3);
+
         MockObject result1 = coll.findAndModify(DBQuery.is("_id", "id1"), null,
                 null, DBUpdate.set("integer", 20)
                         .set("string", "twenty"), true, false);
@@ -96,9 +104,15 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         assertThat(result2.integer, equalTo(30));
         assertThat(result2.string, equalTo("thirty"));
 
+        MockObject result3 = coll.findAndModify(DBQuery.is("_id", "id3"), null,
+                null, DBUpdate.pushAll("simpleList", Arrays.asList("1", "2", "3")),
+                true, false);
+        assertThat(result3.simpleList, hasSize(5));
+        assertThat(result3.simpleList, hasItems("1", "2", "3"));
+
         coll.removeById("id1");
         coll.removeById("id2");
-
+        coll.removeById("id3");
     }
 
 }
