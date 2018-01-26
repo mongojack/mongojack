@@ -390,12 +390,6 @@ public class DocumentSerializationUtils {
         return dbObject;
     }
 
-    public static Document serializeDBUpdateAsDocument(
-            Map<String, Map<String, UpdateOperationValue>> update,
-            ObjectMapper objectMapper, JavaType javaType) {
-        return serializeDBUpdate(update, objectMapper, javaType);
-    }
-
     private static Object serializeUpdateField(UpdateOperationValue value,
             JsonSerializer<?> serializer, SerializerProvider serializerProvider,
             String op, String field) {
