@@ -2157,10 +2157,30 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      */
     public DBObject convertToDbObject(T object) throws MongoException {
+        return JacksonDBCollection.convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION), view, objectMapper);
+    }
+
+    /**
+     * This method provides a static way to convert an object into a DBObject. Defaults will be used for all parameters
+     * left null.
+     * 
+     * @param object The object to convert
+     * @param useStreamSerialization Whether to use stream Serialization. (Default false)
+     * @param view The Jackson View to use in serialization. (Default null)
+     * @param objectMapper The specific Jackson ObjectMapper to use. (Default MongoJack ObjectMapper)
+     * @return
+     */
+    public static <T> DBObject convertToDbObject(T object, Boolean useStreamSerialization, Class<?> view, ObjectMapper objectMapper) {
         if (object == null) {
             return null;
         }
-        if (isEnabled(Feature.USE_STREAM_SERIALIZATION)) {
+        if (useStreamSerialization == null) {
+            useStreamSerialization = Feature.USE_STREAM_SERIALIZATION.isEnabledByDefault();
+        }
+        if (objectMapper == null) {
+            objectMapper = DEFAULT_OBJECT_MAPPER;
+        }
+        if (useStreamSerialization) {
             return new JacksonDBObject<T>(object, view);
         } else {
             BsonObjectGenerator generator = new BsonObjectGenerator();
@@ -2239,6 +2259,37 @@ public class JacksonDBCollection<T, K> {
         }
         try {
             return objectMapper.readValue(new BsonObjectTraversingParser(this,
+                    dbObject, objectMapper), clazz);
+        } catch (JsonMappingException e) {
+            throw new MongoJsonMappingException(e);
+        } catch (IOException e) {
+            // This shouldn't happen
+            throw new MongoException(
+                    "Unknown error occurred converting BSON to object", e);
+        }
+    }
+
+    /**
+     * This method provides a static method to convert a DBObject into a given class. If the ObjectMapper is null, use a
+     * default ObjectMapper
+     * 
+     * @param dbObject
+     * @param clazz
+     * @param objectMapper
+     * @return
+     * @throws MongoException
+     */
+    public static <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz, ObjectMapper objectMapper) throws MongoException {
+        if (dbObject == null) {
+            return null;
+        }
+        if (objectMapper == null)
+            objectMapper = DEFAULT_OBJECT_MAPPER;
+        if (dbObject instanceof JacksonDBObject) {
+            return (S) ((JacksonDBObject) dbObject).getObject();
+        }
+        try {
+            return objectMapper.readValue(new BsonObjectTraversingParser(null,
                     dbObject, objectMapper), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);

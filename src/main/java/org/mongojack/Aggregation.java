@@ -400,6 +400,18 @@ public class Aggregation<T> {
             return new FieldPath<Object>(path);
         }
     }
+    
+    public static class Out extends SimpleStage implements Pipeline.Stage<Void> {
+        private final String collectionName;
+
+        public Out(String collectionName) {
+            this.collectionName = collectionName;
+        }
+
+        public String collectionName() {
+            return collectionName;
+        }
+    }
 
     /**
      * A fluent Aggregation builder.
@@ -490,6 +502,10 @@ public class Aggregation<T> {
 
         public Pipeline<Void> unwind(String... path) {
             return then(new Unwind(path));
+        }
+        
+        public Pipeline<Void> out(String collectionName) {
+            return then(new Out(collectionName));
         }
 
         public Iterable<Stage<?>> stages() {
@@ -661,6 +677,10 @@ public class Aggregation<T> {
 
         public static Expression<Integer> size(Expression<List<?>> array) {
             return new OperatorExpression<Integer>("$size", array);
+        }
+        
+        public static <T> Expression<T> arrayElemAt(Expression<List<?>> expression, Expression<Integer> index) {
+            return new OperatorExpression<T>("$arrayElemAt", expression, index);
         }
 
         // Date Operator Expressions
