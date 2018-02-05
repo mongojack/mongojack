@@ -2138,7 +2138,7 @@ public class JacksonDBCollection<T, K> {
         }
         BsonObjectGenerator generator = new BsonObjectGenerator();
         try {
-            objectMapper.writeValue(generator, object);
+            objectMapper.writerWithView(view).writeValue(generator, object);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
         } catch (IOException e) {
@@ -2229,7 +2229,7 @@ public class JacksonDBCollection<T, K> {
             return (T) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return (T) objectMapper.readValue(new BsonObjectTraversingParser(
+            return (T) objectMapper.readerWithView(view).readValue(new BsonObjectTraversingParser(
                     this, dbObject, objectMapper), type);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
@@ -2258,7 +2258,7 @@ public class JacksonDBCollection<T, K> {
             return (S) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(this,
+            return objectMapper.readerWithView(view).readValue(new BsonObjectTraversingParser(this,
                     dbObject, objectMapper), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
@@ -2280,6 +2280,21 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      */
     public static <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz, ObjectMapper objectMapper) throws MongoException {
+        return convertFromDbObject(dbObject, clazz, objectMapper, null);
+    }
+
+    /**
+     * This method provides a static method to convert a DBObject into a given class. If the ObjectMapper is null, use a
+     * default ObjectMapper
+     * 
+     * @param dbObject
+     * @param clazz
+     * @param objectMapper
+     * @param view
+     * @return
+     * @throws MongoException
+     */
+    public static <S> S convertFromDbObject(DBObject dbObject, Class<S> clazz, ObjectMapper objectMapper, Class<?> view) throws MongoException {
         if (dbObject == null) {
             return null;
         }
@@ -2289,7 +2304,7 @@ public class JacksonDBCollection<T, K> {
             return (S) ((JacksonDBObject) dbObject).getObject();
         }
         try {
-            return objectMapper.readValue(new BsonObjectTraversingParser(null,
+            return objectMapper.readerWithView(view).readValue(new BsonObjectTraversingParser(null,
                     dbObject, objectMapper), clazz);
         } catch (JsonMappingException e) {
             throw new MongoJsonMappingException(e);
