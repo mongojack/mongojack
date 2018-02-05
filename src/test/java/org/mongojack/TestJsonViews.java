@@ -53,6 +53,14 @@ public class TestJsonViews extends MongoDBTestBase {
         assertThat(coll.findOneById("id").view2, nullValue());
     }
 
+    @Test
+    public void testDisabledPropertyWithViewAfterUpdate() {
+        ObjectWithView obj = new ObjectWithView("id", "normal", "view1", "view2");
+        coll.save(obj);
+        coll.update(DBQuery.is("_id", "id"), obj);
+        assertThat(coll.findOneById("id").view2, nullValue());
+    }
+
     public static class ObjectWithView {
         public ObjectWithView() {
         }

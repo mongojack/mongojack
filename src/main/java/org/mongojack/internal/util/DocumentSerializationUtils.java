@@ -29,6 +29,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.mongojack.Aggregation;
 import org.mongojack.Aggregation.Expression;
@@ -56,16 +58,11 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
-import com.fasterxml.jackson.databind.ser.std.StaticListSerializerBase;
-import com.fasterxml.jackson.databind.ser.std.StringSerializer;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 
 /**
  * Utilities for helping with serialisation
  */
-public class SerializationUtils {
+public class DocumentSerializationUtils {
 
     private static final Set<Class<?>> BASIC_TYPES;
 
@@ -101,17 +98,17 @@ public class SerializationUtils {
 
     /**
      * Serialize the fields of the given object using the given object mapper.
-     * This will convert POJOs to DBObjects where necessary.
-     * 
+     * This will convert POJOs to Documents where necessary.
+     *
      * @param objectMapper
      *            The object mapper to use to do the serialization
      * @param object
      *            The object to serialize the fields of
-     * @return The DBObject, safe for serialization to MongoDB
+     * @return The Document, safe for serialization to MongoDB
      */
-    public static DBObject serializeFields(ObjectMapper objectMapper,
-            DBObject object) {
-        BasicDBObject serialised = null;
+    public static Document serializeFields(ObjectMapper objectMapper,
+            Document object) {
+        Document serialised = null;
         for (String field : object.keySet()) {
             Object value = object.get(field);
             Object serialisedValue = serializeField(objectMapper, value);
@@ -119,7 +116,7 @@ public class SerializationUtils {
                 // It's changed
                 if (serialised == null) {
                     // Make a shallow copy of the object
-                    serialised = new BasicDBObject();
+                    serialised = new Document();
                     for (String f : object.keySet()) {
                         serialised.put(f, object.get(f));
                     }
@@ -134,7 +131,7 @@ public class SerializationUtils {
         }
     }
 
-    public static DBObject serializeQuery(ObjectMapper objectMapper,
+    public static Document serializeQuery(ObjectMapper objectMapper,
             JavaType type, DBQuery.Query query) {
         SerializerProvider serializerProvider = JacksonAccessor
                 .getSerializerProvider(objectMapper);
@@ -143,10 +140,10 @@ public class SerializationUtils {
         return serializeQuery(serializerProvider, serializer, query);
     }
 
-    private static DBObject serializeQuery(
+    private static Document serializeQuery(
             SerializerProvider serializerProvider, JsonSerializer<?> serializer,
             DBQuery.Query query) {
-        DBObject serializedQuery = new BasicDBObject();
+        Document serializedQuery = new Document();
         for (Map.Entry<String, QueryCondition> field : query.conditions()) {
             String key = field.getKey();
             QueryCondition condition = field.getValue();
@@ -156,6 +153,7 @@ public class SerializationUtils {
         }
         return serializedQuery;
     }
+
 
     public static Object serializeQueryCondition(ObjectMapper objectMapper,
             JavaType type, String key, QueryCondition condition) {
@@ -178,23 +176,6 @@ public class SerializationUtils {
                 if (!isOperator(key)) {
                     serializer = findQuerySerializer(false, key,
                             serializerProvider, serializer);
-                    // If we have a SimpleQueryCondition for a field that represents a Collection
-                    // we should use the serializer of the collection element to serialize the single value.
-                    // This e.g. is the case when doing a DBQuery.is query on a collection field
-                    if (serializer != null && serializer.handledType() != null && Collection.class.isAssignableFrom(serializer.handledType())) {
-                        if (serializer instanceof StaticListSerializerBase) {
-                            // How do we get the used serializer here?
-                            // Subclasses of StaticListSerializerBase (currently?) only handle
-                            // String elements, so we naively use a StringSerializer here, but the
-                            // StaticListSerializerBase also supports a custom serializer to which
-                            // we don't have access to...
-                            serializer = new StringSerializer();
-                        } else if (serializer instanceof ContainerSerializer) {
-                            serializer = ((ContainerSerializer) serializer).getContentSerializer();
-                        } else {
-                            throw new IllegalStateException();
-                        }
-                    }
                 }
                 return serializeQueryField(simple.getValue(), serializer,
                         serializerProvider, key);
@@ -221,9 +202,9 @@ public class SerializationUtils {
         }
     }
 
-	private static boolean isOperator(String key) {
-		return key.startsWith("$");
-	}
+    private static boolean isOperator(String key) {
+        return key.startsWith("$");
+    }
 
     private static Object serializeQueryField(Object value,
             JsonSerializer serializer, SerializerProvider serializerProvider,
@@ -292,7 +273,7 @@ public class SerializationUtils {
 
     /**
      * Serialize the given field
-     * 
+     *
      * @param objectMapper
      *            The object mapper to serialize it with
      * @param value
@@ -304,8 +285,8 @@ public class SerializationUtils {
         if (value == null || BASIC_TYPES.contains(value.getClass())) {
             // Return as is
             return value;
-        } else if (value instanceof DBObject) {
-            return serializeFields(objectMapper, (DBObject) value);
+        } else if (value instanceof Document) {
+            return serializeFields(objectMapper, (Document) value);
         } else if (value instanceof Collection) {
             Collection<?> coll = (Collection<?>) value;
             List<Object> copy = null;
@@ -361,18 +342,18 @@ public class SerializationUtils {
         }
     }
 
-    public static DBObject serializeDBUpdate(
+    public static Document serializeDBUpdate(
             Map<String, Map<String, UpdateOperationValue>> update,
             ObjectMapper objectMapper, JavaType javaType) {
         SerializerProvider serializerProvider = JacksonAccessor
                 .getSerializerProvider(objectMapper);
-        BasicDBObject dbObject = new BasicDBObject();
+        Document dbObject = new Document();
 
         JsonSerializer<?> serializer = null;
 
         for (Map.Entry<String, Map<String, UpdateOperationValue>> op : update
                 .entrySet()) {
-            BasicDBObject opObject = new BasicDBObject();
+            Document opObject = new Document();
             for (Map.Entry<String, UpdateOperationValue> field : op.getValue()
                     .entrySet()) {
                 Object value;
@@ -402,7 +383,7 @@ public class SerializationUtils {
                         && field.getValue() instanceof MultiUpdateOperationValue) {
                     // Add to set needs $each for multi values
                     // Same for $push with MultiUpdateOperation
-                    opObject.put(field.getKey(), new BasicDBObject("$each",
+                    opObject.put(field.getKey(), new Document("$each",
                             value));
                 } else {
                     opObject.put(field.getKey(), value);
@@ -623,40 +604,40 @@ public class SerializationUtils {
         }
     }
 
-    public static List<DBObject> serializePipeline(ObjectMapper objectMapper, JavaType type, Pipeline<?> pipeline) {
+    public static List<Document> serializePipeline(ObjectMapper objectMapper, JavaType type, Pipeline<?> pipeline) {
         SerializerProvider serializerProvider = JacksonAccessor
                 .getSerializerProvider(objectMapper);
         JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
                 serializerProvider, type);
-        List<DBObject> serializedPipeline = new ArrayList<DBObject>();
+        List<Document> serializedPipeline = new ArrayList<Document>();
         for (Pipeline.Stage<?> stage: pipeline.stages()) {
             serializedPipeline.add(serializePipelineStage(serializerProvider, serializer, stage));
         }
         return serializedPipeline;
     }
 
-    private static DBObject serializePipelineStage(
+    private static Document serializePipelineStage(
             SerializerProvider serializerProvider, JsonSerializer<?> serializer,
             Pipeline.Stage<?> stage) {
         if (stage instanceof Aggregation.Limit) {
-            return new BasicDBObject("$limit", ((Aggregation.Limit) stage).limit());
+            return new Document("$limit", ((Aggregation.Limit) stage).limit());
         }
         if (stage instanceof Aggregation.Skip) {
-            return new BasicDBObject("$skip", ((Aggregation.Skip) stage).skip());
+            return new Document("$skip", ((Aggregation.Skip) stage).skip());
         }
         if (stage instanceof Aggregation.Sort) {
-            return new BasicDBObject("$sort", ((Aggregation.Sort) stage).builder());
+            return new Document("$sort", ((Aggregation.Sort) stage).builder());
         }
         if (stage instanceof Aggregation.Unwind) {
-            return new BasicDBObject("$unwind", ((Object) ((Aggregation.Unwind) stage).path()).toString());
+            return new Document("$unwind", ((Object) ((Aggregation.Unwind) stage).path()).toString());
         }
         if (stage instanceof Aggregation.Match) {
-            return new BasicDBObject("$match", serializeQuery(serializerProvider, serializer,
+            return new Document("$match", serializeQuery(serializerProvider, serializer,
                     ((Aggregation.Match) stage).query()));
         }
         if (stage instanceof Aggregation.Project) {
             ProjectionBuilder builder = ((Aggregation.Project) stage).builder();
-            BasicDBObject object = new BasicDBObject();
+            Document object = new Document();
             for (Entry<String, Object> entry : builder.entrySet()) {
                 if (entry.getValue() instanceof Expression<?>) {
                     object.append(entry.getKey(),
@@ -665,24 +646,24 @@ public class SerializationUtils {
                     object.append(entry.getKey(), entry.getValue());
                 }
             }
-            return new BasicDBObject("$project", object);
+            return new Document("$project", object);
         }
         if (stage instanceof Aggregation.Group) {
             Aggregation.Group group = (Aggregation.Group) stage;
-            BasicDBObject object = new BasicDBObject("_id", serializeExpression(serializerProvider, serializer, group.key()));
+            Document object = new Document("_id", serializeExpression(serializerProvider, serializer, group.key()));
             for (Map.Entry<String, Aggregation.Group.Accumulator> field : group.calculatedFields()) {
                 object.append(field.getKey(), serializeAccumulator(serializerProvider, serializer, field.getValue()));
             }
-            return new BasicDBObject("$group", object);
+            return new Document("$group", object);
         }
         if (stage instanceof Aggregation.Out) {
-        	return new BasicDBObject("$out", ((Object) ((Aggregation.Out) stage).collectionName()));
+            return new Document("$out", ((Object) ((Aggregation.Out) stage).collectionName()));
         }
         throw new IllegalArgumentException(stage.getClass().getName());
     }
 
-    private static DBObject serializeAccumulator(SerializerProvider serializerProvider, JsonSerializer<?> serializer, Accumulator accumulator) {
-        return new BasicDBObject(accumulator.operator.name(),
+    private static Document serializeAccumulator(SerializerProvider serializerProvider, JsonSerializer<?> serializer, Accumulator accumulator) {
+        return new Document(accumulator.operator.name(),
                 serializeExpression(serializerProvider, serializer, accumulator.expression));
     }
 
@@ -691,10 +672,10 @@ public class SerializationUtils {
             return ((Aggregation.FieldPath) expression).toString();
         }
         if (expression instanceof Aggregation.Literal<?>) {
-            return new BasicDBObject("$literal", ((Aggregation.Literal<?>) expression).value());
+            return new Document("$literal", ((Aggregation.Literal<?>) expression).value());
         }
         if (expression instanceof Aggregation.ExpressionObject) {
-            BasicDBObject object = new BasicDBObject();
+            Document object = new Document();
             for (Entry<String, Expression<?>> property : ((Aggregation.ExpressionObject) expression).properties()) {
                 object.append(property.getKey(),
                         serializeExpression(serializerProvider, serializer, property.getValue()));
@@ -703,11 +684,11 @@ public class SerializationUtils {
         }
         if (expression instanceof Aggregation.OperatorExpression) {
             Aggregation.OperatorExpression<?> oe = (Aggregation.OperatorExpression<?>) expression;
-            BasicDBList operands = new BasicDBList();
+            List<Bson> operands = new ArrayList<>();
             for (Expression<?> e : oe.operands()) {
-                operands.add(serializeExpression(serializerProvider, serializer, e));
+                operands.add((Document) serializeExpression(serializerProvider, serializer, e));
             }
-            return new BasicDBObject(oe.operator(), operands);
+            return new Document(oe.operator(), operands);
         }
         throw new IllegalArgumentException(expression.getClass().getName());
     }

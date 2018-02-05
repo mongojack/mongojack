@@ -1,438 +1,496 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>9</version>
-    </parent>
+  <groupId>org.mongojack</groupId>
+  <artifactId>mongojack</artifactId>
+  <version>2.8.1-SNAPSHOT</version>
+  <packaging>bundle</packaging>
 
-    <groupId>org.mongojack</groupId>
-    <artifactId>mongojack</artifactId>
-    <version>2.6.2-SNAPSHOT</version>
-    <packaging>bundle</packaging>
+  <name>MongoJack</name>
+  <description>Maps MongoDB objects to POJOs using Jackson</description>
+  <url>http://mongojack.org</url>
+  <organization>
+    <name>devbliss GmbH</name>
+    <url>http://www.devbliss.com</url>
+  </organization>
+  <inceptionYear>2011</inceptionYear>
 
-    <name>MongoJack</name>
-    <description>Maps MongoDB objects to POJOs using Jackson</description>
-    <url>http://mongojack.org</url>
-    <organization>
-        <name>devbliss GmbH</name>
-        <url>http://www.devbliss.com</url>
-    </organization>
-    <inceptionYear>2011</inceptionYear>
+  <dependencies>
+    <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver</artifactId>
+      <version>3.6.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.8.7</version>
+    </dependency>
+    <dependency>
+      <groupId>de.undercouch</groupId>
+      <artifactId>bson4jackson</artifactId>
+      <version>2.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.persistence</groupId>
+      <artifactId>persistence-api</artifactId>
+      <version>1.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.5</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>de.flapdoodle.embed</groupId>
+      <artifactId>de.flapdoodle.embed.mongo</artifactId>
+      <version>2.0.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-junit</artifactId>
+      <version>2.0.0.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-all</artifactId>
+      <version>1.10.19</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver</artifactId>
-            <version>3.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.7.1-1</version>
-        </dependency>
-        <dependency>
-            <groupId>de.undercouch</groupId>
-            <artifactId>bson4jackson</artifactId>
-            <version>2.7.0</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.4</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.flapdoodle.embed</groupId>
-            <artifactId>de.flapdoodle.embed.mongo</artifactId>
-            <version>1.50.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.10.19</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <!-- Necessary because according to the docs, site filtering doesn't work for properties with dots in them -->
+    <siteProjectVersion>${project.version}</siteProjectVersion>
+    <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
+  </properties>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <!-- Necessary because according to the docs, site filtering doesn't work for properties with dots in them -->
-        <siteProjectVersion>${project.version}</siteProjectVersion>
-        <maven.javadoc.failOnError>false</maven.javadoc.failOnError>
-    </properties>
-
-    <build>
-        <plugins>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.5.3</version>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <useReleaseProfile>false</useReleaseProfile>
+          <releaseProfiles>release</releaseProfiles>
+          <goals>deploy</goals>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.3</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <source>1.8</source>
+          <target>1.8</target>
+          <compilerArgument>-Xlint:deprecation</compilerArgument>
+          <showDeprecation>true</showDeprecation>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.4</version>
+        <configuration>
+          <reportPlugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <compilerArgument>-Xlint:deprecation</compilerArgument>
-                    <showDeprecation>true</showDeprecation>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.4</version>
-                <configuration>
-                    <reportPlugins>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-project-info-reports-plugin</artifactId>
-                            <version>2.8.1</version>
-                        </plugin>
-                        <plugin>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-javadoc-plugin</artifactId>
-                            <version>2.10.3</version>
-                        </plugin>
-                    </reportPlugins>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.doxia</groupId>
-                        <artifactId>doxia-module-markdown</artifactId>
-                        <version>1.6</version>
-                    </dependency>
-                </dependencies>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-project-info-reports-plugin</artifactId>
+              <version>2.8.1</version>
             </plugin>
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.18.1</version>
-              <configuration>
-                    <properties>
-                        <property>
-                            <name>listener</name>
-                            <value>org.mongojack.testing.DbRunListener</value>
-                        </property>
-                    </properties>
-                    <systemPropertyVariables>
-                        <isMaven>true</isMaven>
-                    </systemPropertyVariables>
-                </configuration>
+              <artifactId>maven-javadoc-plugin</artifactId>
+              <version>2.10.3</version>
             </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.5.4</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Export-Package>org.mongojack</Export-Package>
-                    </instructions>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
+          </reportPlugins>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-module-markdown</artifactId>
+            <version>1.6</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.18.1</version>
+        <configuration>
+          <properties>
+            <property>
+              <name>listener</name>
+              <value>org.mongojack.testing.DbRunListener</value>
+            </property>
+          </properties>
+          <systemPropertyVariables>
+            <isMaven>true</isMaven>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.5.4</version>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Export-Package>org.mongojack</Export-Package>
+          </instructions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
 
-        <extensions>
-            <extension>
-                <groupId>com.github.stephenc.wagon</groupId>
-                <artifactId>wagon-gitsite</artifactId>
-                <version>0.5</version>
-            </extension>
-        </extensions>
-        <pluginManagement>
-            <plugins>
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.felix
-                                        </groupId>
-                                        <artifactId>
-                                            maven-bundle-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [2.5.3,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>manifest</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore />
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
+    <extensions>
+      <extension>
+        <groupId>com.github.stephenc.wagon</groupId>
+        <artifactId>wagon-gitsite</artifactId>
+        <version>0.5</version>
+      </extension>
+    </extensions>
+    <pluginManagement>
+      <plugins>
+        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>
+                      org.apache.felix
+                    </groupId>
+                    <artifactId>
+                      maven-bundle-plugin
+                    </artifactId>
+                    <versionRange>
+                      [2.5.3,)
+                    </versionRange>
+                    <goals>
+                      <goal>manifest</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore />
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 
-    <developers>
-        <developer>
-            <name>James Roper</name>
-            <email>james@jazzy.id.au</email>
-            <url>http://jazzy.id.au</url>
-            <roles>
-                <role>Author</role>
-            </roles>
-            <organization>devbliss GmbH</organization>
-            <organizationUrl>https://devbliss.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Marco Reinwarth</name>
-            <email>marco.reinwarth@devbliss.com</email>
-            <url>https://about.me/marei</url>
-            <roles>
-                <role>Maintainer</role>
-            </roles>
-            <organization>devbliss GmbH</organization>
-            <organizationUrl>https://devbliss.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Bastien Mary</name>
-            <email>bastien.mary@devbliss.com</email>
-            <roles>
-                <role>Maintainer</role>
-            </roles>
-            <organization>devbliss GmbH</organization>
-            <organizationUrl>https://devbliss.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Ben McCann</name>
-            <roles>
-                <role>Maintainer</role>
-            </roles>
-            <organizationUrl>https://www.benmccannn.com</organizationUrl>
-        </developer>
-    </developers>
+  <developers>
+    <developer>
+      <name>James Roper</name>
+      <email>james@jazzy.id.au</email>
+      <url>http://jazzy.id.au</url>
+      <roles>
+        <role>Author</role>
+      </roles>
+      <organization>devbliss GmbH</organization>
+      <organizationUrl>https://devbliss.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Marco Reinwarth</name>
+      <email>marco.reinwarth@devbliss.com</email>
+      <url>https://about.me/marei</url>
+      <roles>
+        <role>Maintainer</role>
+      </roles>
+      <organization>devbliss GmbH</organization>
+      <organizationUrl>https://devbliss.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Bastien Mary</name>
+      <email>bastien.mary@devbliss.com</email>
+      <roles>
+        <role>Maintainer</role>
+      </roles>
+      <organization>devbliss GmbH</organization>
+      <organizationUrl>https://devbliss.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Ben McCann</name>
+      <roles>
+        <role>Maintainer</role>
+      </roles>
+      <organizationUrl>https://www.benmccannn.com</organizationUrl>
+    </developer>
+  </developers>
 
-    <contributors>
-        <contributor>
-            <name>Christian Riedel</name>
-            <url>https://github.com/criedel</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>Reimund Klain</name>
-            <url>http://blog.klain.eu</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>aleskiewicz</name>
-            <url>https://github.com/aleskiewicz</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>John Hinnegan</name>
-            <url>https://github.com/softwaregravy</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>pmaedel</name>
-            <url>https://github.com/pmaedel</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <organization>ThinkNear</organization>
-        </contributor>
-        <contributor>
-            <name>Timothy Maxwell</name>
-            <url>https://github.com/truthspirit</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>saadmufti</name>
-            <url>https://github.com/saadmufti</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>Jan Meyer</name>
-            <url>http://www.m-bs.de</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <organization>Meyer Business Services GmbH</organization>
-            <organizationUrl>http://www.m-bs.de</organizationUrl>
-        </contributor>
-        <contributor>
-            <name>Paul Bakker</name>
-            <url>http://twitter.com/pbakker</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <organization>Luminis Technologies</organization>
-        </contributor>
-        <contributor>
-            <name>Jeff Yemin</name>
-            <url>https://github.com/jyemin</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <organization>MongoDB, Inc.</organization>
-        </contributor>
-        <contributor>
-            <name>Christopher Exell</name>
-            <url>https://github.com/exell-christopher</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>Yun Zhi Lin</name>
-            <url>http://www.yunspace.com/</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>Mike Ho</name>
-            <url>https://github.com/abc2mit</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>Luke Palmer</name>
-            <url>https://github.com/lukepalmer</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-        <contributor>
-            <name>Camilo Bermudez</name>
-            <url>https://github.com/camilobermudez85</url>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </contributor>
-    </contributors>
+  <contributors>
+    <contributor>
+      <name>Christian Riedel</name>
+      <url>https://github.com/criedel</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Reimund Klain</name>
+      <url>http://blog.klain.eu</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>aleskiewicz</name>
+      <url>https://github.com/aleskiewicz</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>John Hinnegan</name>
+      <url>https://github.com/softwaregravy</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>pmaedel</name>
+      <url>https://github.com/pmaedel</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <organization>ThinkNear</organization>
+    </contributor>
+    <contributor>
+      <name>Timothy Maxwell</name>
+      <url>https://github.com/truthspirit</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>saadmufti</name>
+      <url>https://github.com/saadmufti</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Jan Meyer</name>
+      <url>http://www.m-bs.de</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <organization>Meyer Business Services GmbH</organization>
+      <organizationUrl>http://www.m-bs.de</organizationUrl>
+    </contributor>
+    <contributor>
+      <name>Paul Bakker</name>
+      <url>http://twitter.com/pbakker</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <organization>Luminis Technologies</organization>
+    </contributor>
+    <contributor>
+      <name>Jeff Yemin</name>
+      <url>https://github.com/jyemin</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <organization>MongoDB, Inc.</organization>
+    </contributor>
+    <contributor>
+      <name>Christopher Exell</name>
+      <url>https://github.com/exell-christopher</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Yun Zhi Lin</name>
+      <url>http://www.yunspace.com/</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Mike Ho</name>
+      <url>https://github.com/abc2mit</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Luke Palmer</name>
+      <url>https://github.com/lukepalmer</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Camilo Bermudez</name>
+      <url>https://github.com/camilobermudez85</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Thomas Simon</name>
+      <email>thomas.simon@actility.com</email>
+      <url>https://github.com/Tomuss</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <organization>Actility</organization>
+      <organizationUrl>https://www.actility.com/</organizationUrl>
+    </contributor>
+    <contributor>
+      <name>Christopher O'Grady</name>
+      <url>https://github.com/cfogrady</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
+  </contributors>
 
-    <licenses>
-        <license>
-            <name>Apache 2</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
-    </licenses>
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
 
-    <profiles>
-        <profile>
-            <id>release-sign-artifacts</id>
-            <activation>
-                <property>
-                    <name>performRelease</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
-
-    <scm>
-        <url>https://github.com/mongojack/mongojack</url>
-        <connection>scm:git://github.com/mongojack/mongojack.git</connection>
-        <developerConnection>scm:git:git@github.com:mongojack/mongojack.git</developerConnection>
-    </scm>
-
-    <distributionManagement>
-        <site>
-            <id>github-project-site</id>
-            <url>gitsite:git@github.com/mongojack/mongojack.git</url>
-        </site>
-    </distributionManagement>
-
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/mongojack/mongojack/issues/</url>
-    </issueManagement>
-
-    <reporting>
+  <profiles>
+    <profile>
+      <id>release</id>
+      <activation>
+        <property>
+          <name>performRelease</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.8.1</version>
-            </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.2.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9.1</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
-    </reporting>
+      </build>
+    </profile>
+  </profiles>
 
-    <mailingLists>
-        <mailingList>
-            <name>MongoDB Jackson Mapper Users</name>
-            <post>mongo-jackson-mapper@googlegroups.com</post>
-            <archive>http://groups.google.com/group/mongo-jackson-mapper</archive>
-        </mailingList>
-    </mailingLists>
+  <scm>
+    <url>https://github.com/mongojack/mongojack</url>
+    <connection>scm:git://github.com/mongojack/mongojack.git</connection>
+    <developerConnection>scm:git:git@github.com:mongojack/mongojack.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <site>
+      <id>github-project-site</id>
+      <url>gitsite:git@github.com/mongojack/mongojack.git</url>
+    </site>
+  </distributionManagement>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/mongojack/mongojack/issues/</url>
+  </issueManagement>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.8.1</version>
+      </plugin>
+    </plugins>
+  </reporting>
+
+  <mailingLists>
+    <mailingList>
+        <name>MongoDB Jackson Mapper Users</name>
+        <post>mongo-jackson-mapper@googlegroups.com</post>
+        <archive>http://groups.google.com/group/mongo-jackson-mapper</archive>
+    </mailingList>
+  </mailingLists>
 </project>

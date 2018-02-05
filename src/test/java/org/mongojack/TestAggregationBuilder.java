@@ -18,11 +18,7 @@ package org.mongojack;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -175,6 +171,41 @@ public class TestAggregationBuilder extends MongoDBTestBase {
             Assert.assertTrue(mockObjectAggregationResult.string.equals("foo") ||  mockObjectAggregationResult.string.equals("baz"));
         }
 
+    }
+    
+    @Test
+    public void testOut() {
+    	coll.insert(new MockObject("foo", 1));
+        coll.insert(new MockObject("bar", 2));
+        coll.insert(new MockObject("baz", 3));
+        coll.insert(new MockObject("qux", 4));
+        
+        Pipeline<?> pipeline = Aggregation.match(DBQuery.greaterThan("integer", 2)).out("testOut");
+        
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
+        
+        JacksonDBCollection<MockObject, String> outCollection = getCollection(MockObject.class, String.class, "testOut");
+        Assert.assertEquals(2, outCollection.count());
+        Iterator<MockObject> iterator = outCollection.find().iterator();
+        while(iterator.hasNext()){
+        	MockObject object = iterator.next();
+        	Assert.assertTrue(object.string.equals("baz") || object.string.equals("qux"));
+        }
+    }
+    
+    @Test
+    public void testProjectArrayElemAt() {
+    	MockObject object = new MockObject();
+    	object.simpleList = new ArrayList<String>();
+    	object.simpleList.add("foo");
+    	object.simpleList.add("bar");
+        coll.insert(object);
+
+        Pipeline<?> pipeline = Aggregation.project("string", Expression.arrayElemAt(Expression.list("simpleList"), Expression.literal(1)));
+
+        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(pipeline, MockObjectAggregationResult.class);
+
+        Assert.assertEquals("bar", aggregationResult.results().get(0).string);
     }
 
     static class User {

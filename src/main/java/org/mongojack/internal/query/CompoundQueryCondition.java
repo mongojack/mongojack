@@ -21,12 +21,18 @@ import org.mongojack.DBQuery;
 public class CompoundQueryCondition implements QueryCondition {
 
     private final DBQuery.Query query;
+    private final boolean targetIsCollection;
 
-    public CompoundQueryCondition(DBQuery.Query query) {
+    public CompoundQueryCondition(DBQuery.Query query, boolean targetIsCollection) {
         this.query = query;
+        this.targetIsCollection = targetIsCollection;
     }
 
     public DBQuery.Query getQuery() {
         return query;
+    }
+    
+    public boolean targetIsCollection() {
+        return targetIsCollection;
     }
 }

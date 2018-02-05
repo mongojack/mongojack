@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
 /**
  * Base class for unit tests that run against MongoDB. Assumes there is a
@@ -48,6 +49,7 @@ public abstract class MongoDBTestBase {
 
     protected MongoClient mongo;
     protected DB db;
+    protected MongoDatabase mongoDatabase;
     private Set<String> collections;
 
     @Before
@@ -58,7 +60,9 @@ public abstract class MongoDBTestBase {
             mongo = new MongoClient("localhost", DbManager.PORT);
         }
 
-        db = mongo.getDB("unittest");
+        String testDatabaseName = "unittest";
+        db = mongo.getDB(testDatabaseName);
+        mongoDatabase = mongo.getDatabase(testDatabaseName);
         collections = new HashSet<String>();
     }
 
@@ -81,6 +85,12 @@ public abstract class MongoDBTestBase {
     protected DBCollection getCollection(String name) {
         collections.add(name);
         return db.getCollection(name);
+    }
+
+    protected com.mongodb.client.MongoCollection<?> getMongoCollection(String name) {
+        collections.add(name);
+        com.mongodb.client.MongoCollection<?> collection = mongoDatabase.getCollection(name);
+        return collection;
     }
 
     /**

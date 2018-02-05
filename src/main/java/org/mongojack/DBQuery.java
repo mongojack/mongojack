@@ -617,7 +617,7 @@ public class DBQuery {
          * @return the query
          */
         public Q elemMatch(String field, Query query) {
-            return put(field, "$elemMatch", new CompoundQueryCondition(query));
+            return put(field, "$elemMatch", new CompoundQueryCondition(query, false));
         }
 
         /**
@@ -673,7 +673,9 @@ public class DBQuery {
             QueryCondition saved = query.get(field);
             if (!(saved instanceof CompoundQueryCondition)) {
                 subQuery = new Query();
-                query.put(field, new CompoundQueryCondition(subQuery));
+                boolean targetIsCollection = (value instanceof CollectionQueryCondition && ((CollectionQueryCondition)value).targetIsCollection())
+                    || (value instanceof CompoundQueryCondition && ((CompoundQueryCondition)value).targetIsCollection());
+                query.put(field, new CompoundQueryCondition(subQuery, targetIsCollection));
             } else {
                 subQuery = ((CompoundQueryCondition) saved).getQuery();
             }
@@ -696,7 +698,7 @@ public class DBQuery {
             }
             List<QueryCondition> conditions = new ArrayList<QueryCondition>();
             for (Query query : expressions) {
-                conditions.add(new CompoundQueryCondition(query));
+                conditions.add(new CompoundQueryCondition(query, false));
             }
             condition.addAll(conditions);
             return this;
