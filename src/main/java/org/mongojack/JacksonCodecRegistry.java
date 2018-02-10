@@ -2,6 +2,8 @@ package org.mongojack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoClient;
+import com.mongodb.annotations.Beta;
+
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -17,6 +19,7 @@ import org.mongojack.internal.stream.JacksonEncoder;
  * @author christopher.ogrady
  *
  */
+@Beta
 public class JacksonCodecRegistry implements CodecRegistry {
 
     protected static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule

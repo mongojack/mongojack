@@ -38,6 +38,7 @@ import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Beta;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MapReduceIterable;
@@ -62,6 +63,7 @@ import com.mongodb.client.result.UpdateResult;
  * @author James Roper
  * @since 1.0
  */
+@Beta
 public class JacksonMongoCollection<T> {
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule
