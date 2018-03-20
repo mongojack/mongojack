@@ -237,6 +237,25 @@ public class JacksonDBCollection<T, K> {
     }
 
     /**
+     * Wraps a DB collection in a JacksonDBCollection
+     * 
+     * @param dbCollection The DB collection to wrap
+     * @param type The type of objects to deserialize to
+     * @param keyType The type of the objects key
+     * @param objectMapper The ObjectMapper to configure.
+     * @param view The JSON view to use for serialization
+     * @return The wrapped collection
+     */
+    public static <T, K> JacksonDBCollection<T, K> wrap(
+                                                        DBCollection dbCollection, Class<T> type, Class<K> keyType,
+                                                        ObjectMapper objectMapper,
+                                                        Class<?> view) {
+        MongoJackModule.configure(objectMapper);
+        return new JacksonDBCollection<T, K>(dbCollection, objectMapper.constructType(type),
+                                             objectMapper.constructType(keyType), objectMapper, view, null);
+    }
+
+    /**
      * Enable the given feature
      * 
      * @param feature
