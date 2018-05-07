@@ -211,7 +211,7 @@ public class JacksonMongoCollection<T> {
      * @param query
      *            search query for old object to update
      * @param document
-     *            object with which to update <tt>query</tt>
+     *            a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param upsert
      *            if the database should create the element if it does not exist
      * @param concern
@@ -242,7 +242,7 @@ public class JacksonMongoCollection<T> {
      * @param query
      *            search query for old object to update
      * @param document
-     *            object with which to update <tt>query</tt>
+     *            a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param upsert
      *            if the database should create the element if it does not exist
      * @param concern
@@ -334,12 +334,12 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
-     * Performs an update operation.
+     * Performs an update operation, replacing the entire document.
      * 
      * @param query
-     *            search query for old object to update
+     *            search query for old object to replace
      * @param object
-     *            object with which to update <tt>query</tt>
+     *            object with which to replace <tt>query</tt>
      * @param upsert
      *            if the database should create the element if it does not exist
      * @param concern
@@ -352,24 +352,24 @@ public class JacksonMongoCollection<T> {
      * @throws MongoException
      *             If an error occurred
      */
-    public UpdateResult update(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+    public UpdateResult replaceOne(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(
+            return mongoCollection.withWriteConcern(concern).replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(
                     upsert));
         } else {
-            return mongoCollection.updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(upsert));
+            return mongoCollection.replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(upsert));
         }
 
     }
 
     /**
-     * Performs an update operation.
+     * Performs an update operation, replacing the entire document.
      * 
      * @param query
-     *            search query for old object to update
+     *            search query for old object to replace
      * @param object
-     *            object with which to update <tt>query</tt>
+     *            object with which to replace <tt>query</tt>
      * @param upsert
      *            if the database should create the element if it does not exist
      * @param concern
@@ -382,14 +382,14 @@ public class JacksonMongoCollection<T> {
      * @throws MongoException
      *             If an error occurred
      */
-    public UpdateResult update(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+    public UpdateResult replaceOne(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
         query = serializeFields(query);
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(query, convertToDocument(object), new UpdateOptions().upsert(
+            return mongoCollection.withWriteConcern(concern).replaceOne(query, object, new UpdateOptions().upsert(
                     upsert));
         } else {
-            return mongoCollection.updateOne(query, convertToDocument(object), new UpdateOptions().upsert(upsert));
+            return mongoCollection.replaceOne(query, object, new UpdateOptions().upsert(upsert));
         }
 
     }
@@ -400,7 +400,7 @@ public class JacksonMongoCollection<T> {
      * @param query
      *            search query for old object to update
      * @param object
-     *            object with which to update <tt>query</tt>
+     *            a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return The result
      * @throws MongoWriteException
      *             If the write failed due some other failure specific to the update command
@@ -435,12 +435,12 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
-     * Performs an update operation.
+     * Performs an update operation, replacing the entire document.
      * 
      * @param query
-     *            search query for old object to update
+     *            search query for old object to replace
      * @param object
-     *            object with which to update <tt>query</tt>
+     *            object with which to replace <tt>query</tt>
      * @return The result
      * @throws MongoWriteException
      *             If the write failed due some other failure specific to the update command
@@ -449,18 +449,18 @@ public class JacksonMongoCollection<T> {
      * @throws MongoException
      *             If an error occurred
      */
-    public UpdateResult update(DBQuery.Query query, T object)
+    public UpdateResult replaceOne(DBQuery.Query query, T object)
             throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return update(query, object, false, null);
+        return replaceOne(query, object, false, null);
     }
 
     /**
-     * Performs an update operation for the document with this _id.
+     * Performs an update operation, replacing the entire document, for the document with this _id.
      * 
      * @param _id
-     *            the _id of the object to update
+     *            the _id of the object to replace
      * @param object
-     *            object with which to update <tt>query</tt>
+     *            object with which to replace <tt>query</tt>
      * @return The result
      * @throws MongoWriteException
      *             If the write failed due some other failure specific to the update command
@@ -469,8 +469,8 @@ public class JacksonMongoCollection<T> {
      * @throws MongoException
      *             If an error occurred
      */
-    public UpdateResult updateById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return update(createIdQuery(_id), object, false, null);
+    public UpdateResult replaceOneById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return replaceOne(createIdQuery(_id), object, false, null);
     }
 
     /**
@@ -901,7 +901,7 @@ public class JacksonMongoCollection<T> {
             this.insert(object, concern);
             return UpdateResult.acknowledged(0, 1L, new BsonObjectId((ObjectId) convertToDocument(object).get("_id")));
         } else {
-            return this.update(new Document("_id", _id), object, true, concern);
+            return this.replaceOne(new Document("_id", _id), object, true, concern);
         }
     }
 

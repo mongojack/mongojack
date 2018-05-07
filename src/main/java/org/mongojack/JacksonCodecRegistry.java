@@ -28,6 +28,10 @@ public class JacksonCodecRegistry implements CodecRegistry {
     private final ObjectMapper objectMapper;
     private final Class<?> view;
     private CodecRegistry codecRegistry;
+
+    public JacksonCodecRegistry(ObjectMapper objectMapper) {
+        this(objectMapper, null);
+    }
     
     public JacksonCodecRegistry(ObjectMapper objectMapper, Class<?> view) {
         if (objectMapper == null) {
@@ -38,8 +42,8 @@ public class JacksonCodecRegistry implements CodecRegistry {
         codecRegistry = MongoClient.getDefaultCodecRegistry();
     }
 
-    public JacksonCodecRegistry() {
-        this(null, null);
+    public static JacksonCodecRegistry withDefaultObjectMapper() {
+        return new JacksonCodecRegistry(DEFAULT_OBJECT_MAPPER, null);
     }
 
     @Override

@@ -32,6 +32,7 @@ import org.bson.Document;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.mock.MockObject;
 
 public class TestJacksonCodecRegistry extends MongoDBTestBase {
@@ -40,7 +41,7 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
     @Before
     public void setup() throws Exception {
         com.mongodb.client.MongoCollection<?> collection = getMongoCollection("testCollection");
-        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry();
+        JacksonCodecRegistry jacksonCodecRegistry = JacksonCodecRegistry.withDefaultObjectMapper();
         jacksonCodecRegistry.addCodecForClass(MockObject.class);
         coll = collection.withDocumentClass(MockObject.class).withCodecRegistry(jacksonCodecRegistry);
     }
