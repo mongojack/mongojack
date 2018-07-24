@@ -501,6 +501,7 @@ public class JacksonDBCollection<T, K> {
     public WriteResult<T, K> update(DBQuery.Query query, T object,
             boolean upsert, boolean multi, WriteConcern concern)
             throws MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, true);
         return new WriteResult<T, K>(this, dbCollection.update(
                 serializeQuery(query), convertToBasicDbObject(object), upsert,
                 multi, concern));
@@ -643,6 +644,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     public WriteResult<T, K> updateById(K id, T object) throws MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, true);
         return update(createIdQuery(id), convertToDbObject(object), false,
                 false);
     }
