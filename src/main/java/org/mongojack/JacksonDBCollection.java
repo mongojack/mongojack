@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.mongojack.internal.FetchableDBRef;
 import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
+import org.mongojack.internal.PrePersistEntityMethodsInvoker;
 import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.object.BsonObjectTraversingParser;
 import org.mongojack.internal.query.QueryCondition;
@@ -114,6 +115,7 @@ public class JacksonDBCollection<T, K> {
     private final IdHandler<K, Object> idHandler;
     private final JacksonDecoderFactory<T> decoderFactory;
     private final Map<Feature, Boolean> features;
+    private final PrePersistEntityMethodsInvoker<T> prePersistEntityMethodsInvoker;
 
     /**
      * Cache of referenced collections
@@ -146,6 +148,7 @@ public class JacksonDBCollection<T, K> {
         }
         dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(
                 objectMapper, this));
+        prePersistEntityMethodsInvoker = new PrePersistEntityMethodsInvoker<>(this.type.getRawClass());
     }
 
     /**
