@@ -2179,6 +2179,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      */
     public DBObject convertToDbObject(T object) throws MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, false);
         return JacksonDBCollection.convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION), view, objectMapper);
     }
 
