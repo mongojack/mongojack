@@ -115,6 +115,7 @@ public class JacksonMongoCollection<T> {
      *             If an error occurred
      */
     public void insert(T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
+        prePersistEntityMethodsInvoker.prePersist(object, false);
         mongoCollection.insertOne(object);
     }
 
@@ -134,6 +135,7 @@ public class JacksonMongoCollection<T> {
      */
     public void insert(T object, WriteConcern concern)
             throws MongoException, MongoWriteException, MongoWriteConcernException {
+        prePersistEntityMethodsInvoker.prePersist(object, false);
         mongoCollection.withWriteConcern(concern).insertOne(object);
     }
 
@@ -151,6 +153,7 @@ public class JacksonMongoCollection<T> {
     public void insert(@SuppressWarnings("unchecked") T... objects) throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
         for (T object : objects) {
+            prePersistEntityMethodsInvoker.prePersist(object, false);
             objectList.add(object);
         }
         mongoCollection.insertMany(objectList);
@@ -172,6 +175,7 @@ public class JacksonMongoCollection<T> {
             throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
         for (T object : objects) {
+            prePersistEntityMethodsInvoker.prePersist(object, false);
             objectList.add(object);
         }
         mongoCollection.withWriteConcern(concern).insertMany(objectList);
@@ -205,6 +209,9 @@ public class JacksonMongoCollection<T> {
      */
     public void insert(List<T> list, WriteConcern concern)
             throws MongoException {
+        for (T entity : list) {
+            prePersistEntityMethodsInvoker.prePersist(entity, false);
+        }
         mongoCollection.withWriteConcern(concern).insertMany(list);
     }
 
@@ -357,6 +364,7 @@ public class JacksonMongoCollection<T> {
      */
     public UpdateResult update(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
+        prePersistEntityMethodsInvoker.prePersist(object, true);
         if (concern != null) {
             return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(
                     upsert));
@@ -388,6 +396,7 @@ public class JacksonMongoCollection<T> {
     public UpdateResult update(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
         query = serializeFields(query);
+        prePersistEntityMethodsInvoker.prePersist(object, true);
         if (concern != null) {
             return mongoCollection.withWriteConcern(concern).updateOne(query, convertToDocument(object), new UpdateOptions().upsert(
                     upsert));
@@ -898,6 +907,7 @@ public class JacksonMongoCollection<T> {
      *             If an error occurred
      */
     public UpdateResult save(T object, WriteConcern concern) throws MongoWriteException, MongoWriteConcernException, MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, false);
         Document dbObject = convertToDocument(object);
         Object _id = dbObject.get("_id");
         if(_id == null) {
