@@ -25,6 +25,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.mongojack.internal.MongoJackModule;
+import org.mongojack.internal.PrePersistEntityMethodsInvoker;
 import org.mongojack.internal.object.document.DocumentObjectGenerator;
 import org.mongojack.internal.object.document.DocumentObjectTraversingParser;
 import org.mongojack.internal.query.QueryCondition;
@@ -74,6 +75,7 @@ public class JacksonMongoCollection<T> {
     private final Class<?> view;
     private final Class<T> valueClass;
     private final JavaType type;
+    private final PrePersistEntityMethodsInvoker<T> prePersistEntityMethodsInvoker;
 
     private JacksonMongoCollection(
             com.mongodb.client.MongoCollection<?> mongoCollection,
@@ -87,6 +89,7 @@ public class JacksonMongoCollection<T> {
         this.view = view;
         this.valueClass = valueClass;
         this.type = this.objectMapper.constructType(valueClass);
+        this.prePersistEntityMethodsInvoker = new PrePersistEntityMethodsInvoker<>(valueClass);
     }
 
 
