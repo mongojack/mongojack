@@ -386,6 +386,13 @@
         <role>developer</role>
       </roles>
     </contributor>
+    <contributor>
+      <name>David Nebinger</name>
+      <url>https://github.com/dnebing</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
   </contributors>
 
   <licenses>
