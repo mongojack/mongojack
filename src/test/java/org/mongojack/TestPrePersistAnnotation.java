@@ -18,6 +18,7 @@ package org.mongojack;
 
 import org.junit.Test;
 
+import javax.persistence.PrePersist;
 import java.util.Date;
 
 import static org.hamcrest.core.IsEqual.equalTo;
