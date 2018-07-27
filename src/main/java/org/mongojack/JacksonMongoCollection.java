@@ -81,8 +81,8 @@ public class JacksonMongoCollection<T> {
             Class<T> valueClass,
             Class<?> view) {
         this.objectMapper = objectMapper == null ? DEFAULT_OBJECT_MAPPER : objectMapper;
-	this.view = view;
-	JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, this.view);
+        this.view = view;
+        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, this.view);
         jacksonCodecRegistry.addCodecForClass(valueClass);
         this.mongoCollection = mongoCollection.withDocumentClass(valueClass).withCodecRegistry(jacksonCodecRegistry);;
         this.valueClass = valueClass;
