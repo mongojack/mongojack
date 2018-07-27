@@ -835,7 +835,7 @@ public class JacksonMongoCollection<T> {
      *             If an error occurred
      */
     public T findOneById(Object id) throws MongoException {
-        return findOneById(createIdQuery(id));
+        return findOne(createIdQuery(id));
     }
 
     /**
