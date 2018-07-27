@@ -17,8 +17,8 @@
 package org.mongojack.internal;
 
 import com.mongodb.MongoException;
-import org.mongojack.PrePersist;
 
+import javax.persistence.PrePersist;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
