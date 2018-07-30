@@ -19,6 +19,9 @@ package org.mongojack.internal.query;
 import java.util.ArrayList;
 import java.util.Collection;
 
+/**
+ * Used for query conditions that have a collection of values, such as $in or $nin.
+ */
 public class CollectionQueryCondition implements QueryCondition {
     private final Collection<QueryCondition> values;
     private final boolean targetIsCollection;
