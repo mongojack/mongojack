@@ -202,9 +202,9 @@ public class SerializationUtils {
         }
     }
 
-	private static boolean isOperator(String key) {
-		return key.startsWith("$");
-	}
+    private static boolean isOperator(String key) {
+        return key.startsWith("$");
+    }
 
     private static Object serializeQueryField(Object value,
             JsonSerializer serializer, SerializerProvider serializerProvider,
@@ -657,7 +657,7 @@ public class SerializationUtils {
             return new BasicDBObject("$group", object);
         }
         if (stage instanceof Aggregation.Out) {
-        	return new BasicDBObject("$out", ((Object) ((Aggregation.Out) stage).collectionName()));
+            return new BasicDBObject("$out", ((Object) ((Aggregation.Out) stage).collectionName()));
         }
         throw new IllegalArgumentException(stage.getClass().getName());
     }
