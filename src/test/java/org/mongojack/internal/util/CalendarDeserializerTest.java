@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * Unit tests for the {@link CalendarDeserializer}
@@ -88,11 +91,13 @@ public class CalendarDeserializerTest {
 
     @Test
     public void testNoEmbeddedObject() throws IOException {
-        when(jsonParser.getCurrentToken()).thenReturn(JsonToken.VALUE_NUMBER_INT);
-        when(jsonParser.getLongValue()).thenReturn(TIME_AS_LONG);
+        ObjectMapper mapper = createMapper();
+        deserializedDate = mapper.readValue(Long.toString(TIME_AS_LONG), Calendar.class);
 
-        deserializedDate = deserializer.deserialize(jsonParser, deserializationContext);
-        assertEquals(calendar, deserializedDate);
+        Calendar expectedCalendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        expectedCalendar.setTimeInMillis(TIME_AS_LONG);
+
+        assertEquals(expectedCalendar, deserializedDate);
     }
 
     @Test
@@ -101,5 +106,13 @@ public class CalendarDeserializerTest {
 
         deserializedDate = deserializer.deserialize(jsonParser, deserializationContext);
         assertNull(deserializedDate);
+    }
+    
+    private ObjectMapper createMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule(CalendarDeserializerTest.class.getSimpleName() + "Module");
+        module.addDeserializer(Calendar.class, deserializer);
+        mapper.registerModule(module);
+        return mapper;
     }
 }

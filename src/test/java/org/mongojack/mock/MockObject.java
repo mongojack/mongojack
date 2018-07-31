@@ -18,6 +18,7 @@ package org.mongojack.mock;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class MockObject {
     public BigDecimal bigDecimal;
     public Boolean booleans;
     public Date date;
+    public Calendar calendar;
 
     public List<String> simpleList;
     public List<MockEmbeddedObject> complexList;
@@ -67,6 +69,7 @@ public class MockObject {
                 ", bigDecimal=" + bigDecimal +
                 ", booleans=" + booleans +
                 ", date=" + date +
+                ", calendar=" + calendar +
                 ", simpleList=" + simpleList +
                 ", complexList=" + complexList +
                 ", object=" + object +
@@ -114,6 +117,9 @@ public class MockObject {
         if (date != null ? !date.equals(that.date) : that.date != null) {
             return false;
         }
+        if (calendar != null ? !calendar.equals(that.calendar) : that.calendar != null) {
+            return false;
+        }
         if (object != null ? !object.equals(that.object) : that.object != null) {
             return false;
         }
@@ -138,6 +144,7 @@ public class MockObject {
         result = 31 * result + (doubles != null ? doubles.hashCode() : 0);
         result = 31 * result + (bigDecimal != null ? bigDecimal.hashCode() : 0);
         result = 31 * result + (booleans != null ? booleans.hashCode() : 0);
+        result = 31 * result + (calendar != null ? calendar.hashCode() : 0);
         result = 31 * result + (date != null ? date.hashCode() : 0);
         result = 31 * result + (simpleList != null ? simpleList.hashCode() : 0);
         result = 31 * result + (complexList != null ? complexList.hashCode() : 0);

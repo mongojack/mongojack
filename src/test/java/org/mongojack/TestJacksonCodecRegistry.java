@@ -18,10 +18,13 @@ package org.mongojack;
 
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
@@ -54,6 +57,21 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
                 .find(new Document("string", "ten")).into(new ArrayList<>());
         assertThat(results, hasSize(2));
         assertThat(results, contains(o1, o2));
+    }
+
+    @Test
+    public void testCustomSerialization() {
+        long millis = 123456789l;
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        calendar.setTimeInMillis(millis);
+        MockObject o1 = new MockObject("1", "ten", 10);
+        o1.calendar = calendar;
+
+        coll.insertOne(o1);
+
+        List<MockObject> results = coll.find(new Document("string", "ten")).into(new ArrayList<>());
+        assertThat(results, hasSize(1));
+        assertEquals(calendar, results.get(0).calendar);
     }
 
     @Test
