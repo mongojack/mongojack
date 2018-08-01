@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.mongojack.internal.FetchableDBRef;
 import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
+import org.mongojack.internal.PrePersistEntityMethodsInvoker;
 import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.object.BsonObjectTraversingParser;
 import org.mongojack.internal.query.QueryCondition;
@@ -114,6 +115,7 @@ public class JacksonDBCollection<T, K> {
     private final IdHandler<K, Object> idHandler;
     private final JacksonDecoderFactory<T> decoderFactory;
     private final Map<Feature, Boolean> features;
+    private final PrePersistEntityMethodsInvoker<T> prePersistEntityMethodsInvoker;
 
     /**
      * Cache of referenced collections
@@ -146,6 +148,7 @@ public class JacksonDBCollection<T, K> {
         }
         dbCollection.setDBEncoderFactory(new JacksonEncoderFactory(
                 objectMapper, this));
+        prePersistEntityMethodsInvoker = new PrePersistEntityMethodsInvoker<>(this.type.getRawClass());
     }
 
     /**
@@ -498,6 +501,7 @@ public class JacksonDBCollection<T, K> {
     public WriteResult<T, K> update(DBQuery.Query query, T object,
             boolean upsert, boolean multi, WriteConcern concern)
             throws MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, true);
         return new WriteResult<T, K>(this, dbCollection.update(
                 serializeQuery(query), convertToBasicDbObject(object), upsert,
                 multi, concern));
@@ -640,6 +644,7 @@ public class JacksonDBCollection<T, K> {
      *             If an error occurred
      */
     public WriteResult<T, K> updateById(K id, T object) throws MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, true);
         return update(createIdQuery(id), convertToDbObject(object), false,
                 false);
     }
@@ -2176,6 +2181,7 @@ public class JacksonDBCollection<T, K> {
      * @throws MongoException
      */
     public DBObject convertToDbObject(T object) throws MongoException {
+        prePersistEntityMethodsInvoker.prePersist(object, false);
         return JacksonDBCollection.convertToDbObject(object, isEnabled(Feature.USE_STREAM_SERIALIZATION), view, objectMapper);
     }
 
