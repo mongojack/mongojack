@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertThat;
 
@@ -27,9 +28,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.mongodb.WriteConcern;
+import com.mongodb.client.FindIterable;
 import org.bson.Document;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
@@ -113,6 +117,51 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.removeById("id1");
         coll.removeById("id2");
         coll.removeById("id3");
+    }
+
+    @Test
+    // Currently this test does not pass, see issue #170
+    public void testUpdateDocumentBy_id() {
+        coll.insert(new MockObject("id1", "ten", 10));
+        coll.insert(new MockObject("id2", "ten", 10));
+
+        MockObject mockObject3 = new MockObject("id3", "ten", 10);
+        mockObject3.simpleList = new ArrayList<>();
+        mockObject3.simpleList.add("a");
+        mockObject3.simpleList.add("b");
+        coll.insert(mockObject3);
+
+        coll.update(DBQuery.is("_id", "id1"),
+                new MockObject("id1", "twenty", 20),
+                /*upsert*/ false,
+                WriteConcern.W1);
+
+        MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
+
+        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+    }
+
+
+
+    @Test
+    public void testReplaceOneBy_id() {
+        coll.insert(new MockObject("id1", "ten", 10));
+        coll.insert(new MockObject("id2", "ten", 10));
+
+        MockObject mockObject3 = new MockObject("id3", "ten", 10);
+        mockObject3.simpleList = new ArrayList<>();
+        mockObject3.simpleList.add("a");
+        mockObject3.simpleList.add("b");
+        coll.insert(mockObject3);
+
+        coll.replaceOne(DBQuery.is("_id", "id1"),
+                new MockObject("id1", "twenty", 20),
+                /*upsert*/ false,
+                WriteConcern.W1);
+
+        MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
+
+        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
     }
 
 }

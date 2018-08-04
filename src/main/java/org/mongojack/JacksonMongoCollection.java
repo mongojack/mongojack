@@ -334,6 +334,36 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
+     * Performs an update operation.
+     *
+     * @param query
+     *            search query for old object to update
+     * @param object
+     *            object with which to update <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param concern
+     *            the write concern
+     * @return The write result
+     * @throws MongoWriteException
+     *             If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException
+     *             If the write failed due being unable to fulfill the write concern
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public UpdateResult update(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+            MongoWriteConcernException {
+        if (concern != null) {
+            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(
+                    upsert));
+        } else {
+            return mongoCollection.updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(upsert));
+        }
+
+    }
+
+    /**
      * Performs an update operation, replacing the entire document.
      * 
      * @param query
