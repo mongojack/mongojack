@@ -334,94 +334,45 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
-     * Performs an update operation.
-     *
-     * @param query
-     *            search query for old object to update
-     * @param object
-     *            object with which to update <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
-     * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @deprecated Use {@link #replaceOne(DBQuery.Query, Object)} instead.
      */
+    @Deprecated
     public UpdateResult update(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
-        if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(
-                    upsert));
-        } else {
-            return mongoCollection.updateOne(serializeQuery(query), convertToDocument(object), new UpdateOptions().upsert(upsert));
-        }
-
+        return replaceOne(query, object, upsert, concern);
     }
 
     /**
-     * Performs an update operation, replacing the entire document.
-     * 
-     * @param query
-     *            search query for old object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
-     * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @deprecated Use {@link #replaceOne(Document, Object, boolean, WriteConcern)} instead.
      */
-    public UpdateResult replaceOne(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
-        if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(
-                    upsert));
-        } else {
-            return mongoCollection.replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(upsert));
-        }
-
-    }
-
-    /**
-     * Performs an update operation, replacing the entire document.
-     * 
-     * @param query
-     *            search query for old object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
-     * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
-     */
-    public UpdateResult replaceOne(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+    @Deprecated
+    public UpdateResult update(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
         query = serializeFields(query);
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).replaceOne(query, object, new UpdateOptions().upsert(
+            return mongoCollection.withWriteConcern(concern).updateOne(query, convertToDocument(object), new UpdateOptions().upsert(
                     upsert));
         } else {
-            return mongoCollection.replaceOne(query, object, new UpdateOptions().upsert(upsert));
+            return mongoCollection.updateOne(query, convertToDocument(object), new UpdateOptions().upsert(upsert));
         }
 
+    }
+
+    /**
+     * @deprecated Use {@link #replaceOne(DBQuery.Query, Object)} instead.
+     */
+    @Deprecated
+    public UpdateResult update(DBQuery.Query query, T object)
+            throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return replaceOne(query, object);
+    }
+
+    /**
+     * @deprecated Use {@link #replaceOneById(Object, Object)} instead.
+     */
+    @Deprecated
+    public UpdateResult updateById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return update(createIdQuery(_id), object, false, null);
     }
 
     /**
@@ -462,45 +413,6 @@ public class JacksonMongoCollection<T> {
     public UpdateResult update(DBQuery.Query query, DBUpdate.Builder update)
             throws MongoException, MongoWriteException, MongoWriteConcernException {
         return this.updateOne(query, update, false, null);
-    }
-
-    /**
-     * Performs an update operation, replacing the entire document.
-     * 
-     * @param query
-     *            search query for old object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
-     * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
-     */
-    public UpdateResult replaceOne(DBQuery.Query query, T object)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return replaceOne(query, object, false, null);
-    }
-
-    /**
-     * Performs an update operation, replacing the entire document, for the document with this _id.
-     * 
-     * @param _id
-     *            the _id of the object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
-     * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
-     */
-    public UpdateResult replaceOneById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return replaceOne(createIdQuery(_id), object, false, null);
     }
 
     /**
@@ -562,6 +474,106 @@ public class JacksonMongoCollection<T> {
     public UpdateResult updateMany(DBQuery.Query query, DBUpdate.Builder update) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
         return updateMany(query, update, false, null);
+    }
+
+    /**
+     * Performs an update operation, replacing the entire document.
+     *
+     * @param query
+     *            search query for old object to replace
+     * @param object
+     *            object with which to replace <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param concern
+     *            the write concern
+     * @return The write result
+     * @throws MongoWriteException
+     *             If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException
+     *             If the write failed due being unable to fulfill the write concern
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public UpdateResult replaceOne(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+            MongoWriteConcernException {
+        if (concern != null) {
+            return mongoCollection.withWriteConcern(concern).replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(
+                    upsert));
+        } else {
+            return mongoCollection.replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(upsert));
+        }
+
+    }
+
+    /**
+     * Performs an update operation, replacing the entire document.
+     *
+     * @param query
+     *            search query for old object to replace
+     * @param object
+     *            object with which to replace <tt>query</tt>
+     * @param upsert
+     *            if the database should create the element if it does not exist
+     * @param concern
+     *            the write concern
+     * @return The write result
+     * @throws MongoWriteException
+     *             If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException
+     *             If the write failed due being unable to fulfill the write concern
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public UpdateResult replaceOne(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+            MongoWriteConcernException {
+        query = serializeFields(query);
+        if (concern != null) {
+            return mongoCollection.withWriteConcern(concern).replaceOne(query, object, new UpdateOptions().upsert(
+                    upsert));
+        } else {
+            return mongoCollection.replaceOne(query, object, new UpdateOptions().upsert(upsert));
+        }
+
+    }
+
+    /**
+     * Performs an update operation, replacing the entire document.
+     *
+     * @param query
+     *            search query for old object to replace
+     * @param object
+     *            object with which to replace <tt>query</tt>
+     * @return The result
+     * @throws MongoWriteException
+     *             If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException
+     *             If the write failed due being unable to fulfill the write concern
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public UpdateResult replaceOne(DBQuery.Query query, T object)
+            throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return replaceOne(query, object, false, null);
+    }
+
+    /**
+     * Performs an update operation, replacing the entire document, for the document with this _id.
+     *
+     * @param _id
+     *            the _id of the object to replace
+     * @param object
+     *            object with which to replace <tt>query</tt>
+     * @return The result
+     * @throws MongoWriteException
+     *             If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException
+     *             If the write failed due being unable to fulfill the write concern
+     * @throws MongoException
+     *             If an error occurred
+     */
+    public UpdateResult replaceOneById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return replaceOne(createIdQuery(_id), object, false, null);
     }
 
     /**
