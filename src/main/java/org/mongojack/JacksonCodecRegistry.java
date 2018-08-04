@@ -29,6 +29,14 @@ public class JacksonCodecRegistry implements CodecRegistry {
     private final Class<?> view;
     private CodecRegistry codecRegistry;
 
+    /**
+     * @deprecated Use {@link #withDefaultObjectMapper()}
+     */
+    @Deprecated
+    public JacksonCodecRegistry() {
+        this(DEFAULT_OBJECT_MAPPER);
+    }
+
     public JacksonCodecRegistry(ObjectMapper objectMapper) {
         this(objectMapper, null);
     }
@@ -43,7 +51,7 @@ public class JacksonCodecRegistry implements CodecRegistry {
     }
 
     public static JacksonCodecRegistry withDefaultObjectMapper() {
-        return new JacksonCodecRegistry(DEFAULT_OBJECT_MAPPER, null);
+        return new JacksonCodecRegistry(DEFAULT_OBJECT_MAPPER);
     }
 
     @Override
