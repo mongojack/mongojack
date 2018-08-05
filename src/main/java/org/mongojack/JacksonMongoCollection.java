@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mongodb.client.model.ReplaceOptions;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -498,10 +499,10 @@ public class JacksonMongoCollection<T> {
     public UpdateResult replaceOne(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
             MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(
+            return mongoCollection.withWriteConcern(concern).replaceOne(serializeQuery(query), object, new ReplaceOptions().upsert(
                     upsert));
         } else {
-            return mongoCollection.replaceOne(serializeQuery(query), object, new UpdateOptions().upsert(upsert));
+            return mongoCollection.replaceOne(serializeQuery(query), object, new ReplaceOptions().upsert(upsert));
         }
 
     }
@@ -529,10 +530,10 @@ public class JacksonMongoCollection<T> {
             MongoWriteConcernException {
         query = serializeFields(query);
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).replaceOne(query, object, new UpdateOptions().upsert(
+            return mongoCollection.withWriteConcern(concern).replaceOne(query, object, new ReplaceOptions().upsert(
                     upsert));
         } else {
-            return mongoCollection.replaceOne(query, object, new UpdateOptions().upsert(upsert));
+            return mongoCollection.replaceOne(query, object, new ReplaceOptions().upsert(upsert));
         }
 
     }
