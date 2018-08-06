@@ -335,48 +335,6 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
-     * @deprecated Use {@link #replaceOne(DBQuery.Query, Object)} instead.
-     */
-    @Deprecated
-    public UpdateResult update(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
-        return replaceOne(query, object, upsert, concern);
-    }
-
-    /**
-     * @deprecated Use {@link #replaceOne(Document, Object, boolean, WriteConcern)} instead.
-     */
-    @Deprecated
-    public UpdateResult update(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
-        query = serializeFields(query);
-        if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(query, convertToDocument(object), new UpdateOptions().upsert(
-                    upsert));
-        } else {
-            return mongoCollection.updateOne(query, convertToDocument(object), new UpdateOptions().upsert(upsert));
-        }
-
-    }
-
-    /**
-     * @deprecated Use {@link #replaceOne(DBQuery.Query, Object)} instead.
-     */
-    @Deprecated
-    public UpdateResult update(DBQuery.Query query, T object)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return replaceOne(query, object);
-    }
-
-    /**
-     * @deprecated Use {@link #replaceOneById(Object, Object)} instead.
-     */
-    @Deprecated
-    public UpdateResult updateById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return update(createIdQuery(_id), object, false, null);
-    }
-
-    /**
      * Performs an update operation without upsert and default write concern.
      * 
      * @param query

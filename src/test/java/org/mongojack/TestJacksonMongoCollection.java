@@ -121,20 +121,6 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     }
 
     @Test
-    public void testUpdateWithWholeDocumentActsLikeReplaceOne() {
-        coll.insert(new MockObject("id1", "ten", 10));
-
-        coll.update(DBQuery.is("string", "ten"),
-                new MockObject("id1", "twenty", 20),
-                /*upsert*/ false,
-                WriteConcern.W1);
-
-        MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
-
-        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
-    }
-
-    @Test
     public void testReplaceOneByNonIdQuery() {
         coll.insert(new MockObject("id1", "ten", 10));
 
