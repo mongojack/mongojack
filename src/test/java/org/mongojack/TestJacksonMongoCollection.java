@@ -20,6 +20,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.Assert.assertThat;
 
@@ -27,9 +29,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.mongodb.WriteConcern;
+import com.mongodb.client.FindIterable;
 import org.bson.Document;
 import org.hamcrest.Matchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
@@ -115,4 +120,66 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.removeById("id3");
     }
 
+    @Test
+    public void testReplaceOneByNonIdQuery() {
+        coll.insert(new MockObject("id1", "ten", 10));
+
+        coll.replaceOne(DBQuery.is("string", "ten"),
+                new MockObject("id1", "twenty", 20),
+                /*upsert*/ false,
+                WriteConcern.W1);
+
+        MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
+
+        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+    }
+
+    @Test
+    public void testReplaceOneByUsesQueryNotId() {
+        coll.insert(new MockObject("id1", "ten", 10));
+
+        coll.replaceOne(DBQuery.is("string", "ten"),
+                new MockObject(null, "twenty", 20),
+                /*upsert*/ false,
+                WriteConcern.W1);
+
+        MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
+
+        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+    }
+
+    @Test
+    public void testReplaceOneUpsertsIfNoDocumentExistsByQueryAndUpsertTrue() {
+        coll.replaceOne(DBQuery.is("string", "ten"),
+                new MockObject(null, "twenty", 20),
+                /*upsert*/ true,
+                WriteConcern.W1);
+
+        MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
+
+        assertThat(found, equalTo(new MockObject(found._id, "twenty", 20)));
+    }
+
+    @Test
+    public void testReplaceOneDoesNotUpsertIfUpsertFalse() {
+        coll.replaceOne(DBQuery.is("string", "ten"),
+                new MockObject(null, "twenty", 20),
+                /*upsert*/ false,
+                WriteConcern.W1);
+
+        MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
+
+        assertThat(found, nullValue());
+    }
+
+    @Test
+    public void testReplaceOneByIdUsesIdProvided() {
+        coll.insert(new MockObject("id1", "ten", 10));
+
+        coll.replaceOneById("id1", new MockObject(null, "twenty", 20));
+
+        MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
+
+        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+    }
 }
