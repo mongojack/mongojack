@@ -12,6 +12,9 @@ import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.internal.stream.JacksonDecoder;
 import org.mongojack.internal.stream.JacksonEncoder;
 
+import java.util.List;
+import java.util.LinkedList;
+
 /**
  * This is an experimental JacksonCodecRegistry for use with the Mongo 3.0+ java driver. It has only undergone basic
  * testing. This is use at your own risk.
@@ -26,6 +29,7 @@ public class JacksonCodecRegistry implements CodecRegistry {
             .configure(new ObjectMapper());
 
     private final ObjectMapper objectMapper;
+    private final List<CodecRegistry> extraCodecRegistries;
     private final Class<?> view;
     private CodecRegistry codecRegistry;
 
@@ -38,14 +42,15 @@ public class JacksonCodecRegistry implements CodecRegistry {
     }
 
     public JacksonCodecRegistry(ObjectMapper objectMapper) {
-        this(objectMapper, null);
+        this(objectMapper, null, null);
     }
     
-    public JacksonCodecRegistry(ObjectMapper objectMapper, Class<?> view) {
+    public JacksonCodecRegistry(ObjectMapper objectMapper, List<CodecRegistry> extraCodecRegistries, Class<?> view) {
         if (objectMapper == null) {
             objectMapper = DEFAULT_OBJECT_MAPPER;
         }
         this.objectMapper = objectMapper;
+        this.extraCodecRegistries = extraCodecRegistries;
         this.view = view;
         codecRegistry = MongoClient.getDefaultCodecRegistry();
     }
@@ -62,7 +67,14 @@ public class JacksonCodecRegistry implements CodecRegistry {
     public <T> void addCodecForClass(Class<T> clazz) {
         JacksonEncoder<T> encoder = new JacksonEncoder<>(clazz, view, objectMapper);
         JacksonDecoder<T> decoder = new JacksonDecoder<>(clazz, view, objectMapper);
-        JacksonCodec<T> jacksonCodec = new JacksonCodec<T>(encoder, decoder);
-        codecRegistry = CodecRegistries.fromRegistries(codecRegistry, CodecRegistries.fromCodecs(jacksonCodec));
+        JacksonCodec<T> jacksonCodec = new JacksonCodec<>(encoder, decoder);
+
+        List<CodecRegistry> registries = new LinkedList<>();
+        registries.add(codecRegistry);
+        registries.add(CodecRegistries.fromCodecs(jacksonCodec));
+        if (extraCodecRegistries != null) {
+            registries.addAll(extraCodecRegistries);
+        }
+        codecRegistry = CodecRegistries.fromRegistries(registries);
     }
 }
