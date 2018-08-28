@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,20 +16,6 @@
  */
 package org.mongojack;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.mongodb.client.model.ReplaceOptions;
-import org.bson.BsonObjectId;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
-import org.mongojack.internal.MongoJackModule;
-import org.mongojack.internal.object.document.DocumentObjectGenerator;
-import org.mongojack.internal.object.document.DocumentObjectTraversingParser;
-import org.mongojack.internal.query.QueryCondition;
-import org.mongojack.internal.util.DocumentSerializationUtils;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,22 +31,37 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import org.bson.Document;
+import org.bson.codecs.Codec;
+import org.bson.codecs.CollectibleCodec;
+import org.bson.conversions.Bson;
+import org.mongojack.internal.MongoJackModule;
+import org.mongojack.internal.object.document.DocumentObjectGenerator;
+import org.mongojack.internal.object.document.DocumentObjectTraversingParser;
+import org.mongojack.internal.query.QueryCondition;
+import org.mongojack.internal.stream.JacksonCodec;
+import org.mongojack.internal.util.DocumentSerializationUtils;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated
  * classes. It provides a very thin wrapper over an existing MongoCollection.
- * 
+ *
  * A JacksonMongoCollection is threadsafe, with a few caveats:
- * 
+ *
  * If you pass your own ObjectMapper to it, it is not thread safe to reconfigure
  * that ObjectMapper at all after creating it. The setWritePreference and a few
  * other methods on JacksonMongoCollection should not be called from multiple
  * threads
- * 
+ *
  * @author James Roper
  * @since 1.0
  */
@@ -93,7 +94,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Get the underlying mongo collection
-     * 
+     *
      * @return The underlying mongo collection
      */
     public com.mongodb.client.MongoCollection<?> getMongoCollection() {
@@ -102,7 +103,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Inserts an object into the database. If the objects _id is null, the driver will generate one
-     * 
+     *
      * @param object
      *            The object to insert
      * @throws MongoWriteConcernException
@@ -118,7 +119,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Inserts an object into the database. If the objects _id is null, the driver will generate one
-     * 
+     *
      * @param object
      *            The object to insert
      * @param concern
@@ -137,14 +138,14 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
-     * 
+     *
      * @param objects
      *            The objects to insert
      * @throws MongoBulkWriteException
      *             If there's an exception in the bulk write operation
      * @throws MongoException
      *             If an error occurred
-     * 
+     *
      */
     public void insert(@SuppressWarnings("unchecked") T... objects) throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
@@ -156,7 +157,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
-     * 
+     *
      * @param objects
      *            The objects to insert
      * @param concern
@@ -177,7 +178,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
-     * 
+     *
      * @param list
      *            The objects to insert
      * @throws MongoBulkWriteException
@@ -191,7 +192,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
-     * 
+     *
      * @param list
      *            The objects to insert
      * @param concern
@@ -208,7 +209,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation.
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param document
@@ -239,7 +240,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation.
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param document
@@ -271,7 +272,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation.
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param update
@@ -304,7 +305,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation.
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param update
@@ -336,7 +337,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation without upsert and default write concern.
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param object
@@ -356,7 +357,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation.
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param update
@@ -376,7 +377,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an update operation.
-     * 
+     *
      * @param _id
      *            The id of the document to update
      * @param update
@@ -397,7 +398,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Update all matching records
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param object
@@ -417,7 +418,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Update all matching records
-     * 
+     *
      * @param query
      *            search query for old object to update
      * @param update
@@ -537,7 +538,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Removes objects from the database collection.
-     * 
+     *
      * @param query
      *            the object that documents to be removed must match
      * @param concern
@@ -561,7 +562,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Removes objects from the database collection.
-     * 
+     *
      * @param query
      *            the query
      * @param concern
@@ -585,7 +586,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Removes objects from the database collection with the default WriteConcern
-     * 
+     *
      * @param query
      *            the query that documents to be removed must match
      * @return The Delete result
@@ -602,7 +603,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Removes objects from the database collection with the default WriteConcern
-     * 
+     *
      * @param query
      *            the query
      * @return The delete result
@@ -619,7 +620,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Removes object from the database collection with the default WriteConcern
-     * 
+     *
      * @param _id
      *            the id of the document to remove
      * @return The delete result
@@ -636,7 +637,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Finds the first document in the query and updates it.
-     * 
+     *
      * @param query
      *            query to match
      * @param fields
@@ -660,7 +661,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Finds the first document in the query and updates it.
-     * 
+     *
      * @param query
      *            query to match
      * @param fields
@@ -686,7 +687,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Finds the first document in the query and updates it.
-     * 
+     *
      * @param query
      *            query to match
      * @param fields
@@ -713,7 +714,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Finds a document and deletes it.
-     * 
+     *
      * @param query
      *            The query
      * @return the removed object
@@ -724,7 +725,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Finds a document and deletes it.
-     * 
+     *
      * @param query
      *            The query
      * @return the removed object
@@ -735,7 +736,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * creates an index with default index options
-     * 
+     *
      * @param keys
      *            an object with a key set of the fields desired for the index
      * @throws MongoException
@@ -748,7 +749,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Forces creation of an index on a set of fields, if one does not already
      * exist.
-     * 
+     *
      * @param keys
      *            The keys to index
      * @param options
@@ -765,7 +766,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Queries for an object in this collection.
-     * 
+     *
      * @param query
      *            object for which to search
      * @return an iterator over the results
@@ -787,14 +788,14 @@ public class JacksonMongoCollection<T> {
      * <p>
      * An example that returns the "x" and "_id" fields for every document in the collection that has an "x" field:
      * </p>
-     * 
+     *
      * <pre>
 	 * BasicDBObject keys = new BasicDBObject();
 	 * keys.put("x", 1);
 	 *
 	 * DBCursor cursor = collection.find(new BasicDBObject(), keys);
 	 * </pre>
-     * 
+     *
      * @param query
      *            object for which to search
      * @return a cursor to iterate over results
@@ -806,7 +807,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Queries for all objects in this collection.
-     * 
+     *
      * @return a cursor which will iterate over every object
      * @throws MongoException
      *             If an error occurred
@@ -817,7 +818,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Returns a single object from this collection.
-     * 
+     *
      * @return the object found, or <code>null</code> if the collection is empty
      * @throws MongoException
      *             If an error occurred
@@ -828,7 +829,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Find an object by the given id
-     * 
+     *
      * @param id
      *            The id
      * @return The object
@@ -841,7 +842,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Returns a single object from this collection matching the query.
-     * 
+     *
      * @param query
      *            the query object
      * @return the object found, or <code>null</code> if no such object exists
@@ -852,7 +853,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Returns a single object from this collection matching the query.
-     * 
+     *
      * @param query
      *            the query object
      * @return the object found, or <code>null</code> if no such object exists
@@ -863,7 +864,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Saves and object to this collection (does insert or update based on the object _id). Uses default write concern.
-     * 
+     *
      * @param object
      *            the object to save. will add <code>_id</code> field to object if
      *            needed
@@ -882,7 +883,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Saves an object to this collection (does insert or update based on the
      * object _id).
-     * 
+     *
      * @param object
      *            the <code>DBObject</code> to save
      * @param concern
@@ -896,11 +897,26 @@ public class JacksonMongoCollection<T> {
      *             If an error occurred
      */
     public UpdateResult save(T object, WriteConcern concern) throws MongoWriteException, MongoWriteConcernException, MongoException {
-        Document dbObject = convertToDocument(object);
-        Object _id = dbObject.get("_id");
+        Object _id;
+        @SuppressWarnings("unchecked")
+        final Codec<T> codec = getMongoCollection().getCodecRegistry().get((Class<T>) object.getClass());
+        if (codec instanceof CollectibleCodec) {
+            _id = JacksonCodec.extractValueEx(((CollectibleCodec<T>) codec).getDocumentId(object));
+        } else {
+            Document dbObject = convertToDocument(object);
+            _id = dbObject.get("_id");
+        }
         if(_id == null) {
-            this.insert(object, concern);
-            return UpdateResult.acknowledged(0, 1L, new BsonObjectId((ObjectId) convertToDocument(object).get("_id")));
+            if (concern == null) {
+                this.insert(object);
+            } else {
+                this.insert(object, concern);
+            }
+            if (codec instanceof CollectibleCodec) {
+                return UpdateResult.acknowledged(0, 1L, ((CollectibleCodec<T>)codec).getDocumentId(object));
+            } else {
+                return UpdateResult.acknowledged(0, 1L, null);
+            }
         } else {
             return this.replaceOne(new Document("_id", _id), object, true, concern);
         }
@@ -908,7 +924,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Drops all indices from this collection
-     * 
+     *
      * @throws MongoException
      *             If an error occurred
      */
@@ -918,7 +934,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Drops an index from this collection
-     * 
+     *
      * @param name
      *            the index name
      * @throws MongoException
@@ -930,7 +946,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Drops (deletes) this collection. Use with care.
-     * 
+     *
      * @throws MongoException
      *             If an error occurred
      */
@@ -940,7 +956,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Gets a count of documents in the collection
-     * 
+     *
      * @return number of documents that match query
      * @throws MongoException
      *             If an error occurred
@@ -951,7 +967,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Gets a count of documents which match the query
-     * 
+     *
      * @param query
      *            query to match
      * @return The count
@@ -964,7 +980,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Gets a count of documents which match the query
-     * 
+     *
      * @param query
      *            query to match
      * @return The count
@@ -977,7 +993,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * find distinct values for a key
-     * 
+     *
      * @param key
      *            The key
      * @return The results
@@ -988,7 +1004,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * find distinct values for a key
-     * 
+     *
      * @param key
      *            The key
      * @param query
@@ -1002,7 +1018,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs a map reduce operation
-     * 
+     *
      * @param mapFunction - The map function to execute
      * @param reduceFunction - The reduce function to execute
      * @param resultClass - The class for the expected result type
@@ -1015,7 +1031,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Performs an aggregation pipeline against this collection.
-     * 
+     *
      * @param pipeline - This should be a List of Bson Documents in the Mongo aggregation language.
      * @param resultClass - The class for the type that will be returned
      * @return an AggregateIterable with the result objects mapped to the type specified by the resultClass.
@@ -1033,7 +1049,7 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
-     * 
+     *
      * @param pipeline - This is a MongoJack Aggregation.Pipeline
      * @param resultClass - Class of the results from the aggregationt.
      * @return an AggregationIterable with result object mapped to the type specified by the resultClass.
@@ -1048,7 +1064,7 @@ public class JacksonMongoCollection<T> {
      * Set the write concern for this collection. Will be used for writes to
      * this collection. Overrides any setting of write concern at the DB level.
      * See the documentation for {@link WriteConcern} for more information.
-     * 
+     *
      * @param concern
      *            write concern to use
      */
@@ -1058,7 +1074,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Get the write concern for this collection.
-     * 
+     *
      * @return THe write concern
      */
     public WriteConcern getWriteConcern() {
@@ -1069,7 +1085,7 @@ public class JacksonMongoCollection<T> {
      * Sets the read preference for this collection. Will be used as default for
      * reads from this collection; overrides DB &amp; Connection level settings. See
      * the * documentation for {@link ReadPreference} for more information.
-     * 
+     *
      * @param preference
      *            Read Preference to use
      */
@@ -1079,7 +1095,7 @@ public class JacksonMongoCollection<T> {
 
     /**
      * Gets the read preference
-     * 
+     *
      * @return The read preference
      */
     public ReadPreference getReadPreference() {
@@ -1089,7 +1105,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Creates a document query object for the _id field using the object as the _id. This object is expected to already
      * be in the correct format... Document, Long, String, etc...
-     * 
+     *
      * @param _id
      * @return
      */
@@ -1104,7 +1120,7 @@ public class JacksonMongoCollection<T> {
     /**
      * This method provides a static way to convert an object into a Document. Defaults will be used for all parameters
      * left null.
-     * 
+     *
      * @param object The object to convert
      * @param objectMapper The specific Jackson ObjectMapper to use. (Default MongoJack ObjectMapper)
      * @param view The Jackson View to use in serialization. (Default null)
@@ -1132,7 +1148,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Convert a Document, normally a query result to the object type for this
      * collection using the Jackson ObjectMapper for this collection.
-     * 
+     *
      * @param document The Document to convert
      * @return A converted instance of the object type of this class.
      * @throws MongoException
@@ -1144,7 +1160,7 @@ public class JacksonMongoCollection<T> {
     /**
      * This method provides a static method to convert a DBObject into a given class. If the ObjectMapper is null, use a
      * default ObjectMapper
-     * 
+     *
      * @param document
      * @param clazz
      * @param objectMapper
@@ -1173,7 +1189,7 @@ public class JacksonMongoCollection<T> {
      * Serialize the fields of the given object using the object mapper
      * for this collection.
      * This will convert POJOs to DBObjects where necessary.
-     * 
+     *
      * @param value The object to serialize the fields of
      * @return The DBObject, safe for use in a mongo query.
      */
@@ -1185,7 +1201,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Serialize the given DBQuery.Query using the object mapper
      * for this collection.
-     * 
+     *
      * @param query The DBQuery.Query to serialize.
      * @return The query as a serialized DBObject ready to pass to mongo.
      */
@@ -1237,7 +1253,7 @@ public class JacksonMongoCollection<T> {
 
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
-         * 
+         *
          * @param mongoCollection - The MongoCollection that {@link JacksonMongoCollection} will wrap.
          * @param valueType - The type that this should serialize and deserialize to.
          * @return A new instance of a JacksonMongoCollection
