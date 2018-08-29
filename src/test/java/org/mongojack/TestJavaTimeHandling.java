@@ -8,9 +8,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.MonthDay;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -440,5 +443,134 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         assertThat(result._id, equalTo(id));
         assertThat(result.monthDay, equalTo(object.monthDay));
+    }
+
+    public static class OffsetTimeContainer {
+        public org.bson.types.ObjectId _id;
+        public OffsetTime offsetTime;
+    }
+
+    @Test
+    public void testOffsetTimeSavedAsTimestamps() {
+        // create the object
+        OffsetTimeContainer object = new OffsetTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        LocalTime now = LocalTime.now();
+        OffsetTime offsetTime = OffsetTime.of(now, ZoneOffset.UTC);
+
+        object.offsetTime = offsetTime;
+
+        // get a container
+        JacksonDBCollection<OffsetTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        OffsetTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.offsetTime, equalTo(object.offsetTime));
+    }
+
+    @Test
+    public void testOffsetTimeSavedAsISO8601() {
+        // create the object
+        OffsetTimeContainer object = new OffsetTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        LocalTime now = LocalTime.now();
+        OffsetTime offsetTime = OffsetTime.of(now, ZoneOffset.UTC);
+
+        object.offsetTime = offsetTime;
+
+        // get a container
+        JacksonDBCollection<OffsetTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        OffsetTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.offsetTime, equalTo(object.offsetTime));
+    }
+
+    public static class OffsetDateTimeContainer {
+        public org.bson.types.ObjectId _id;
+        public OffsetDateTime offsetDateTime;
+    }
+
+    /*
+        Like ZonedDateTime, OffsetDateTime serializes to a BigDecimal when writing dates as timestamps.
+        Since MongoJack does not support BigDecimals, this type cannot be serialized.
+        
+    @Test
+    public void testOffsetDateTimeSavedAsTimestamps() {
+        // create the object
+        OffsetDateTimeContainer object = new OffsetDateTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        OffsetDateTime offsetTime = OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC);
+
+        object.offsetDateTime = offsetTime;
+
+        // get a container
+        JacksonDBCollection<OffsetDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetDateTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        OffsetDateTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.offsetDateTime, equalTo(object.offsetDateTime));
+    }
+     */
+
+    @Test
+    public void testOffsetDateTimeSavedAsISO8601() {
+        // create the object
+        OffsetDateTimeContainer object = new OffsetDateTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        OffsetDateTime offsetTime = OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC);
+
+        object.offsetDateTime = offsetTime;
+
+        // get a container
+        JacksonDBCollection<OffsetDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetDateTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        OffsetDateTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.offsetDateTime, equalTo(object.offsetDateTime));
     }
 }
