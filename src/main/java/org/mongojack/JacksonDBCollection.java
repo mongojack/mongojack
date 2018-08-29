@@ -90,7 +90,15 @@ public class JacksonDBCollection<T, K> {
          * to the server, which means WriteResult.getSavedId() getSavedObject()
          * will not work. Hence it is disabled by default.
          */
-        USE_STREAM_SERIALIZATION(false);
+        USE_STREAM_SERIALIZATION(false),
+
+        /**
+         * For Java 8 time objects introduced by JSR 310, this feature will enable
+         * or disable the writing of dates as timestamps for MongoDB. When disabled,
+         * a LocalDateTime will be an array of ints, [YYYY, M, D, H, m, s, S] but,
+         * when enabled, will be a string "YYYY-MM-DDTHH:mm:ss.S" per the ISO format.
+         */
+        WRITE_DATES_AS_TIMESTAMPS(true);
 
         Feature(boolean enabledByDefault) {
             this.enabledByDefault = enabledByDefault;
