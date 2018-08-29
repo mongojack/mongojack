@@ -7,6 +7,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.MonthDay;
+import java.time.Year;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -207,7 +210,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
 
         So this test is disabled because it will fail.
 
-        
+
     @Test
     public void testZonedDateTimeSavedAsTimestamps() {
         // create the object
@@ -266,5 +269,176 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         assertThat(result._id, equalTo(id));
         assertTrue(result.zonedDateTime.isEqual(object.zonedDateTime));
+    }
+
+    public static class YearContainer {
+        public org.bson.types.ObjectId _id;
+        public Year year;
+    }
+
+    @Test
+    public void testYearSavedAsTimestamps() {
+        // create the object
+        YearContainer object = new YearContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.year = Year.now();
+
+        // get a container
+        JacksonDBCollection<YearContainer, org.bson.types.ObjectId> coll = getCollection(YearContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        YearContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.year, equalTo(object.year));
+    }
+
+    @Test
+    public void testYearSavedAsISO8601() {
+        // create the object
+        YearContainer object = new YearContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.year = Year.now();
+
+        // get a container
+        JacksonDBCollection<YearContainer, org.bson.types.ObjectId> coll = getCollection(YearContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        YearContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.year, equalTo(object.year));
+    }
+
+    public static class YearMonthContainer {
+        public org.bson.types.ObjectId _id;
+        public YearMonth yearMonth;
+    }
+
+    @Test
+    public void testYearMonthSavedAsTimestamps() {
+        // create the object
+        YearMonthContainer object = new YearMonthContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.yearMonth = YearMonth.now();
+
+        // get a container
+        JacksonDBCollection<YearMonthContainer, org.bson.types.ObjectId> coll = getCollection(YearMonthContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        YearMonthContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.yearMonth, equalTo(object.yearMonth));
+    }
+
+    @Test
+    public void testYearMonthSavedAsISO8601() {
+        // create the object
+        YearMonthContainer object = new YearMonthContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.yearMonth = YearMonth.now();
+
+        // get a container
+        JacksonDBCollection<YearMonthContainer, org.bson.types.ObjectId> coll = getCollection(YearMonthContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        YearMonthContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.yearMonth, equalTo(object.yearMonth));
+    }
+
+    public static class MonthDayContainer {
+        public org.bson.types.ObjectId _id;
+        public MonthDay monthDay;
+    }
+
+    @Test
+    public void testMonthDaySavedAsTimestamps() {
+        // create the object
+        MonthDayContainer object = new MonthDayContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.monthDay = MonthDay.now();
+
+        // get a container
+        JacksonDBCollection<MonthDayContainer, org.bson.types.ObjectId> coll = getCollection(MonthDayContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        MonthDayContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.monthDay, equalTo(object.monthDay));
+    }
+
+    @Test
+    public void testMonthDaySavedAsISO8601() {
+        // create the object
+        MonthDayContainer object = new MonthDayContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.monthDay = MonthDay.now();
+
+        // get a container
+        JacksonDBCollection<MonthDayContainer, org.bson.types.ObjectId> coll = getCollection(MonthDayContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        MonthDayContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.monthDay, equalTo(object.monthDay));
     }
 }
