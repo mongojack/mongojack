@@ -645,7 +645,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
     /*
         Like ZonedDateTime, an Instant serializes to a BigDecimal when writing dates as timestamps.  Since BigDecimals
         are not supported by MongoJack, neither can we support serialization of Instants.
-        
+
     @Test
     public void testInstantSavedAsTimestamps() {
         // create the object
