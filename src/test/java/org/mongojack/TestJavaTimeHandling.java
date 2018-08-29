@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -131,5 +132,64 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         assertThat(result._id, equalTo(id));
         assertThat(result.localTime, equalTo(object.localTime));
+    }
+
+    public static class LocalDateTimeContainer {
+        public org.bson.types.ObjectId _id;
+        public LocalDateTime localDateTime;
+    }
+
+    @Test
+    public void testLocalDateTimeSavedAsTimestamps() {
+        // create the object
+        LocalDateTimeContainer object = new LocalDateTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        LocalDateTime time = LocalDateTime.now();
+        object.localDateTime = time;
+
+        // get a container
+        JacksonDBCollection<LocalDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        LocalDateTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.localDateTime, equalTo(object.localDateTime));
+    }
+
+    @Test
+    public void testLocalDateTimeSavedAsISO8601() {
+        // create the object
+        LocalDateTimeContainer object = new LocalDateTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        LocalDateTime time = LocalDateTime.now();
+        object.localDateTime = time;
+
+        // get a container
+        JacksonDBCollection<LocalDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        LocalDateTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.localDateTime, equalTo(object.localDateTime));
     }
 }
