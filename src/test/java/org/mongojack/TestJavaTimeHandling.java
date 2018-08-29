@@ -33,6 +33,35 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         JacksonDBCollection<LocalDateContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateContainer.class,
                 org.bson.types.ObjectId.class);
 
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        LocalDateContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.localDate, equalTo(object.localDate));
+    }
+
+    @Test
+    public void testLocalDateSavedAsISO8601() {
+        // create the object
+        LocalDateContainer object = new LocalDateContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.localDate = LocalDate.now();
+
+        // get a container
+        JacksonDBCollection<LocalDateContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
         // save the object
         coll.insert(object);
 
