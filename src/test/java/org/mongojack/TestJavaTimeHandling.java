@@ -3,6 +3,7 @@ package org.mongojack;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -516,7 +517,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
     /*
         Like ZonedDateTime, OffsetDateTime serializes to a BigDecimal when writing dates as timestamps.
         Since MongoJack does not support BigDecimals, this type cannot be serialized.
-        
+
     @Test
     public void testOffsetDateTimeSavedAsTimestamps() {
         // create the object
@@ -572,5 +573,67 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         assertThat(result._id, equalTo(id));
         assertThat(result.offsetDateTime, equalTo(object.offsetDateTime));
+    }
+
+    public static class DurationContainer {
+        public org.bson.types.ObjectId _id;
+        public Duration duration;
+    }
+
+    /*
+        Like ZonedDateTime, Duration serializes to a BigDecimal when writing as a timestamp, since MongoJack does
+        not serialize BigDecimals, Duration serialization as a timestamp is not supported.
+        
+    @Test
+    public void testDurationSavedAsTimestamps() {
+        // create the object
+        DurationContainer object = new DurationContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.duration = Duration.ofMinutes(2047);
+
+        // get a container
+        JacksonDBCollection<DurationContainer, org.bson.types.ObjectId> coll = getCollection(DurationContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        DurationContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.duration, equalTo(object.duration));
+    }
+    */
+
+    @Test
+    public void testDurationSavedAsISO8601() {
+        // create the object
+        DurationContainer object = new DurationContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.duration = Duration.ofMinutes(2047);
+
+        // get a container
+        JacksonDBCollection<DurationContainer, org.bson.types.ObjectId> coll = getCollection(DurationContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        DurationContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.duration, equalTo(object.duration));
     }
 }
