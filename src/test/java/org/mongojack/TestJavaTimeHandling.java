@@ -7,9 +7,12 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * class TestJavaTimeHandling: Tests the java.time.* handling in MongoJack.
@@ -191,5 +194,77 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         assertThat(result._id, equalTo(id));
         assertThat(result.localDateTime, equalTo(object.localDateTime));
+    }
+
+    public static class ZonedDateTimeContainer {
+        public org.bson.types.ObjectId _id;
+        public ZonedDateTime zonedDateTime;
+    }
+
+    /*
+        NOTE: A ZonedDateTime as WRITE_DATES_AS_TIMESTAMPS wants to store as a BigDecimal, but MongoJack doesn't support
+        serialization of a BigDecimal.
+
+        So this test is disabled because it will fail.
+
+        
+    @Test
+    public void testZonedDateTimeSavedAsTimestamps() {
+        // create the object
+        ZonedDateTimeContainer object = new ZonedDateTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        LocalDateTime time = LocalDateTime.now();
+        ZoneId paris = ZoneId.of("Europe/Paris");
+        ZonedDateTime zoned = time.atZone(paris);
+        object.zonedDateTime = zoned;
+
+        // get a container
+        JacksonDBCollection<ZonedDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(ZonedDateTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        ZonedDateTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        boolean equals = result.zonedDateTime.isEqual(zoned);
+        assertTrue("Zoned date times do not match.", equals);
+    }
+    */
+
+    @Test
+    public void testZonedDateTimeSavedAsISO8601() {
+        // create the object
+        ZonedDateTimeContainer object = new ZonedDateTimeContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        LocalDateTime time = LocalDateTime.now();
+        ZoneId paris = ZoneId.of("Europe/Paris");
+        ZonedDateTime zoned = time.atZone(paris);
+        object.zonedDateTime = zoned;
+
+        // get a container
+        JacksonDBCollection<ZonedDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(ZonedDateTimeContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        ZonedDateTimeContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertTrue(result.zonedDateTime.isEqual(object.zonedDateTime));
     }
 }
