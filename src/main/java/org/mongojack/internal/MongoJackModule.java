@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class MongoJackModule extends Module {
     public static final Module INSTANCE = new MongoJackModule();
     public static final Module JAVATIME = new JavaTimeModule();
-    
+
     /**
      * Configure the given object mapper to be used with MongoJack. Please call
      * this method rather than calling
@@ -47,6 +47,10 @@ public class MongoJackModule extends Module {
      */
     public static ObjectMapper configure(ObjectMapper objectMapper) {
         objectMapper.registerModule(INSTANCE);
+
+        // register java time module
+        objectMapper.registerModule(JAVATIME);
+
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
     }
