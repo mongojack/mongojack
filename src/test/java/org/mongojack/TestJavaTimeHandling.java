@@ -583,7 +583,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
     /*
         Like ZonedDateTime, Duration serializes to a BigDecimal when writing as a timestamp, since MongoJack does
         not serialize BigDecimals, Duration serialization as a timestamp is not supported.
-        
+
     @Test
     public void testDurationSavedAsTimestamps() {
         // create the object
@@ -635,5 +635,67 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         assertThat(result._id, equalTo(id));
         assertThat(result.duration, equalTo(object.duration));
+    }
+
+    public static class InstantContainer {
+        public org.bson.types.ObjectId _id;
+        public Instant instant;
+    }
+
+    /*
+        Like ZonedDateTime, an Instant serializes to a BigDecimal when writing dates as timestamps.  Since BigDecimals
+        are not supported by MongoJack, neither can we support serialization of Instants.
+        
+    @Test
+    public void testInstantSavedAsTimestamps() {
+        // create the object
+        InstantContainer object = new InstantContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.instant = Instant.now().plus(Duration.ofHours(3).plusMinutes(8));
+
+        // get a container
+        JacksonDBCollection<InstantContainer, org.bson.types.ObjectId> coll = getCollection(InstantContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        InstantContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.instant, equalTo(object.instant));
+    }
+    */
+
+    @Test
+    public void testInstantSavedAsISO8601() {
+        // create the object
+        InstantContainer object = new InstantContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.instant = Instant.now().plus(Duration.ofHours(3).plusMinutes(8));
+
+        // get a container
+        JacksonDBCollection<InstantContainer, org.bson.types.ObjectId> coll = getCollection(InstantContainer.class,
+                org.bson.types.ObjectId.class);
+
+        // enable as timestamps.
+        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        InstantContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.instant, equalTo(object.instant));
     }
 }
