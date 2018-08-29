@@ -16,6 +16,7 @@
  */
 package org.mongojack.internal;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.mongojack.internal.stream.ServerErrorProblemHandler;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,7 +32,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class MongoJackModule extends Module {
     public static final Module INSTANCE = new MongoJackModule();
-
+    public static final Module JAVATIME = new JavaTimeModule();
+    
     /**
      * Configure the given object mapper to be used with MongoJack. Please call
      * this method rather than calling
