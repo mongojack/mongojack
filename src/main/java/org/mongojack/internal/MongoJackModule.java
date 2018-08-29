@@ -54,7 +54,7 @@ public class MongoJackModule extends Module {
 
         // disable serialize dates as timestamps because we have fewer runtime errors that way
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        
+
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
     }
