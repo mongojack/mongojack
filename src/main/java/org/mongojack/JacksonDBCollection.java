@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.mongojack.internal.FetchableDBRef;
 import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
@@ -272,6 +273,9 @@ public class JacksonDBCollection<T, K> {
      */
     public JacksonDBCollection<T, K> enable(Feature feature) {
         features.put(feature, true);
+        if (feature == Feature.WRITE_DATES_AS_TIMESTAMPS) {
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        }
         return this;
     }
 
@@ -284,6 +288,9 @@ public class JacksonDBCollection<T, K> {
      */
     public JacksonDBCollection<T, K> disable(Feature feature) {
         features.put(feature, false);
+        if (feature == Feature.WRITE_DATES_AS_TIMESTAMPS) {
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        }
         return this;
     }
 
