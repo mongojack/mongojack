@@ -16,6 +16,8 @@
  */
 package org.mongojack.internal;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.mongojack.internal.stream.ServerErrorProblemHandler;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class MongoJackModule extends Module {
     public static final Module INSTANCE = new MongoJackModule();
+    public static final Module JAVATIME = new JavaTimeModule();
 
     /**
      * Configure the given object mapper to be used with MongoJack. Please call
@@ -45,6 +48,13 @@ public class MongoJackModule extends Module {
      */
     public static ObjectMapper configure(ObjectMapper objectMapper) {
         objectMapper.registerModule(INSTANCE);
+
+        // register java time module
+        objectMapper.registerModule(JAVATIME);
+
+        // disable serialize dates as timestamps because we have fewer runtime errors that way
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return objectMapper;
     }

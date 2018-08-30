@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.mongojack.internal.FetchableDBRef;
 import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
@@ -90,7 +91,15 @@ public class JacksonDBCollection<T, K> {
          * to the server, which means WriteResult.getSavedId() getSavedObject()
          * will not work. Hence it is disabled by default.
          */
-        USE_STREAM_SERIALIZATION(false);
+        USE_STREAM_SERIALIZATION(false),
+
+        /**
+         * For Java 8 time objects introduced by JSR 310, this feature will enable
+         * or disable the writing of dates as timestamps for MongoDB. When disabled,
+         * a LocalDateTime will be an array of ints, [YYYY, M, D, H, m, s, S] but,
+         * when enabled, will be a string "YYYY-MM-DDTHH:mm:ss.S" per the ISO format.
+         */
+        WRITE_DATES_AS_TIMESTAMPS(true);
 
         Feature(boolean enabledByDefault) {
             this.enabledByDefault = enabledByDefault;
@@ -264,6 +273,9 @@ public class JacksonDBCollection<T, K> {
      */
     public JacksonDBCollection<T, K> enable(Feature feature) {
         features.put(feature, true);
+        if (feature == Feature.WRITE_DATES_AS_TIMESTAMPS) {
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        }
         return this;
     }
 
@@ -276,6 +288,9 @@ public class JacksonDBCollection<T, K> {
      */
     public JacksonDBCollection<T, K> disable(Feature feature) {
         features.put(feature, false);
+        if (feature == Feature.WRITE_DATES_AS_TIMESTAMPS) {
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        }
         return this;
     }
 
