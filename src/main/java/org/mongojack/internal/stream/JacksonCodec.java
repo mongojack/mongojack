@@ -69,7 +69,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return getReader(t).get();
     }
 
-    protected Supplier<BsonValue> getReader(final T t) {
+    private Supplier<BsonValue> getReader(final T t) {
         final Class<?> documentClass = t.getClass();
         final Optional<Method> maybeIdGetter = getIdGetter(documentClass);
         if (maybeIdGetter.isPresent()) {
@@ -102,7 +102,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         }
     }
 
-    protected Consumer<BsonObjectId> getWriter(final T t) {
+    private Consumer<BsonObjectId> getWriter(final T t) {
         final Class<?> documentClass = t.getClass();
         final Optional<Method> maybeSetter = getIdSetter(documentClass);
         if (maybeSetter.isPresent()) {
@@ -136,7 +136,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         }
     }
 
-    protected Optional<Field> getIdField(final Class<?> documentClass) {
+    private Optional<Field> getIdField(final Class<?> documentClass) {
         Field[] fields = documentClass.getDeclaredFields();
         Optional<Field> maybeField = Arrays.stream(fields)
             .filter(field -> field.isAnnotationPresent(javax.persistence.Id.class) ||
@@ -154,7 +154,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return Optional.empty();
     }
 
-    protected Optional<Method> getIdGetter(final Class<?> documentClass) {
+    private Optional<Method> getIdGetter(final Class<?> documentClass) {
         Method[] methods = documentClass.getDeclaredMethods();
         Optional<Method> maybeGetter = Arrays.stream(methods)
             .filter(method -> method.getName().startsWith("get") &&
@@ -174,7 +174,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return Optional.empty();
     }
 
-    protected Optional<Method> getIdSetter(final Class<?> documentClass) {
+    private Optional<Method> getIdSetter(final Class<?> documentClass) {
         Method[] methods = documentClass.getDeclaredMethods();
         Optional<Method> maybeSetter = Arrays.stream(methods)
             .filter(method -> method.getName().startsWith("set") &&
@@ -194,7 +194,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return Optional.empty();
     }
 
-    protected Object extractValue(BsonObjectId value, Class<?> valueType) {
+    private Object extractValue(BsonObjectId value, Class<?> valueType) {
         if (String.class.equals(valueType)) {
             return value.asObjectId().getValue().toHexString();
         } else if (ObjectId.class.equals(valueType)) {
@@ -223,7 +223,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         throw new IllegalArgumentException("Unsupported ID type: " + value.getClass());
     }
 
-    protected BsonValue constructValue(Object value) {
+    private BsonValue constructValue(Object value) {
         if (value == null) {
             return BsonNull.VALUE;
         } else if (value instanceof Double) {
