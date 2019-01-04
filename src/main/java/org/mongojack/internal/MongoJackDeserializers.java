@@ -16,6 +16,7 @@
  */
 package org.mongojack.internal;
 
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -38,6 +39,7 @@ import com.fasterxml.jackson.databind.module.SimpleDeserializers;
 public class MongoJackDeserializers extends SimpleDeserializers {
     public MongoJackDeserializers() {
         addDeserializer(Date.class, new DateDeserializer());
+        addDeserializer(Instant.class, new MongoJackInstantDeserializer());
         addDeserializer(Calendar.class, new CalendarDeserializer());
         addDeserializer(UUID.class, new UUIDDeserializer());
     }
