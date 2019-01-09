@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,20 +30,6 @@ public class TestJacksonMongoCollectionMultiple extends MongoDBTestBase {
 
     private JacksonMongoCollection.JacksonMongoCollectionBuilder builder;
 
-    public static class MockObject1 {
-        @Id
-        @ObjectId
-        public String id;
-        public Integer num;
-    }
-
-    public static class MockObject2 {
-        @Id
-        @ObjectId
-        public String id;
-        public String value;
-    }
-
     @Before
     public void setup() throws Exception {
         builder = JacksonMongoCollection.builder();
@@ -64,7 +50,7 @@ public class TestJacksonMongoCollectionMultiple extends MongoDBTestBase {
         coll2.insert(o2);
 
         List<MockObject1> results11 = coll1
-                .find(new Document("num", 10)).into(new ArrayList<>());
+            .find(new Document("num", 10)).into(new ArrayList<>());
         assertThat(results11, hasSize(1));
 
         List<MockObject1> results10 = coll1
@@ -78,5 +64,19 @@ public class TestJacksonMongoCollectionMultiple extends MongoDBTestBase {
         List<MockObject2> results20 = coll2
             .find(new Document("num", 10)).into(new ArrayList<>());
         assertThat(results20, hasSize(0));
+    }
+
+    public static class MockObject1 {
+        @Id
+        @ObjectId
+        public String id;
+        public Integer num;
+    }
+
+    public static class MockObject2 {
+        @Id
+        @ObjectId
+        public String id;
+        public String value;
     }
 }
