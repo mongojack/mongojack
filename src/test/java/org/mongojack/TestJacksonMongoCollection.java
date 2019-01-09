@@ -38,7 +38,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
     @Before
     public void setup() throws Exception {
-        coll = JacksonMongoCollection.<MockObject> builder().build(getMongoCollection("testJacksonMongoCollection"), MockObject.class);
+        coll = JacksonMongoCollection.builder().build(getMongoCollection("testJacksonMongoCollection"), MockObject.class);
     }
 
     @Test
