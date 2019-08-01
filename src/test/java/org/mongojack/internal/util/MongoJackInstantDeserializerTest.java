@@ -15,10 +15,6 @@
  */
 package org.mongojack.internal.util;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.Date;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonTokenId;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -32,9 +28,13 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mongojack.internal.MongoJackInstantDeserializer;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Date;
+
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link MongoJackInstantDeserializer}
@@ -103,10 +103,11 @@ public class MongoJackInstantDeserializerTest {
         assertEquals(instant, deserializedDate);
     }
 
-    @Test(expected = JsonMappingException.class)
+    @Test
     public void testDateIsNull() throws IOException {
         when(jsonParser.getCurrentTokenId()).thenReturn(JsonTokenId.ID_NULL);
         deserializedDate = deserializer.deserialize(jsonParser, deserializationContext);
+        assertNull(deserializedDate);
     }
 
     private ObjectMapper createMapper() {
