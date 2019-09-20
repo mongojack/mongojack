@@ -20,7 +20,7 @@
     <dependency>
       <groupId>org.mongodb</groupId>
       <artifactId>mongodb-driver-legacy</artifactId>
-      <version>3.11.0-rc0</version>
+      <version>3.11.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
