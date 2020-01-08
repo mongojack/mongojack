@@ -17,10 +17,17 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bson.BsonDocument;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 import org.mongojack.internal.query.CollectionQueryCondition;
 import org.mongojack.internal.query.CompoundQueryCondition;
 import org.mongojack.internal.query.QueryCondition;
 import org.mongojack.internal.query.SimpleQueryCondition;
+import org.mongojack.internal.util.DocumentSerializationUtils;
+import org.mongojack.internal.util.InitializationRequiredForTransformation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -592,9 +599,11 @@ public class DBQuery {
      * This is a query builder that is also a valid query that can be passed to
      * MongoDB
      */
-    public static class Query extends AbstractBuilder<Query> {
+    public static class Query extends AbstractBuilder<Query> implements Bson, InitializationRequiredForTransformation {
 
         protected final Map<String, QueryCondition> query = new LinkedHashMap<String, QueryCondition>();
+        private ObjectMapper objectMapper;
+        private JavaType type;
 
         private Query() {
         }
@@ -645,5 +654,17 @@ public class DBQuery {
             condition.addAll(conditions);
             return this;
         }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            return DocumentSerializationUtils.serializeQuery(objectMapper, type, this).toBsonDocument(tDocumentClass, codecRegistry);
+        }
+
+        @Override
+        public void initialize(final ObjectMapper objectMapper, final JavaType type, final JacksonCodecRegistry codecRegistry) {
+            this.objectMapper = objectMapper;
+            this.type = type;
+        }
+
     }
 }

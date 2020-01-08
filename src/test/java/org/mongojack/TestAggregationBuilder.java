@@ -254,7 +254,6 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(baz);
 
         Pipeline<?> pipeline = Aggregation.project("integer", Expression.size(Expression.list("simpleList")));
-        System.err.println("pipeline: " + coll.serializePipeline(pipeline));
         final AggregateIterable<MockObjectAggregationResult> aggregate = coll.aggregate(pipeline, MockObjectAggregationResult.class);
         final List<MockObjectAggregationResult> resultsList = StreamSupport.stream(aggregate.spliterator(), false)
             .collect(Collectors.toList());

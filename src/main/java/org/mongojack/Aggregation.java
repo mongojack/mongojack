@@ -15,11 +15,18 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bson.BsonDocument;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery.Query;
 import org.mongojack.DBSort.SortBuilder;
 import org.mongojack.internal.query.QueryCondition;
+import org.mongojack.internal.util.AbstractDelegateList;
+import org.mongojack.internal.util.DocumentSerializationUtils;
+import org.mongojack.internal.util.InitializationRequiredForTransformation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,94 +46,92 @@ import java.util.Set;
  * @author Christopher Exell
  * @since 2.1.0
  */
+@SuppressWarnings("unused")
 public class Aggregation<T> {
-    private Class<T> resultType;
-    private Bson initialOp;
-    private Bson[] additionalOps;
-
-    public Aggregation(Class<T> resultType, Bson initialOp, Bson... additionalOps) {
-        this.resultType = resultType;
-        this.initialOp = initialOp;
-        this.additionalOps = additionalOps;
-    }
-
-    public Class<T> getResultType() {
-        return resultType;
-    }
-
-    public Bson getInitialOp() {
-        return initialOp;
-    }
-
-    public Bson[] getAdditionalOps() {
-        return additionalOps;
-    }
-
-    public List<Bson> getAllOps() {
-        List<Bson> allOps = new ArrayList<>();
-        allOps.add(initialOp);
-        allOps.addAll(Arrays.asList(additionalOps));
-        return allOps;
-    }
 
     public static Pipeline<Group.Accumulator> group(Expression<?> key, Map<String, Group.Accumulator> calculatedFields) {
-        return new Pipeline<Group.Accumulator>(Group.by(key).set(calculatedFields));
+        return new Pipeline<>(Group.by(key).set(calculatedFields));
     }
 
     public static Pipeline<Group.Accumulator> group(Expression<?> key) {
-        return new Pipeline<Group.Accumulator>(Group.by(key));
+        return new Pipeline<>(Group.by(key));
     }
 
     public static Pipeline<Group.Accumulator> group(String key) {
-        return new Pipeline<Group.Accumulator>(Group.by(Expression.path(key)));
+        return new Pipeline<>(Group.by(Expression.path(key)));
     }
 
     public static Pipeline<Void> limit(int n) {
-        return new Pipeline<Void>(new Limit(n));
+        return new Pipeline<>(new Limit(n));
     }
 
     public static Pipeline<Void> match(Query query) {
-        return new Pipeline<Void>(new Match(query));
+        return new Pipeline<>(new Match(query));
     }
 
     public static Pipeline<Expression<?>> project(ProjectionBuilder projection) {
-        return new Pipeline<Expression<?>>(new Project(projection));
+        return new Pipeline<>(new Project(projection));
     }
 
     public static Pipeline<Expression<?>> project(String field) {
-        return new Pipeline<Expression<?>>(Project.fields(field));
+        return new Pipeline<>(Project.fields(field));
     }
 
     public static Pipeline<Expression<?>> project(String field, Expression<?> value) {
-        return new Pipeline<Expression<?>>(Project.field(field, value));
+        return new Pipeline<>(Project.field(field, value));
     }
 
     public static Pipeline<Void> skip(int n) {
-        return new Pipeline<Void>(new Skip(n));
+        return new Pipeline<>(new Skip(n));
     }
 
     public static Pipeline<Void> sort(SortBuilder builder) {
-        return new Pipeline<Void>(new Sort(builder));
+        return new Pipeline<>(new Sort(builder));
     }
 
     public static Pipeline<Void> unwind(String path) {
-        return new Pipeline<Void>(new Unwind(path));
+        return new Pipeline<>(new Unwind(path));
     }
 
-    private static abstract class SimpleStage implements Pipeline.Stage<Void> {
+    public interface Stage<S> extends Bson, InitializationRequiredForTransformation {
+
+        Stage<S> set(String field, S value);
+
+        Stage<S> set(Map<String, S> fields);
+
+    }
+
+    private static abstract class AbstractStage<S> implements Stage<S> {
+
+        private ObjectMapper objectMapper;
+        private JavaType type;
 
         @Override
-        public Pipeline.Stage<Void> set(String field, Void value) {
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            return DocumentSerializationUtils.serializePipelineStage(objectMapper, type, this).toBsonDocument(tDocumentClass, codecRegistry);
+        }
+
+        @Override
+        public void initialize(final ObjectMapper objectMapper, final JavaType type, final JacksonCodecRegistry codecRegistry) {
+            this.objectMapper = objectMapper;
+            this.type = type;
+        }
+    }
+
+    private static abstract class SimpleStage extends AbstractStage<Void> implements Stage<Void> {
+
+        @Override
+        public Stage<Void> set(String field, Void value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Pipeline.Stage<Void> set(Map<String, Void> fields) {
+        public Stage<Void> set(Map<String, Void> fields) {
             throw new UnsupportedOperationException();
         }
     }
 
-    public static class Group implements Pipeline.Stage<Group.Accumulator> {
+    public static class Group extends AbstractStage<Group.Accumulator> implements Stage<Group.Accumulator> {
         public enum Op {$addToSet, $avg, $first, $last, $max, $min, $push, $sum}
 
         ;
@@ -134,7 +139,7 @@ public class Aggregation<T> {
         private static final Accumulator COUNT = sum(Expression.literal(1));
 
         private final Expression<?> key;
-        private final Map<String, Accumulator> calculatedFields = new LinkedHashMap<String, Accumulator>();
+        private final Map<String, Accumulator> calculatedFields = new LinkedHashMap<>();
 
         private Group(Expression<?> key) {
             this.key = key;
@@ -250,7 +255,7 @@ public class Aggregation<T> {
         }
     }
 
-    public static class Limit extends SimpleStage implements Pipeline.Stage<Void> {
+    public static class Limit extends SimpleStage implements Stage<Void> {
         private final int n;
 
         private Limit(int n) {
@@ -262,8 +267,10 @@ public class Aggregation<T> {
         }
     }
 
-    public static class Match extends DBQuery.AbstractBuilder<Match> implements Pipeline.Stage<Void> {
+    public static class Match extends DBQuery.AbstractBuilder<Match> implements Stage<Void> {
         private final Query query;
+        private ObjectMapper objectMapper;
+        private JavaType type;
 
         private Match() {
             this(DBQuery.empty());
@@ -292,21 +299,32 @@ public class Aggregation<T> {
         }
 
         @Override
-        public Pipeline.Stage<Void> set(String field, Void value) {
+        public Stage<Void> set(String field, Void value) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public Pipeline.Stage<Void> set(Map<String, Void> fields) {
+        public Stage<Void> set(Map<String, Void> fields) {
             throw new UnsupportedOperationException();
         }
 
         public Query query() {
             return query;
         }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            return DocumentSerializationUtils.serializePipelineStage(objectMapper, type, this).toBsonDocument(tDocumentClass, codecRegistry);
+        }
+
+        @Override
+        public void initialize(final ObjectMapper objectMapper, final JavaType type, final JacksonCodecRegistry codecRegistry) {
+            this.objectMapper = objectMapper;
+            this.type = type;
+        }
     }
 
-    public static class Project implements Pipeline.Stage<Expression<?>> {
+    public static class Project extends AbstractStage<Expression<?>> implements Stage<Expression<?>> {
         private final ProjectionBuilder builder;
 
         private Project(ProjectionBuilder builder) {
@@ -356,7 +374,7 @@ public class Aggregation<T> {
         }
     }
 
-    public static class Skip extends SimpleStage implements Pipeline.Stage<Void> {
+    public static class Skip extends SimpleStage implements Stage<Void> {
         private final int n;
 
         private Skip(int n) {
@@ -368,7 +386,7 @@ public class Aggregation<T> {
         }
     }
 
-    public static class Sort extends SimpleStage implements Pipeline.Stage<Void> {
+    public static class Sort extends SimpleStage implements Stage<Void> {
         private final SortBuilder builder;
 
         private Sort(SortBuilder builder) {
@@ -390,7 +408,7 @@ public class Aggregation<T> {
         }
     }
 
-    public static class Unwind extends SimpleStage implements Pipeline.Stage<Void> {
+    public static class Unwind extends SimpleStage implements Stage<Void> {
         private final String[] path;
 
         private Unwind(String... path) {
@@ -398,11 +416,11 @@ public class Aggregation<T> {
         }
 
         public FieldPath<Object> path() {
-            return new FieldPath<Object>(path);
+            return new FieldPath<>(path);
         }
     }
 
-    public static class Out extends SimpleStage implements Pipeline.Stage<Void> {
+    public static class Out extends SimpleStage implements Stage<Void> {
         private final String collectionName;
 
         public Out(String collectionName) {
@@ -419,29 +437,24 @@ public class Aggregation<T> {
      * <p>
      * Type parameter S is the type of value that can be passed to set(String, S), given current latest stage.
      */
-    public static class Pipeline<S> {
-        public static interface Stage<S> {
-            Stage<S> set(String field, S value);
+    public static class Pipeline<S> extends AbstractDelegateList<Stage<Object>> implements List<Stage<Object>>, InitializationRequiredForTransformation {
 
-            Stage<S> set(Map<String, S> fields);
-        }
+        private final List<Stage<Object>> allStages;
 
-        private Stage<S> latestStage;
-        private final List<Stage<?>> precedingStages;
+        private ObjectMapper objectMapper;
+        private JavaType type;
+        private JacksonCodecRegistry codecRegistry;
 
-        private Pipeline(Stage<S> latestStage, List<Stage<?>> precedingStages) {
-            this.latestStage = latestStage;
-            this.precedingStages = precedingStages;
-        }
-
+        @SuppressWarnings("unchecked")
         public Pipeline(Stage<S> stage) {
-            this(stage, new ArrayList<Stage<?>>());
+            allStages = new ArrayList<>();
+            allStages.add((Stage<Object>) stage);
         }
 
+        @SuppressWarnings("unchecked")
         public <X> Pipeline<X> then(Stage<X> stage) {
             Pipeline<X> result = (Pipeline<X>) this;
-            result.precedingStages.add(latestStage);
-            result.latestStage = stage;
+            result.allStages.add((Stage<Object>) stage);
             return result;
         }
 
@@ -458,7 +471,7 @@ public class Aggregation<T> {
         }
 
         public Pipeline<S> set(String field, S value) {
-            latestStage.set(field, value);
+            allStages.get(allStages.size() - 1).set(field, value);
             return this;
         }
 
@@ -510,12 +523,25 @@ public class Aggregation<T> {
             return then(new Out(collectionName));
         }
 
-        public Iterable<Stage<?>> stages() {
-            ArrayList<Stage<?>> stages = new ArrayList<Stage<?>>(precedingStages.size() + 1);
-            stages.addAll(precedingStages);
-            stages.add(latestStage);
+        public List<Stage<Object>> stages() {
+            ArrayList<Stage<Object>> stages = new ArrayList<>(allStages.size() + 1);
+            stages.addAll(allStages);
+            stages.forEach((stage) -> stage.initialize(objectMapper, type, codecRegistry));
             return stages;
         }
+
+        @Override
+        public void initialize(final ObjectMapper objectMapper, final JavaType type, final JacksonCodecRegistry codecRegistry) {
+            this.objectMapper = objectMapper;
+            this.type = type;
+            this.codecRegistry = codecRegistry;
+        }
+
+        @Override
+        protected List<Stage<Object>> delegate() {
+            return stages();
+        }
+
     }
 
     /**
@@ -524,35 +550,35 @@ public class Aggregation<T> {
     public static abstract class Expression<T> {
 
         public static Expression<Object> path(String... path) {
-            return new FieldPath<Object>(path);
+            return new FieldPath<>(path);
         }
 
         public static Expression<Boolean> bool(String... path) {
-            return new FieldPath<Boolean>(path);
+            return new FieldPath<>(path);
         }
 
         public static Expression<Date> date(String... path) {
-            return new FieldPath<Date>(path);
+            return new FieldPath<>(path);
         }
 
         public static Expression<Integer> integer(String... path) {
-            return new FieldPath<Integer>(path);
+            return new FieldPath<>(path);
         }
 
         public static Expression<List<?>> list(String... path) {
-            return new FieldPath<List<?>>(path);
+            return new FieldPath<>(path);
         }
 
         public static Expression<Number> number(String... path) {
-            return new FieldPath<Number>(path);
+            return new FieldPath<>(path);
         }
 
         public static Expression<String> string(String... path) {
-            return new FieldPath<String>(path);
+            return new FieldPath<>(path);
         }
 
         public static <T> Expression<T> literal(T value) {
-            return new Literal<T>(value);
+            return new Literal<>(value);
         }
 
         public static Expression<Object> object(Map<String, Expression<?>> properties) {
@@ -562,167 +588,167 @@ public class Aggregation<T> {
         // Boolean Operator Expressions
 
         public static Expression<Boolean> and(Expression<?>... operands) {
-            return new OperatorExpression<Boolean>("$and", operands);
+            return new OperatorExpression<>("$and", operands);
         }
 
         public static Expression<Boolean> not(Expression<?> operand) {
-            return new OperatorExpression<Boolean>("$not", operand);
+            return new OperatorExpression<>("$not", operand);
         }
 
         public static Expression<Boolean> or(Expression<?>... operands) {
-            return new OperatorExpression<Boolean>("$or", operands);
+            return new OperatorExpression<>("$or", operands);
         }
 
         // Set Operator Expressions
 
         public static Expression<Boolean> allElementsTrue(Expression<List<?>> set) {
-            return new OperatorExpression<Boolean>("$allElementsTrue", set);
+            return new OperatorExpression<>("$allElementsTrue", set);
         }
 
         public static Expression<Boolean> anyElementTrue(Expression<List<?>> set) {
-            return new OperatorExpression<Boolean>("$anyElementTrue", set);
+            return new OperatorExpression<>("$anyElementTrue", set);
         }
 
         public static Expression<List<?>> setDifference(Expression<List<?>> set1, Expression<List<?>> set2) {
-            return new OperatorExpression<List<?>>("$setDifference", set1, set2);
+            return new OperatorExpression<>("$setDifference", set1, set2);
         }
 
         public static Expression<Boolean> setEquals(Expression<List<?>>... sets) {
-            return new OperatorExpression<Boolean>("$setEquals", sets);
+            return new OperatorExpression<>("$setEquals", sets);
         }
 
         public static Expression<List<?>> setIntersection(Expression<List<?>>... sets) {
-            return new OperatorExpression<List<?>>("$setIntersection", sets);
+            return new OperatorExpression<>("$setIntersection", sets);
         }
 
         public static Expression<Boolean> setIsSubset(Expression<List<?>> set1, Expression<List<?>> set2) {
-            return new OperatorExpression<Boolean>("$setIsSubset", set1, set2);
+            return new OperatorExpression<>("$setIsSubset", set1, set2);
         }
 
         public static Expression<List<?>> setUnion(Expression<List<?>>... sets) {
-            return new OperatorExpression<List<?>>("$setUnion", sets);
+            return new OperatorExpression<>("$setUnion", sets);
         }
 
         // Comparison Operator Expressions
 
         public static Expression<Integer> compareTo(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Integer>("$cmp", value1, value2);
+            return new OperatorExpression<>("$cmp", value1, value2);
         }
 
         public static Expression<Boolean> equals(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Boolean>("$eq", value1, value2);
+            return new OperatorExpression<>("$eq", value1, value2);
         }
 
         public static Expression<Boolean> greaterThan(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Boolean>("$gt", value1, value2);
+            return new OperatorExpression<>("$gt", value1, value2);
         }
 
         public static Expression<Boolean> greaterThanOrEquals(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Boolean>("$gte", value1, value2);
+            return new OperatorExpression<>("$gte", value1, value2);
         }
 
         public static Expression<Boolean> lessThan(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Boolean>("$lt", value1, value2);
+            return new OperatorExpression<>("$lt", value1, value2);
         }
 
         public static Expression<Boolean> lessThanOrEquals(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Boolean>("$lte", value1, value2);
+            return new OperatorExpression<>("$lte", value1, value2);
         }
 
         public static Expression<Boolean> notEquals(Expression<?> value1, Expression<?> value2) {
-            return new OperatorExpression<Boolean>("$ne", value1, value2);
+            return new OperatorExpression<>("$ne", value1, value2);
         }
 
         // Arithmetic Operator Expressions
 
         public static Expression<Number> add(Expression<Number>... numbers) {
-            return new OperatorExpression<Number>("$add", numbers);
+            return new OperatorExpression<>("$add", numbers);
         }
 
         public static Expression<Number> divide(Expression<Number> number1, Expression<Number> number2) {
-            return new OperatorExpression<Number>("$divide", number1, number2);
+            return new OperatorExpression<>("$divide", number1, number2);
         }
 
         public static Expression<Number> mod(Expression<Number> number1, Expression<Number> number2) {
-            return new OperatorExpression<Number>("$mod", number1, number2);
+            return new OperatorExpression<>("$mod", number1, number2);
         }
 
         public static Expression<Number> multiply(Expression<Number>... numbers) {
-            return new OperatorExpression<Number>("$multiply", numbers);
+            return new OperatorExpression<>("$multiply", numbers);
         }
 
         public static Expression<Number> subtract(Expression<Number> number1, Expression<Number> number2) {
-            return new OperatorExpression<Number>("$subtract", number1, number2);
+            return new OperatorExpression<>("$subtract", number1, number2);
         }
 
         // String Operator Expressions
 
         public static Expression<String> concat(Expression<String>... strings) {
-            return new OperatorExpression<String>("$concat", strings);
+            return new OperatorExpression<>("$concat", strings);
         }
 
         public static Expression<Integer> compareToIgnoreCase(Expression<String> string1, Expression<String> string2) {
-            return new OperatorExpression<Integer>("$strcasecmp", string1, string2);
+            return new OperatorExpression<>("$strcasecmp", string1, string2);
         }
 
         public static Expression<String> substring(Expression<String> string, Expression<Integer> start, Expression<Integer> length) {
-            return new OperatorExpression<String>("$substr", string, start, length);
+            return new OperatorExpression<>("$substr", string, start, length);
         }
 
         public static Expression<String> toLowerCase(Expression<String> string) {
-            return new OperatorExpression<String>("$toLower", string);
+            return new OperatorExpression<>("$toLower", string);
         }
 
         public static Expression<String> toUpperCase(Expression<String> string) {
-            return new OperatorExpression<String>("$toUpper", string);
+            return new OperatorExpression<>("$toUpper", string);
         }
 
         // Array Operator Expressions
 
         public static Expression<Integer> size(Expression<List<?>> array) {
-            return new OperatorExpression<Integer>("$size", array);
+            return new OperatorExpression<>("$size", array);
         }
 
         public static <T> Expression<T> arrayElemAt(Expression<List<?>> expression, Expression<Integer> index) {
-            return new OperatorExpression<T>("$arrayElemAt", expression, index);
+            return new OperatorExpression<>("$arrayElemAt", expression, index);
         }
 
         // Date Operator Expressions
 
         public static Expression<Integer> dayOfMonth(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$dayOfMonth", date);
+            return new OperatorExpression<>("$dayOfMonth", date);
         }
 
         public static Expression<Integer> dayOfWeek(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$dayOfWeek", date);
+            return new OperatorExpression<>("$dayOfWeek", date);
         }
 
         public static Expression<Integer> hour(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$hour", date);
+            return new OperatorExpression<>("$hour", date);
         }
 
         public static Expression<Integer> millisecond(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$millisecond", date);
+            return new OperatorExpression<>("$millisecond", date);
         }
 
         public static Expression<Integer> minute(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$minute", date);
+            return new OperatorExpression<>("$minute", date);
         }
 
         public static Expression<Integer> month(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$month", date);
+            return new OperatorExpression<>("$month", date);
         }
 
         public static Expression<Integer> second(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$second", date);
+            return new OperatorExpression<>("$second", date);
         }
 
         public static Expression<Integer> week(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$week", date);
+            return new OperatorExpression<>("$week", date);
         }
 
         public static Expression<Integer> year(Expression<Date> date) {
-            return new OperatorExpression<Integer>("$year", date);
+            return new OperatorExpression<>("$year", date);
         }
 
         // Conditional Operator Expressions
@@ -731,11 +757,11 @@ public class Aggregation<T> {
             Expression<Boolean> condition,
             Expression<? extends T> consequent, Expression<? extends T> alternative
         ) {
-            return new OperatorExpression<T>("$cond", condition, consequent, alternative);
+            return new OperatorExpression<>("$cond", condition, consequent, alternative);
         }
 
         public static <T> Expression<T> ifNull(Expression<? extends T> expression, Expression<? extends T> replacement) {
-            return new OperatorExpression<T>("$ifNull", expression, replacement);
+            return new OperatorExpression<>("$ifNull", expression, replacement);
         }
     }
 

@@ -19,6 +19,7 @@ package org.mongojack;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
+import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.mongojack.internal.update.ComplexUpdateOperationValue;
@@ -26,6 +27,7 @@ import org.mongojack.internal.update.MultiUpdateOperationValue;
 import org.mongojack.internal.update.SingleUpdateOperationValue;
 import org.mongojack.internal.update.UpdateOperationValue;
 import org.mongojack.internal.util.DocumentSerializationUtils;
+import org.mongojack.internal.util.InitializationRequiredForTransformation;
 
 import java.util.HashMap;
 import java.util.List;
@@ -312,8 +314,12 @@ public class DBUpdate {
     /**
      * The builder
      */
-    public static class Builder {
+    public static class Builder implements Bson, InitializationRequiredForTransformation {
+
         private final Map<String, Map<String, UpdateOperationValue>> update = new HashMap<String, Map<String, UpdateOperationValue>>();
+        private ObjectMapper objectMapper;
+        private JavaType type;
+        private CodecRegistry codecRegistry;
 
         /**
          * Increment the given field atomically by one
@@ -646,27 +652,24 @@ public class DBUpdate {
         }
 
         /**
-         * Serialise the values of the query and get them
-         *
-         * @param objectMapper
-         *            The object mapper to use to serialise values
-         * @return The object
-         */
-        public Bson serializeAndGetAsDocument(
-            ObjectMapper objectMapper,
-            JavaType javaType,
-            CodecRegistry registry
-        ) {
-            return DocumentSerializationUtils.serializeDBUpdate(update, objectMapper, javaType, registry);
-        }
-
-        /**
          * Checks if the update is empty
          *
          * @return true if the update is empty
          */
         public boolean isEmpty() {
             return update.isEmpty();
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            return DocumentSerializationUtils.serializeDBUpdate(update, objectMapper, type, codecRegistry).toBsonDocument(tDocumentClass, codecRegistry);
+        }
+
+        @Override
+        public void initialize(final ObjectMapper objectMapper, final JavaType type, final JacksonCodecRegistry codecRegistry) {
+            this.objectMapper = objectMapper;
+            this.type = type;
+            this.codecRegistry = codecRegistry;
         }
 
     }

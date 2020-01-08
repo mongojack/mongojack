@@ -680,15 +680,23 @@ public class DocumentSerializationUtils {
         JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
             serializerProvider, type);
         List<Bson> serializedPipeline = new ArrayList<>();
-        for (Pipeline.Stage<?> stage : pipeline.stages()) {
+        for (Aggregation.Stage<?> stage : pipeline.stages()) {
             serializedPipeline.add(serializePipelineStage(serializerProvider, serializer, stage));
         }
         return serializedPipeline;
     }
 
+    public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, Aggregation.Stage<?> stage) {
+        SerializerProvider serializerProvider = JacksonAccessor
+            .getSerializerProvider(objectMapper);
+        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
+            serializerProvider, type);
+        return serializePipelineStage(serializerProvider, serializer, stage);
+    }
+
     private static Bson serializePipelineStage(
         SerializerProvider serializerProvider, JsonSerializer<?> serializer,
-        Pipeline.Stage<?> stage
+        Aggregation.Stage<?> stage
     ) {
         if (stage instanceof Aggregation.Limit) {
             return new Document("$limit", ((Aggregation.Limit) stage).limit());
