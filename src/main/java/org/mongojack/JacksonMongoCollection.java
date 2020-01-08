@@ -19,16 +19,18 @@ package org.mongojack;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.DBObject;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.annotations.Beta;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MapReduceIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOptions;
@@ -36,27 +38,35 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.codecs.Codec;
-import org.bson.codecs.CollectibleCodec;
 import org.bson.conversions.Bson;
+import org.mongojack.internal.FetchableDBRef;
+import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.internal.object.document.DocumentObjectGenerator;
 import org.mongojack.internal.object.document.DocumentObjectTraversingParser;
-import org.mongojack.internal.query.QueryCondition;
 import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.internal.util.DocumentSerializationUtils;
+import org.mongojack.internal.util.FindIterableDelegate;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated
  * classes. It provides a very thin wrapper over an existing MongoCollection.
- *
+ * <p>
  * A JacksonMongoCollection is threadsafe, with a few caveats:
- *
+ * <p>
  * If you pass your own ObjectMapper to it, it is not thread safe to reconfigure
  * that ObjectMapper at all after creating it. The setWritePreference and a few
  * other methods on JacksonMongoCollection should not be called from multiple
@@ -65,53 +75,83 @@ import java.util.List;
  * @author James Roper
  * @since 1.0
  */
-@Beta
+// TODO: Consider making DBQuery _INTO_ a Bson, to reduce redundant methods
+@SuppressWarnings({"unused", "UnusedReturnValue"})
 public class JacksonMongoCollection<T> {
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = MongoJackModule
-            .configure(new ObjectMapper());
+        .configure(new ObjectMapper());
 
     private com.mongodb.client.MongoCollection<T> mongoCollection;
+    private final MongoClient mongoClient;
     private final ObjectMapper objectMapper;
+    private final JacksonCodecRegistry jacksonCodecRegistry;
     private final Class<?> view;
     private final Class<T> valueClass;
     private final JavaType type;
+    private final Map<JacksonCollectionKey, JacksonMongoCollection<?>> referencedCollectionCache =
+        new ConcurrentHashMap<>();
 
     private JacksonMongoCollection(
-            com.mongodb.client.MongoCollection<?> mongoCollection,
-            ObjectMapper objectMapper,
-            Class<T> valueClass,
-            Class<?> view) {
-        this.objectMapper = objectMapper == null ? DEFAULT_OBJECT_MAPPER : objectMapper;
-        this.view = view;
-        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, this.view);
-        jacksonCodecRegistry.addCodecForClass(valueClass);
-        this.mongoCollection = mongoCollection.withDocumentClass(valueClass).withCodecRegistry(jacksonCodecRegistry);;
-        this.valueClass = valueClass;
-        this.type = this.objectMapper.constructType(valueClass);
+        com.mongodb.client.MongoCollection<?> mongoCollection,
+        ObjectMapper objectMapper,
+        Class<T> valueClass,
+        Class<?> view
+    ) {
+        this(mongoCollection, null, objectMapper, valueClass, view);
     }
 
+    private JacksonMongoCollection(
+        com.mongodb.client.MongoCollection<?> mongoCollection,
+        MongoClient mongoClient,
+        ObjectMapper objectMapper,
+        Class<T> valueClass,
+        Class<?> view
+    ) {
+        this.objectMapper = objectMapper == null ? DEFAULT_OBJECT_MAPPER : objectMapper;
+        this.view = view;
+        jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, this.view, this);
+        jacksonCodecRegistry.addCodecForClass(valueClass);
+        this.mongoCollection = mongoCollection.withDocumentClass(valueClass).withCodecRegistry(jacksonCodecRegistry);
+        this.valueClass = valueClass;
+        this.type = this.objectMapper.constructType(valueClass);
+        this.mongoClient = mongoClient;
+    }
 
     /**
      * Get the underlying mongo collection
      *
      * @return The underlying mongo collection
      */
-    public com.mongodb.client.MongoCollection<?> getMongoCollection() {
+    public com.mongodb.client.MongoCollection<T> getMongoCollection() {
         return mongoCollection;
+    }
+
+    /**
+     * Gets the name of the underlying collection
+     *
+     * @return
+     */
+    public String getName() {
+        return mongoCollection.getNamespace().getCollectionName();
+    }
+
+    /**
+     * Gets the DB name in which the underlying collection is stored
+     *
+     * @return
+     */
+    public String getDatabaseName() {
+        return mongoCollection.getNamespace().getDatabaseName();
     }
 
     /**
      * Inserts an object into the database. If the objects _id is null, the driver will generate one
      *
-     * @param object
-     *            The object to insert
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the insert command
-     * @throws MongoException
-     *             If an error occurred
+     * @param object The object to insert
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoWriteException        If the write failed due some other failure specific to the insert command
+     * @throws MongoException             If an error occurred
      */
     public void insert(T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
         mongoCollection.insertOne(object);
@@ -120,71 +160,53 @@ public class JacksonMongoCollection<T> {
     /**
      * Inserts an object into the database. If the objects _id is null, the driver will generate one
      *
-     * @param object
-     *            The object to insert
-     * @param concern
-     *            the write concern
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the insert command
-     * @throws MongoException
-     *             If an error occurred
+     * @param object  The object to insert
+     * @param concern the write concern
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoWriteException        If the write failed due some other failure specific to the insert command
+     * @throws MongoException             If an error occurred
      */
     public void insert(T object, WriteConcern concern)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
         mongoCollection.withWriteConcern(concern).insertOne(object);
     }
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
      *
-     * @param objects
-     *            The objects to insert
-     * @throws MongoBulkWriteException
-     *             If there's an exception in the bulk write operation
-     * @throws MongoException
-     *             If an error occurred
-     *
+     * @param objects The objects to insert
+     * @throws MongoBulkWriteException If there's an exception in the bulk write operation
+     * @throws MongoException          If an error occurred
      */
-    public void insert(@SuppressWarnings("unchecked") T... objects) throws MongoException, MongoBulkWriteException {
+    @SafeVarargs
+    public final void insert(T... objects) throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
-        for (T object : objects) {
-            objectList.add(object);
-        }
+        Collections.addAll(objectList, objects);
         mongoCollection.insertMany(objectList);
     }
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
      *
-     * @param objects
-     *            The objects to insert
-     * @param concern
-     *            the write concern
-     * @throws MongoBulkWriteException
-     *             If there's an exception in the bulk write operation
-     * @throws MongoException
-     *             If an error occurred
+     * @param objects The objects to insert
+     * @param concern the write concern
+     * @throws MongoBulkWriteException If there's an exception in the bulk write operation
+     * @throws MongoException          If an error occurred
      */
-    public void insert(WriteConcern concern, @SuppressWarnings("unchecked") T... objects)
-            throws MongoException, MongoBulkWriteException {
+    @SafeVarargs
+    public final void insert(WriteConcern concern, T... objects)
+        throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
-        for (T object : objects) {
-            objectList.add(object);
-        }
+        Collections.addAll(objectList, objects);
         mongoCollection.withWriteConcern(concern).insertMany(objectList);
     }
 
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
      *
-     * @param list
-     *            The objects to insert
-     * @throws MongoBulkWriteException
-     *             If there's an exception in the bulk write operation
-     * @throws MongoException
-     *             If an error occurred
+     * @param list The objects to insert
+     * @throws MongoBulkWriteException If there's an exception in the bulk write operation
+     * @throws MongoException          If an error occurred
      */
     public void insert(List<T> list) throws MongoException, MongoBulkWriteException {
         mongoCollection.insertMany(list);
@@ -193,79 +215,61 @@ public class JacksonMongoCollection<T> {
     /**
      * Inserts objects into the database. if the objects' _id are null, they will be generated.
      *
-     * @param list
-     *            The objects to insert
-     * @param concern
-     *            the write concern
-     * @throws MongoBulkWriteException
-     *             If there's an exception in the bulk write operation
-     * @throws MongoException
-     *             If an error occurred
+     * @param list    The objects to insert
+     * @param concern the write concern
+     * @throws MongoBulkWriteException If there's an exception in the bulk write operation
+     * @throws MongoException          If an error occurred
      */
     public void insert(List<T> list, WriteConcern concern)
-            throws MongoException {
+        throws MongoException {
         mongoCollection.withWriteConcern(concern).insertMany(list);
     }
 
     /**
      * Performs an update operation.
      *
-     * @param query
-     *            search query for old object to update
-     * @param document
-     *            a document describing the update, which may not be null. The update to apply must include only update operators.
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
+     * @param query    search query for old object to update
+     * @param document a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param upsert   if the database should create the element if it does not exist
+     * @param concern  the write concern
      * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public UpdateResult updateOne(Document query, Document document, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
-        query = serializeFields(query);
+    public UpdateResult updateOne(Bson query, Bson document, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+        MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(serializeFields(query), serializeFields(document), new UpdateOptions().upsert(
-                    upsert));
+            return mongoCollection.withWriteConcern(concern).updateOne(serializeQueryBson(query), serializeUpdateBson(document), new UpdateOptions().upsert(
+                upsert));
         } else {
-            return mongoCollection.updateOne(serializeFields(query), serializeFields(document), new UpdateOptions().upsert(
-                    upsert));
+            return mongoCollection.updateOne(serializeQueryBson(query), serializeUpdateBson(document), new UpdateOptions().upsert(
+                upsert));
         }
     }
 
     /**
      * Performs an update operation.
      *
-     * @param query
-     *            search query for old object to update
-     * @param document
-     *            a document describing the update, which may not be null. The update to apply must include only update operators.
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
+     * @param query    search query for old object to update
+     * @param document a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param upsert   if the database should create the element if it does not exist
+     * @param concern  the write concern
      * @return The UpdateResult
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public UpdateResult updateMany(Document query, Document document,
-            boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException, MongoWriteConcernException {
-        query = serializeFields(query);
+    public UpdateResult updateMany(
+        Bson query, Bson document,
+        boolean upsert, WriteConcern concern
+    ) throws MongoException, MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateMany(serializeFields(query), serializeFields(document), new UpdateOptions().upsert(
-                    upsert));
+            return mongoCollection.withWriteConcern(concern).updateMany(serializeQueryBson(query), serializeUpdateBson(document), new UpdateOptions().upsert(
+                upsert));
         } else {
-            return mongoCollection.updateMany(serializeFields(query), serializeFields(document), new UpdateOptions().upsert(
-                    upsert));
+            return mongoCollection.updateMany(serializeQueryBson(query), serializeUpdateBson(document), new UpdateOptions().upsert(
+                upsert));
         }
 
     }
@@ -273,32 +277,27 @@ public class JacksonMongoCollection<T> {
     /**
      * Performs an update operation.
      *
-     * @param query
-     *            search query for old object to update
-     * @param update
-     *            update with which to update <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
+     * @param query   search query for old object to update
+     * @param update  update with which to update <tt>query</tt>
+     * @param upsert  if the database should create the element if it does not exist
+     * @param concern the write concern
      * @return The UpdateResult
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult updateOne(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, WriteConcern concern) throws MongoException,
-            MongoWriteException, MongoWriteConcernException {
+        MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
-                    new UpdateOptions().upsert(
-                            upsert));
+            return mongoCollection.withWriteConcern(concern).updateOne(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry),
+                new UpdateOptions().upsert(
+                    upsert)
+            );
         } else {
-            return mongoCollection.updateOne(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
-                    new UpdateOptions().upsert(
-                            upsert));
+            return mongoCollection.updateOne(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry),
+                new UpdateOptions().upsert(
+                    upsert)
+            );
         }
 
     }
@@ -306,160 +305,156 @@ public class JacksonMongoCollection<T> {
     /**
      * Performs an update operation.
      *
-     * @param query
-     *            search query for old object to update
-     * @param update
-     *            update with which to update <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
+     * @param query   search query for old object to update
+     * @param update  update with which to update <tt>query</tt>
+     * @param upsert  if the database should create the element if it does not exist
+     * @param concern the write concern
      * @return The UpdateResult
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult updateMany(DBQuery.Query query, DBUpdate.Builder update, boolean upsert, WriteConcern concern) throws MongoException,
-            MongoWriteException, MongoWriteConcernException {
+        MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).updateMany(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
-                    new UpdateOptions().upsert(
-                            upsert));
+            return mongoCollection.withWriteConcern(concern).updateMany(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry),
+                new UpdateOptions().upsert(
+                    upsert)
+            );
         } else {
-            return mongoCollection.updateMany(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type), new UpdateOptions().upsert(
-                    upsert));
+            return mongoCollection.updateMany(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry), new UpdateOptions().upsert(
+                upsert));
         }
 
+    }
+
+    /**
+     * Performs an update operation.
+     *
+     * @param query  search query for old object to update
+     * @param update update with which to update <tt>query</tt>
+     * @param upsert if the database should create the element if it does not exist
+     * @return The UpdateResult
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
+     */
+    public UpdateResult updateOne(DBQuery.Query query, DBUpdate.Builder update, boolean upsert) throws MongoException,
+        MongoWriteException, MongoWriteConcernException {
+        return updateOne(query, update, upsert, WriteConcern.ACKNOWLEDGED);
+    }
+
+    /**
+     * Performs an update operation.
+     *
+     * @param query  search query for old object to update
+     * @param update update with which to update <tt>query</tt>
+     * @param upsert if the database should create the element if it does not exist
+     * @return The UpdateResult
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
+     */
+    public UpdateResult updateMany(DBQuery.Query query, DBUpdate.Builder update, boolean upsert) throws MongoException,
+        MongoWriteException, MongoWriteConcernException {
+        return updateOne(query, update, upsert, WriteConcern.ACKNOWLEDGED);
     }
 
     /**
      * Performs an update operation without upsert and default write concern.
      *
-     * @param query
-     *            search query for old object to update
-     * @param object
-     *            a document describing the update, which may not be null. The update to apply must include only update operators.
+     * @param query  search query for old object to update
+     * @param object a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public UpdateResult update(Document query, Document object)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
+    public UpdateResult update(Bson query, Bson object)
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
         return updateOne(query, object, false, null);
     }
 
     /**
      * Performs an update operation.
      *
-     * @param query
-     *            search query for old object to update
-     * @param update
-     *            update with which to update <tt>query</tt>
+     * @param query  search query for old object to update
+     * @param update update with which to update <tt>query</tt>
      * @return The update result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult update(DBQuery.Query query, DBUpdate.Builder update)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
         return this.updateOne(query, update, false, null);
     }
 
     /**
      * Performs an update operation.
      *
-     * @param _id
-     *            The id of the document to update
-     * @param update
-     *            update with which to update <tt>query</tt>
+     * @param _id    The id of the document to update
+     * @param update update with which to update <tt>query</tt>
      * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult updateById(Object _id, DBUpdate.Builder update)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
-        return this.update(createIdQuery(_id),
-                update.serializeAndGetAsDocument(objectMapper, type));
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return this.update(
+            createIdQuery(_id),
+            update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry)
+        );
     }
 
     /**
      * Update all matching records
      *
-     * @param query
-     *            search query for old object to update
-     * @param object
-     *            object with which to update <tt>query</tt>
+     * @param query  search query for old object to update
+     * @param object object with which to update <tt>query</tt>
      * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public UpdateResult updateMany(Document query, Document object)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
+    public UpdateResult updateMany(Bson query, Bson object)
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
         return updateMany(query, object, false, null);
     }
 
     /**
      * Update all matching records
      *
-     * @param query
-     *            search query for old object to update
-     * @param update
-     *            update with which to update <tt>query</tt>
+     * @param query  search query for old object to update
+     * @param update update with which to update <tt>query</tt>
      * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult updateMany(DBQuery.Query query, DBUpdate.Builder update) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
+        MongoWriteConcernException {
         return updateMany(query, update, false, null);
     }
 
     /**
      * Performs an update operation, replacing the entire document.
      *
-     * @param query
-     *            search query for old object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
+     * @param query   search query for old object to replace
+     * @param object  object with which to replace <tt>query</tt>
+     * @param upsert  if the database should create the element if it does not exist
+     * @param concern the write concern
      * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult replaceOne(DBQuery.Query query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
+        MongoWriteConcernException {
         if (concern != null) {
             return mongoCollection.withWriteConcern(concern).replaceOne(serializeQuery(query), object, new ReplaceOptions().upsert(
-                    upsert));
+                upsert));
         } else {
             return mongoCollection.replaceOne(serializeQuery(query), object, new ReplaceOptions().upsert(upsert));
         }
@@ -469,30 +464,22 @@ public class JacksonMongoCollection<T> {
     /**
      * Performs an update operation, replacing the entire document.
      *
-     * @param query
-     *            search query for old object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
-     * @param upsert
-     *            if the database should create the element if it does not exist
-     * @param concern
-     *            the write concern
+     * @param query   search query for old object to replace
+     * @param object  object with which to replace <tt>query</tt>
+     * @param upsert  if the database should create the element if it does not exist
+     * @param concern the write concern
      * @return The write result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public UpdateResult replaceOne(Document query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
-            MongoWriteConcernException {
-        query = serializeFields(query);
+    public UpdateResult replaceOne(Bson query, T object, boolean upsert, WriteConcern concern) throws MongoException, MongoWriteException,
+        MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).replaceOne(query, object, new ReplaceOptions().upsert(
-                    upsert));
+            return mongoCollection.withWriteConcern(concern).replaceOne(serializeQueryBson(query), object, new ReplaceOptions().upsert(
+                upsert));
         } else {
-            return mongoCollection.replaceOne(query, object, new ReplaceOptions().upsert(upsert));
+            return mongoCollection.replaceOne(serializeQueryBson(query), object, new ReplaceOptions().upsert(upsert));
         }
 
     }
@@ -500,37 +487,43 @@ public class JacksonMongoCollection<T> {
     /**
      * Performs an update operation, replacing the entire document.
      *
-     * @param query
-     *            search query for old object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
+     * @param query  search query for old object to replace
+     * @param object object with which to replace <tt>query</tt>
      * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult replaceOne(DBQuery.Query query, T object)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
         return replaceOne(query, object, false, null);
+    }
+
+    /**
+     * Performs an update operation, replacing the entire document.
+     *
+     * @param query  search query for old object to replace
+     * @param object object with which to replace <tt>query</tt>
+     * @param upsert whether or not to upset
+     * @return The result
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
+     */
+    public UpdateResult replaceOne(DBQuery.Query query, T object, Boolean upsert)
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return replaceOne(query, object, upsert, null);
     }
 
     /**
      * Performs an update operation, replacing the entire document, for the document with this _id.
      *
-     * @param _id
-     *            the _id of the object to replace
-     * @param object
-     *            object with which to replace <tt>query</tt>
+     * @param _id    the _id of the object to replace
+     * @param object object with which to replace <tt>query</tt>
      * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the update command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult replaceOneById(Object _id, T object) throws MongoException, MongoWriteException, MongoWriteConcernException {
         return replaceOne(createIdQuery(_id), object, false, null);
@@ -539,44 +532,33 @@ public class JacksonMongoCollection<T> {
     /**
      * Removes objects from the database collection.
      *
-     * @param query
-     *            the object that documents to be removed must match
-     * @param concern
-     *            WriteConcern for this operation
+     * @param query   the object that documents to be removed must match
+     * @param concern WriteConcern for this operation
      * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public DeleteResult remove(Document query, WriteConcern concern) throws MongoException, MongoWriteException, MongoWriteConcernException {
-        query = serializeFields(query);
+    public DeleteResult remove(Bson query, WriteConcern concern) throws MongoException, MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
-            return mongoCollection.withWriteConcern(concern).deleteMany(query);
+            return mongoCollection.withWriteConcern(concern).deleteMany(serializeQueryBson(query));
         } else {
-            return mongoCollection.deleteMany(query);
+            return mongoCollection.deleteMany(serializeQueryBson(query));
         }
     }
 
     /**
      * Removes objects from the database collection.
      *
-     * @param query
-     *            the query
-     * @param concern
-     *            WriteConcern for this operation
+     * @param query   the query
+     * @param concern WriteConcern for this operation
      * @return The result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public DeleteResult remove(DBQuery.Query query, WriteConcern concern)
-            throws MongoException, MongoWriteException, MongoWriteConcernException {
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
         if (concern != null) {
             return mongoCollection.withWriteConcern(concern).deleteMany(serializeQuery(query));
         } else {
@@ -587,32 +569,24 @@ public class JacksonMongoCollection<T> {
     /**
      * Removes objects from the database collection with the default WriteConcern
      *
-     * @param query
-     *            the query that documents to be removed must match
+     * @param query the query that documents to be removed must match
      * @return The Delete result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
-    public DeleteResult remove(Document query) throws MongoException, MongoWriteException, MongoWriteConcernException {
+    public DeleteResult remove(Bson query) throws MongoException, MongoWriteException, MongoWriteConcernException {
         return remove(query, null);
     }
 
     /**
      * Removes objects from the database collection with the default WriteConcern
      *
-     * @param query
-     *            the query
+     * @param query the query
      * @return The delete result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public DeleteResult remove(DBQuery.Query query) throws MongoException, MongoWriteException, MongoWriteConcernException {
         return remove(query, null);
@@ -621,15 +595,11 @@ public class JacksonMongoCollection<T> {
     /**
      * Removes object from the database collection with the default WriteConcern
      *
-     * @param _id
-     *            the id of the document to remove
+     * @param _id the id of the document to remove
      * @return The delete result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public DeleteResult removeById(Object _id) throws MongoException, MongoWriteException, MongoWriteConcernException {
         return remove(createIdQuery(_id));
@@ -638,96 +608,80 @@ public class JacksonMongoCollection<T> {
     /**
      * Finds the first document in the query and updates it.
      *
-     * @param query
-     *            query to match
-     * @param fields
-     *            fields to be returned
-     * @param sort
-     *            sort to apply before picking first document
-     * @param update
-     *            update to apply. This must contain only update operators
-     * @param returnNew
-     *            if true, the updated document is returned, otherwise the old
-     *            document is returned (or it would be lost forever)
-     * @param upsert
-     *            do upsert (insert if document not present)
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param update    update to apply. This must contain only update operators
+     * @param returnNew if true, the updated document is returned, otherwise the old
+     *                  document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(Document query, Document fields, Document sort, Document update, boolean returnNew, boolean upsert) {
-        return mongoCollection.findOneAndUpdate(serializeFields(query), update, new FindOneAndUpdateOptions().returnDocument(returnNew
-                ? ReturnDocument.AFTER
-                : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert));
+    public T findAndModify(Bson query, Bson fields, Bson sort, Bson update, boolean returnNew, boolean upsert) {
+        return mongoCollection.findOneAndUpdate(serializeQueryBson(query), update, new FindOneAndUpdateOptions().returnDocument(returnNew
+            ? ReturnDocument.AFTER
+            : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert));
     }
 
     /**
      * Finds the first document in the query and updates it.
      *
-     * @param query
-     *            query to match
-     * @param fields
-     *            fields to be returned
-     * @param sort
-     *            sort to apply before picking first document
-     * @param update
-     *            update to apply
-     * @param returnNew
-     *            if true, the updated document is returned, otherwise the old
-     *            document is returned (or it would be lost forever)
-     * @param upsert
-     *            do upsert (insert if document not present)
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old
+     *                  document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(DBQuery.Query query, Document fields, Document sort, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
-        return mongoCollection.findOneAndUpdate(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type),
-                new FindOneAndUpdateOptions().returnDocument(
-                        returnNew
-                                ? ReturnDocument.AFTER
-                                : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert));
+    public T findAndModify(DBQuery.Query query, Bson fields, Bson sort, DBUpdate.Builder update, boolean returnNew, boolean upsert) {
+        return mongoCollection.findOneAndUpdate(serializeQuery(query), update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry),
+            new FindOneAndUpdateOptions().returnDocument(
+                returnNew
+                    ? ReturnDocument.AFTER
+                    : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert)
+        );
     }
 
     /**
      * Finds the first document in the query and updates it.
      *
-     * @param query
-     *            query to match
-     * @param fields
-     *            fields to be returned
-     * @param sort
-     *            sort to apply before picking first document
-     * @param update
-     *            update to apply
-     * @param returnNew
-     *            if true, the updated document is returned, otherwise the old
-     *            document is returned (or it would be lost forever)
-     * @param upsert
-     *            do upsert (insert if document not present)
+     * @param query     query to match
+     * @param fields    fields to be returned
+     * @param sort      sort to apply before picking first document
+     * @param update    update to apply
+     * @param returnNew if true, the updated document is returned, otherwise the old
+     *                  document is returned (or it would be lost forever)
+     * @param upsert    do upsert (insert if document not present)
      * @return the object
      */
-    public T findAndModify(Document query, Document fields, Document sort, DBUpdate.Builder update, boolean returnNew,
-            boolean upsert) {
-        return mongoCollection.findOneAndUpdate(serializeFields(query), update.serializeAndGetAsDocument(objectMapper, type),
-                new FindOneAndUpdateOptions().returnDocument(
-                        returnNew
-                                ? ReturnDocument.AFTER
-                                : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert));
+    public T findAndModify(
+        Bson query, Bson fields, Bson sort, DBUpdate.Builder update, boolean returnNew,
+        boolean upsert
+    ) {
+        return mongoCollection.findOneAndUpdate(serializeQueryBson(query), update.serializeAndGetAsDocument(objectMapper, type, jacksonCodecRegistry),
+            new FindOneAndUpdateOptions().returnDocument(
+                returnNew
+                    ? ReturnDocument.AFTER
+                    : ReturnDocument.BEFORE).projection(fields).sort(sort).upsert(upsert)
+        );
     }
 
     /**
      * Finds a document and deletes it.
      *
-     * @param query
-     *            The query
+     * @param query The query
      * @return the removed object
      */
-    public T findAndRemove(Document query) {
-        return mongoCollection.findOneAndDelete(serializeFields(query));
+    public T findAndRemove(Bson query) {
+        return mongoCollection.findOneAndDelete(serializeQueryBson(query));
     }
 
     /**
      * Finds a document and deletes it.
      *
-     * @param query
-     *            The query
+     * @param query The query
      * @return the removed object
      */
     public T findAndRemove(DBQuery.Query query) {
@@ -737,12 +691,10 @@ public class JacksonMongoCollection<T> {
     /**
      * creates an index with default index options
      *
-     * @param keys
-     *            an object with a key set of the fields desired for the index
-     * @throws MongoException
-     *             If an error occurred
+     * @param keys an object with a key set of the fields desired for the index
+     * @throws MongoException If an error occurred
      */
-    public void createIndex(Document keys) throws MongoException {
+    public void createIndex(Bson keys) throws MongoException {
         mongoCollection.createIndex(keys);
     }
 
@@ -750,32 +702,25 @@ public class JacksonMongoCollection<T> {
      * Forces creation of an index on a set of fields, if one does not already
      * exist.
      *
-     * @param keys
-     *            The keys to index
-     * @param options
-     *            The options
-     * @throws MongoException
-     *             If an error occurred
+     * @param keys    The keys to index
+     * @param options The options
+     * @throws MongoException If an error occurred
      */
-    public void createIndex(Document keys, IndexOptions options)
-            throws MongoException {
+    public void createIndex(Bson keys, IndexOptions options)
+        throws MongoException {
         mongoCollection.createIndex(keys, options);
     }
-
 
 
     /**
      * Queries for an object in this collection.
      *
-     * @param query
-     *            object for which to search
+     * @param query object for which to search
      * @return an iterator over the results
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
-    public FindIterable<T> find(DBQuery.Query query)
-            throws MongoException {
-        return mongoCollection.find(serializeQuery(query));
+    public FindIterable<T> find(DBQuery.Query query) {
+        return new FindIterableDelegate<>(mongoCollection.find(serializeQuery(query)), objectMapper, type, jacksonCodecRegistry);
     }
 
     /**
@@ -790,18 +735,17 @@ public class JacksonMongoCollection<T> {
      * </p>
      *
      * <pre>
-	 * BasicDBObject keys = new BasicDBObject();
-	 * keys.put("x", 1);
-	 *
-	 * DBCursor cursor = collection.find(new BasicDBObject(), keys);
-	 * </pre>
+     * BasicDBObject keys = new BasicDBObject();
+     * keys.put("x", 1);
      *
-     * @param query
-     *            object for which to search
+     * DBCursor cursor = collection.find(new BasicDBObject(), keys);
+     * </pre>
+     *
+     * @param query object for which to search
      * @return a cursor to iterate over results
      */
-    public FindIterable<T> find(Document query) {
-        return mongoCollection.find(serializeFields(query));
+    public FindIterable<T> find(Bson query) {
+        return new FindIterableDelegate<>(mongoCollection.find(serializeQueryBson(query)), objectMapper, type, jacksonCodecRegistry);
     }
 
 
@@ -809,19 +753,17 @@ public class JacksonMongoCollection<T> {
      * Queries for all objects in this collection.
      *
      * @return a cursor which will iterate over every object
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public FindIterable<T> find() throws MongoException {
-        return mongoCollection.find();
+        return new FindIterableDelegate<>(mongoCollection.find(), objectMapper, type, jacksonCodecRegistry);
     }
 
     /**
      * Returns a single object from this collection.
      *
      * @return the object found, or <code>null</code> if the collection is empty
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public T findOne() throws MongoException {
         return findOne(new Document());
@@ -830,11 +772,9 @@ public class JacksonMongoCollection<T> {
     /**
      * Find an object by the given id
      *
-     * @param id
-     *            The id
+     * @param id The id
      * @return The object
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public T findOneById(Object id) throws MongoException {
         return findOne(createIdQuery(id));
@@ -843,19 +783,17 @@ public class JacksonMongoCollection<T> {
     /**
      * Returns a single object from this collection matching the query.
      *
-     * @param query
-     *            the query object
+     * @param query the query object
      * @return the object found, or <code>null</code> if no such object exists
      */
-    public T findOne(Document query) {
+    public T findOne(Bson query) {
         return this.find(query).first();
     }
 
     /**
      * Returns a single object from this collection matching the query.
      *
-     * @param query
-     *            the query object
+     * @param query the query object
      * @return the object found, or <code>null</code> if no such object exists
      */
     public T findOne(DBQuery.Query query) {
@@ -863,18 +801,36 @@ public class JacksonMongoCollection<T> {
     }
 
     /**
+     * Returns a single object from this collection matching the query.
+     *
+     * @param query   the query object
+     * @param project the projection
+     * @return the object found, or <code>null</code> if no such object exists
+     */
+    public T findOne(Bson query, Bson projection) {
+        return this.find(query).projection(projection).first();
+    }
+
+    /**
+     * Returns a single object from this collection matching the query.
+     *
+     * @param query   the query object
+     * @param project the projection
+     * @return the object found, or <code>null</code> if no such object exists
+     */
+    public T findOne(DBQuery.Query query, Bson projection) {
+        return this.find(query).projection(projection).first();
+    }
+
+    /**
      * Saves and object to this collection (does insert or update based on the object _id). Uses default write concern.
      *
-     * @param object
-     *            the object to save. will add <code>_id</code> field to object if
-     *            needed
+     * @param object the object to save. will add <code>_id</code> field to object if
+     *               needed
      * @return The UpdateResult result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult save(T object) throws MongoWriteException, MongoWriteConcernException, MongoException {
         return this.save(object, null);
@@ -884,39 +840,23 @@ public class JacksonMongoCollection<T> {
      * Saves an object to this collection (does insert or update based on the
      * object _id).
      *
-     * @param object
-     *            the <code>DBObject</code> to save
-     * @param concern
-     *            the write concern
+     * @param object  the <code>DBObject</code> to save
+     * @param concern the write concern
      * @return The UpdateResult result
-     * @throws MongoWriteException
-     *             If the write failed due some other failure specific to the delete command
-     * @throws MongoWriteConcernException
-     *             If the write failed due being unable to fulfill the write concern
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoWriteException        If the write failed due some other failure specific to the delete command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
      */
     public UpdateResult save(T object, WriteConcern concern) throws MongoWriteException, MongoWriteConcernException, MongoException {
-        Object _id;
-        @SuppressWarnings("unchecked")
-        final Codec<T> codec = getMongoCollection().getCodecRegistry().get((Class<T>) object.getClass());
-        if (codec instanceof CollectibleCodec) {
-            _id = JacksonCodec.extractValueEx(((CollectibleCodec<T>) codec).getDocumentId(object));
-        } else {
-            Document dbObject = convertToDocument(object);
-            _id = dbObject.get("_id");
-        }
-        if(_id == null) {
+        final JacksonCodec<T> codec = getValueClassCodec();
+        BsonValue _id = codec.getDocumentId(object);
+        if (_id == null || _id.isNull()) {
             if (concern == null) {
                 this.insert(object);
             } else {
                 this.insert(object, concern);
             }
-            if (codec instanceof CollectibleCodec) {
-                return UpdateResult.acknowledged(0, 1L, ((CollectibleCodec<T>)codec).getDocumentId(object));
-            } else {
-                return UpdateResult.acknowledged(0, 1L, null);
-            }
+            return UpdateResult.acknowledged(0, 1L, codec.getDocumentId(object));
         } else {
             return this.replaceOne(new Document("_id", _id), object, true, concern);
         }
@@ -925,8 +865,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Drops all indices from this collection
      *
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public void dropIndexes() throws MongoException {
         mongoCollection.dropIndexes();
@@ -935,10 +874,8 @@ public class JacksonMongoCollection<T> {
     /**
      * Drops an index from this collection
      *
-     * @param name
-     *            the index name
-     * @throws MongoException
-     *             If an error occurred
+     * @param name the index name
+     * @throws MongoException If an error occurred
      */
     public void dropIndex(String name) throws MongoException {
         mongoCollection.dropIndex(name);
@@ -947,8 +884,7 @@ public class JacksonMongoCollection<T> {
     /**
      * Drops (deletes) this collection. Use with care.
      *
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public void drop() throws MongoException {
         mongoCollection.drop();
@@ -958,8 +894,7 @@ public class JacksonMongoCollection<T> {
      * Gets a count of documents in the collection
      *
      * @return number of documents that match query
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public long count() throws MongoException {
         return getCount(new Document());
@@ -968,34 +903,29 @@ public class JacksonMongoCollection<T> {
     /**
      * Gets a count of documents which match the query
      *
-     * @param query
-     *            query to match
+     * @param query query to match
      * @return The count
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public long getCount(Document query) throws MongoException {
-        return mongoCollection.count(query);
+        return mongoCollection.countDocuments(query);
     }
 
     /**
      * Gets a count of documents which match the query
      *
-     * @param query
-     *            query to match
+     * @param query query to match
      * @return The count
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      */
     public long getCount(DBQuery.Query query) throws MongoException {
-        return mongoCollection.count(serializeQuery(query));
+        return mongoCollection.countDocuments(serializeQuery(query));
     }
 
     /**
      * find distinct values for a key
      *
-     * @param key
-     *            The key
+     * @param key The key
      * @return The results
      */
     public <ResultType> List<ResultType> distinct(String key, Class<ResultType> resultClass) {
@@ -1005,23 +935,21 @@ public class JacksonMongoCollection<T> {
     /**
      * find distinct values for a key
      *
-     * @param key
-     *            The key
-     * @param query
-     *            query to match
+     * @param key   The key
+     * @param query query to match
      * @return The results
      */
     public <ResultType> List<ResultType> distinct(String key, Document query, Class<ResultType> resultClass) {
-        return mongoCollection.distinct(key, serializeFields(query), resultClass).into(new ArrayList<>());
+        return mongoCollection.distinct(key, serializeQueryBson(query), resultClass).into(new ArrayList<>());
     }
 
 
     /**
      * Performs a map reduce operation
      *
-     * @param mapFunction - The map function to execute
+     * @param mapFunction    - The map function to execute
      * @param reduceFunction - The reduce function to execute
-     * @param resultClass - The class for the expected result type
+     * @param resultClass    - The class for the expected result type
      * @return MapReduceIterable of the resultClass
      * @throws MongoException
      */
@@ -1032,32 +960,29 @@ public class JacksonMongoCollection<T> {
     /**
      * Performs an aggregation pipeline against this collection.
      *
-     * @param pipeline - This should be a List of Bson Documents in the Mongo aggregation language.
+     * @param pipeline    - This should be a List of Bson Documents in the Mongo aggregation language.
      * @param resultClass - The class for the type that will be returned
      * @return an AggregateIterable with the result objects mapped to the type specified by the resultClass.
-     * @throws MongoException
-     *             If an error occurred
+     * @throws MongoException If an error occurred
      * @see <a
-     *      href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
+     * href="http://www.mongodb.org/display/DOCS/Aggregation">http://www.mongodb.org/display/DOCS/Aggregation</a>
      * @since 2.1.0
      */
 
     public <ResultType> AggregateIterable<ResultType> aggregate(List<? extends Bson> pipeline, Class<ResultType> resultClass)
-            throws MongoException {
-
+        throws MongoException {
         return mongoCollection.aggregate(pipeline, resultClass);
     }
 
     /**
-     *
-     * @param pipeline - This is a MongoJack Aggregation.Pipeline
+     * @param pipeline    - This is a MongoJack Aggregation.Pipeline
      * @param resultClass - Class of the results from the aggregationt.
      * @return an AggregationIterable with result object mapped to the type specified by the resultClass.
      * @throws MongoException
      */
     public <ResultType> AggregateIterable<ResultType> aggregate(Aggregation.Pipeline<?> pipeline, Class<ResultType> resultClass)
-            throws MongoException {
-        return mongoCollection.aggregate(serializePipeline(pipeline), resultClass);
+        throws MongoException {
+        return aggregate(serializePipeline(pipeline), resultClass);
     }
 
     /**
@@ -1065,8 +990,7 @@ public class JacksonMongoCollection<T> {
      * this collection. Overrides any setting of write concern at the DB level.
      * See the documentation for {@link WriteConcern} for more information.
      *
-     * @param concern
-     *            write concern to use
+     * @param concern write concern to use
      */
     public void setWriteConcern(WriteConcern concern) {
         this.mongoCollection = mongoCollection.withWriteConcern(concern);
@@ -1086,8 +1010,7 @@ public class JacksonMongoCollection<T> {
      * reads from this collection; overrides DB &amp; Connection level settings. See
      * the * documentation for {@link ReadPreference} for more information.
      *
-     * @param preference
-     *            Read Preference to use
+     * @param preference Read Preference to use
      */
     public void setReadPreference(ReadPreference preference) {
         this.mongoCollection = mongoCollection.withReadPreference(preference);
@@ -1109,11 +1032,18 @@ public class JacksonMongoCollection<T> {
      * @param _id
      * @return
      */
-    private Document createIdQuery(Object _id) {
-        return new Document("_id", _id);
+    private Bson createIdQuery(Object _id) {
+        if (_id instanceof BsonValue) {
+            return Filters.eq("_id", _id);
+        }
+        return Filters.eq("_id", JacksonCodec.constructIdValue(_id, JacksonCodec.getIdElement(valueClass)));
     }
 
-    private Document convertToDocument(T object) throws MongoException {
+    private JacksonCodec<T> getValueClassCodec() {
+        return (JacksonCodec<T>) jacksonCodecRegistry.get(valueClass);
+    }
+
+    private Bson convertToDocument(T object) throws MongoException {
         return convertToDocument(object, this.objectMapper, this.view);
     }
 
@@ -1121,12 +1051,12 @@ public class JacksonMongoCollection<T> {
      * This method provides a static way to convert an object into a Document. Defaults will be used for all parameters
      * left null.
      *
-     * @param object The object to convert
+     * @param object       The object to convert
      * @param objectMapper The specific Jackson ObjectMapper to use. (Default MongoJack ObjectMapper)
-     * @param view The Jackson View to use in serialization. (Default null)
+     * @param view         The Jackson View to use in serialization. (Default null)
      * @return
      */
-    public static <T> Document convertToDocument(T object, ObjectMapper objectMapper, Class<?> view) {
+    public static <T> Bson convertToDocument(T object, ObjectMapper objectMapper, Class<?> view) {
         if (object == null) {
             return null;
         }
@@ -1153,7 +1083,7 @@ public class JacksonMongoCollection<T> {
      * @return A converted instance of the object type of this class.
      * @throws MongoException
      */
-    private T convertFromDocument(Document document) throws MongoException {
+    private T convertFromDocument(Bson document) throws MongoException {
         return convertFromDocument(document, this.valueClass, this.objectMapper, this.view);
     }
 
@@ -1168,7 +1098,7 @@ public class JacksonMongoCollection<T> {
      * @return
      * @throws MongoException
      */
-    public static <S> S convertFromDocument(Document document, Class<S> clazz, ObjectMapper objectMapper, Class<?> view) throws MongoException {
+    public static <S> S convertFromDocument(Bson document, Class<S> clazz, ObjectMapper objectMapper, Class<?> view) throws MongoException {
         if (document == null) {
             return null;
         }
@@ -1181,7 +1111,7 @@ public class JacksonMongoCollection<T> {
         } catch (IOException e) {
             // This shouldn't happen
             throw new MongoException(
-                    "Unknown error occurred converting BSON to object", e);
+                "Unknown error occurred converting BSON to object", e);
         }
     }
 
@@ -1193,8 +1123,21 @@ public class JacksonMongoCollection<T> {
      * @param value The object to serialize the fields of
      * @return The DBObject, safe for use in a mongo query.
      */
-    public Document serializeFields(Document value) {
-        return DocumentSerializationUtils.serializeFields(objectMapper, value);
+    private Bson serializeQueryBson(Bson value) {
+        return DocumentSerializationUtils.serializeFilter(objectMapper, type, value, jacksonCodecRegistry);
+    }
+
+
+    /**
+     * Serialize the fields of the given object using the object mapper
+     * for this collection.
+     * This will convert POJOs to DBObjects where necessary.
+     *
+     * @param value The object to serialize the fields of
+     * @return The DBObject, safe for use in a mongo query.
+     */
+    private Bson serializeUpdateBson(Bson value) {
+        return DocumentSerializationUtils.serializeFields(objectMapper, value, jacksonCodecRegistry);
     }
 
 
@@ -1205,16 +1148,11 @@ public class JacksonMongoCollection<T> {
      * @param query The DBQuery.Query to serialize.
      * @return The query as a serialized DBObject ready to pass to mongo.
      */
-    public Document serializeQuery(DBQuery.Query query) {
+    public Bson serializeQuery(DBQuery.Query query) {
         return DocumentSerializationUtils.serializeQuery(objectMapper, type, query);
     }
 
-    Object serializeQueryCondition(String key, QueryCondition condition) {
-        return DocumentSerializationUtils.serializeQueryCondition(objectMapper, type,
-                key, condition);
-    }
-
-    public List<Document> serializePipeline(Aggregation.Pipeline<?> pipeline) {
+    public List<Bson> serializePipeline(Aggregation.Pipeline<?> pipeline) {
         return DocumentSerializationUtils.serializePipeline(objectMapper, type, pipeline);
     }
 
@@ -1223,13 +1161,136 @@ public class JacksonMongoCollection<T> {
     }
 
 
+    /**
+     * Get the type of this collection
+     *
+     * @return The type
+     */
+    public JacksonCollectionKey getCollectionKey() {
+        return new JacksonCollectionKey(getMongoCollection().getNamespace().getCollectionName(), getMongoCollection().getNamespace().getDatabaseName(), type);
+    }
+
+    /**
+     * Get a collection for loading a reference of the given type
+     *
+     * @param collectionName The name of the collection
+     * @param type           The type of the object
+     * @param keyType        the type of the id
+     * @return The collection
+     */
+    public <CT> JacksonMongoCollection<CT> getReferenceCollection(
+        String collectionName, String databaseName, JavaType type
+    ) {
+        return getReferenceCollection(new JacksonCollectionKey(collectionName,
+            databaseName, type
+        ));
+    }
+
+    /**
+     * Get a collection for loading a reference of the given type
+     *
+     * @param collectionKey The key for the collection
+     * @return The collection
+     */
+    @SuppressWarnings("unchecked")
+    public <CT> JacksonMongoCollection<CT> getReferenceCollection(
+        JacksonCollectionKey collectionKey
+    ) {
+        return (JacksonMongoCollection<CT>) referencedCollectionCache.computeIfAbsent(
+            collectionKey,
+            (k) -> {
+                com.mongodb.client.MongoCollection<CT> referencedCollection;
+                if (getMongoClient() == null) {
+                    throw new RuntimeException("Cannot resolve DBRefs if JacksonMongoCollection not instantiated with MongoDatabase");
+                }
+                if (collectionKey.getDbName() == null) {
+                    referencedCollection =
+                        (com.mongodb.client.MongoCollection<CT>) getMongoClient().getDatabase(getMongoCollection().getNamespace().getDatabaseName())
+                            .getCollection(collectionKey.getName(), collectionKey.getType().getRawClass());
+                } else {
+                    referencedCollection =
+                        (com.mongodb.client.MongoCollection<CT>) getMongoClient().getDatabase(collectionKey.getDbName())
+                            .getCollection(collectionKey.getName(), collectionKey.getType().getRawClass());
+                }
+                return new JacksonMongoCollection<>(
+                    referencedCollection,
+                    getMongoClient(),
+                    objectMapper,
+                    (Class<CT>) collectionKey.getType().getRawClass(),
+                    null
+                );
+            }
+        );
+    }
+
+    /**
+     * Fetch a collection of dbrefs. This is more efficient than fetching one at
+     * a time.
+     *
+     * @param collection the collection to fetch
+     * @param <R>        The type of the reference
+     * @return The collection of referenced objcets
+     */
+    public <R, RK> List<R> fetch(
+        Collection<DBRef<R, RK>> collection
+    ) {
+        return fetch(collection, null);
+    }
+
+    /**
+     * Fetch a collection of dbrefs. This is more efficient than fetching one at
+     * a time.
+     *
+     * @param collection the collection to fetch
+     * @param fields     The fields to retrieve for each of the documents
+     * @return The collection of referenced objcets
+     */
+    public <R, RK> List<R> fetch(
+        Collection<org.mongojack.DBRef<R, RK>> collection, DBObject fields
+    ) {
+
+        if (!collection.stream().allMatch((ref -> ref instanceof FetchableDBRef))) {
+            throw new IllegalArgumentException("There are non-fetchable DBRefs in the input collection");
+        }
+
+        return collection.stream()
+            .map(ref -> (FetchableDBRef<R, RK>) ref)
+            .collect(Collectors.groupingBy(FetchableDBRef::getCollectionKey))
+            .entrySet()
+            .stream()
+            .flatMap(
+                entry -> (Stream<R>) StreamSupport.stream(
+                    getReferenceCollection(entry.getKey()).find(Filters.in("_id", entry.getValue().stream().map(DBRef::getId).collect(Collectors.toList()))).spliterator(),
+                    false
+                )
+            )
+            .collect(Collectors.toList());
+    }
+
+    public MongoClient getMongoClient() {
+        return mongoClient;
+    }
+
+    public Class<T> getValueClass() {
+        return valueClass;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s<%s, %s>", getClass().getName(), getMongoCollection().getNamespace().getFullName(), valueClass.getName());
+    }
+
+    public static <CT> List<CT> resultsToList(FindIterable<CT> iterable) {
+        return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
+    }
 
     /**
      * Creates builder to build {@link JacksonMongoCollection}.
+     *
      * @return created builder
      */
     public static <T> JacksonMongoCollectionBuilder<T> builder() {
-        return new JacksonMongoCollectionBuilder<T>();
+        return new JacksonMongoCollectionBuilder<>();
     }
 
     /**
@@ -1238,8 +1299,10 @@ public class JacksonMongoCollection<T> {
     public static final class JacksonMongoCollectionBuilder<T> {
         private ObjectMapper objectMapper;
         private Class<?> view;
+        private MongoClient client;
 
-        private JacksonMongoCollectionBuilder() {}
+        private JacksonMongoCollectionBuilder() {
+        }
 
         public JacksonMongoCollectionBuilder<T> withObjectMapper(ObjectMapper objectMapper) {
             this.objectMapper = objectMapper;
@@ -1251,15 +1314,20 @@ public class JacksonMongoCollection<T> {
             return this;
         }
 
+        public JacksonMongoCollectionBuilder<T> withClient(MongoClient client) {
+            this.client = client;
+            return this;
+        }
+
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
          * @param mongoCollection - The MongoCollection that {@link JacksonMongoCollection} will wrap.
-         * @param valueType - The type that this should serialize and deserialize to.
+         * @param valueType       - The type that this should serialize and deserialize to.
          * @return A new instance of a JacksonMongoCollection
          */
-        public JacksonMongoCollection<T> build(com.mongodb.client.MongoCollection<?> mongoCollection, Class<T> valueType) {
-            return new JacksonMongoCollection<T>(mongoCollection, this.objectMapper, valueType, view);
+        public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<CT> mongoCollection, Class<CT> valueType) {
+            return new JacksonMongoCollection<>(mongoCollection, client, this.objectMapper, valueType, view);
         }
     }
 }

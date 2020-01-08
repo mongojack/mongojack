@@ -16,34 +16,33 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.List;
-
 import org.bson.types.ObjectId;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.*;
+
+@SuppressWarnings("ConstantConditions")
 public class TestObjectIdHandling extends MongoDBTestBase {
 
     @Test
     public void testObjectIdGenerated() {
+        
         ObjectIdId object = new ObjectIdId();
 
-        JacksonDBCollection<ObjectIdId, ObjectId> coll = getCollection(ObjectIdId.class, org.bson.types.ObjectId.class);
+        JacksonMongoCollection<ObjectIdId> coll = getCollection(ObjectIdId.class);
 
         coll.insert(object);
         org.bson.types.ObjectId id = coll.findOne()._id;
         ObjectIdId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
-        assertThat((org.bson.types.ObjectId) coll.getDbCollection().findOne().get("_id"), equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), equalTo(id));
     }
 
     @Test
@@ -52,13 +51,12 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
 
-        JacksonDBCollection<ObjectIdId, org.bson.types.ObjectId> coll = getCollection(ObjectIdId.class,
-                org.bson.types.ObjectId.class);
+        JacksonMongoCollection<ObjectIdId> coll = getCollection(ObjectIdId.class);
 
         coll.insert(object);
         ObjectIdId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
-        assertThat((org.bson.types.ObjectId) coll.getDbCollection().findOne().get("_id"), equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), equalTo(id));
     }
 
     public static class ObjectIdId {
@@ -69,7 +67,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     public void testObjectIdAnnotationOnStringGenerated() {
         StringId object = new StringId();
 
-        JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
+        JacksonMongoCollection<StringId> coll = getCollection(StringId.class);
 
         coll.insert(object);
         String id = coll.findOne()._id;
@@ -77,7 +75,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         assertTrue(org.bson.types.ObjectId.isValid(id));
         StringId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
-        assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
     }
 
     @Test
@@ -86,33 +84,33 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         String id = new org.bson.types.ObjectId().toString();
         object._id = id;
 
-        JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
+        JacksonMongoCollection<StringId> coll = getCollection(StringId.class);
 
         coll.insert(object);
         StringId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
-        assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
     }
 
     @Test
     public void testRemoveByIdWithObjectId() {
-        JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
+        JacksonMongoCollection<StringId> coll = getCollection(StringId.class);
         coll.insert(new StringId());
         String id = coll.findOne()._id;
         coll.insert(new StringId());
-        assertThat(coll.find().toArray(), hasSize(2));
+        assertThat(JacksonMongoCollection.resultsToList(coll.find()), hasSize(2));
         coll.removeById(id);
-        List<StringId> results = coll.find().toArray();
+        List<StringId> results = JacksonMongoCollection.resultsToList(coll.find());
         assertThat(results, hasSize(1));
         assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
     }
 
     @Test
     public void testFindOneByIdWithObjectId() {
-        JacksonDBCollection<StringId, String> coll = getCollection(StringId.class, String.class);
+        JacksonMongoCollection<StringId> coll = getCollection(StringId.class);
         StringId object = new StringId();
         coll.insert(object);
-        assertThat(coll.getDbCollection().findOne().get("_id"), instanceOf(org.bson.types.ObjectId.class));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(org.bson.types.ObjectId.class));
         String id = coll.findOne()._id;
         assertThat(id, instanceOf(String.class));
         StringId result = coll.findOneById(id);
@@ -128,7 +126,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     public void testObjectIdAnnotationOnByteArrayGenerated() {
         ByteArrayId object = new ByteArrayId();
 
-        JacksonDBCollection<ByteArrayId, byte[]> coll = getCollection(ByteArrayId.class, byte[].class);
+        JacksonMongoCollection<ByteArrayId> coll = getCollection(ByteArrayId.class);
 
         coll.insert(object);
         byte[] id = coll.findOne()._id;
@@ -144,7 +142,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         byte[] id = new org.bson.types.ObjectId().toByteArray();
         object._id = id;
 
-        JacksonDBCollection<ByteArrayId, byte[]> coll = getCollection(ByteArrayId.class, byte[].class);
+        JacksonMongoCollection<ByteArrayId> coll = getCollection(ByteArrayId.class);
 
         coll.insert(object);
         ByteArrayId result = coll.findOneById(id);
@@ -162,7 +160,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         object._id = "id";
         object.list = Arrays.asList(org.bson.types.ObjectId.get(), org.bson.types.ObjectId.get());
 
-        JacksonDBCollection<ObjectIdCollection, String> coll = getCollection(ObjectIdCollection.class, String.class);
+        JacksonMongoCollection<ObjectIdCollection> coll = getCollection(ObjectIdCollection.class);
         coll.insert(object);
 
         ObjectIdCollection result = coll.findOneById("id");
@@ -180,7 +178,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         object._id = "id";
         object.list = Arrays.asList(org.bson.types.ObjectId.get().toString(), org.bson.types.ObjectId.get().toString());
 
-        JacksonDBCollection<StringIdCollection, String> coll = getCollection(StringIdCollection.class, String.class);
+        JacksonMongoCollection<StringIdCollection> coll = getCollection(StringIdCollection.class);
         coll.insert(object);
 
         StringIdCollection result = coll.findOneById("id");
@@ -200,8 +198,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         object.list = Arrays.asList(org.bson.types.ObjectId.get().toByteArray(), org.bson.types.ObjectId.get()
                 .toByteArray());
 
-        JacksonDBCollection<ByteArrayIdCollection, String> coll = getCollection(ByteArrayIdCollection.class,
-                String.class);
+        JacksonMongoCollection<ByteArrayIdCollection> coll = getCollection(ByteArrayIdCollection.class);
         coll.insert(object);
 
         ByteArrayIdCollection result = coll.findOneById("id");
@@ -236,7 +233,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     public void testObjectIdAnnotationOnMethodsGenerated() {
         StringIdMethods object = new StringIdMethods();
 
-        JacksonDBCollection<StringIdMethods, String> coll = getCollection(StringIdMethods.class, String.class);
+        JacksonMongoCollection<StringIdMethods> coll = getCollection(StringIdMethods.class);
 
         coll.insert(object);
         String id = coll.findOne().getId();
@@ -244,7 +241,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         assertTrue(org.bson.types.ObjectId.isValid(id));
         StringIdMethods result = coll.findOneById(id);
         assertThat(result.getId(), equalTo(id));
-        assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
     }
 
     @Test
@@ -253,12 +250,12 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         String id = new org.bson.types.ObjectId().toString();
         object.setId(id);
 
-        JacksonDBCollection<StringIdMethods, String> coll = getCollection(StringIdMethods.class, String.class);
+        JacksonMongoCollection<StringIdMethods> coll = getCollection(StringIdMethods.class);
 
         coll.insert(object);
         StringIdMethods result = coll.findOneById(id);
         assertThat(result.getId(), equalTo(id));
-        assertThat(coll.getDbCollection().findOne().get("_id").toString(), equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
     }
 
     public static class ByteArrayIdMethods {
@@ -278,13 +275,13 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     @Test
     public void testByteArrayObjectIdMethods() {
         ByteArrayIdMethods object = new ByteArrayIdMethods();
-         JacksonDBCollection<ByteArrayIdMethods, byte[]> coll = getCollection(ByteArrayIdMethods.class, byte[].class);
+         JacksonMongoCollection<ByteArrayIdMethods> coll = getCollection(ByteArrayIdMethods.class);
          coll.insert(object);
         byte[] id = coll.findOne().getId();
         // Check that it's a valid object id
         new ObjectId(id);
         ByteArrayIdMethods result = coll.findOneById(id);
         assertThat(result.getId(), equalTo(id));
-        assertThat(((ObjectId)coll.getDbCollection().findOne().get("_id")).toByteArray(), equalTo(id));
+        assertThat(((ObjectId)getUnderlyingCollection(coll).find().first().get("_id")).toByteArray(), equalTo(id));
     }
 }

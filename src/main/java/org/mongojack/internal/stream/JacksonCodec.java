@@ -17,6 +17,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -53,7 +54,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
     @Override
     public T generateIdIfAbsentFromDocument(final T t) {
         if (!documentHasId(t)) {
-            getWriter(t).accept(new BsonObjectId());
+            getIdWriter(t).accept(new BsonObjectId());
         }
         return t;
     }
@@ -66,10 +67,10 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
 
     @Override
     public BsonValue getDocumentId(final T t) {
-        return getReader(t).get();
+        return getIdReader(t).get();
     }
 
-    private Supplier<BsonValue> getReader(final T t) {
+    private Supplier<BsonValue> getIdReader(final T t) {
         final Class<?> documentClass = t.getClass();
         final Optional<Method> maybeIdGetter = getIdGetter(documentClass);
         if (maybeIdGetter.isPresent()) {
@@ -77,7 +78,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
             getter.setAccessible(true);
             return () -> {
                 try {
-                    return constructValue(getter.invoke(t));
+                    return constructIdValue(getter.invoke(t), maybeIdGetter);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return BsonNull.VALUE;
@@ -90,7 +91,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
                 field.setAccessible(true);
                 return () -> {
                     try {
-                        return constructValue(field.get(t));
+                        return constructIdValue(field.get(t), maybeField);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return BsonNull.VALUE;
@@ -102,7 +103,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         }
     }
 
-    private Consumer<BsonObjectId> getWriter(final T t) {
+    private Consumer<BsonObjectId> getIdWriter(final T t) {
         final Class<?> documentClass = t.getClass();
         final Optional<Method> maybeSetter = getIdSetter(documentClass);
         if (maybeSetter.isPresent()) {
@@ -111,7 +112,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
             return (value) -> {
                 try {
                     if (value != null) {
-                        setter.invoke(t, extractValue(value, setter.getParameterTypes()[0]));
+                        setter.invoke(t, extractIdValue(value, setter.getParameterTypes()[0]));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -124,7 +125,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
                 field.setAccessible(true);
                 return (value) -> {
                     try {
-                        field.set(t, extractValue(value, field.getType()));
+                        field.set(t, extractIdValue(value, field.getType()));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -136,7 +137,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         }
     }
 
-    private Optional<Field> getIdField(final Class<?> documentClass) {
+    private static Optional<Field> getIdField(final Class<?> documentClass) {
         Field[] fields = documentClass.getDeclaredFields();
         Optional<Field> maybeField = Arrays.stream(fields)
             .filter(field -> field.isAnnotationPresent(javax.persistence.Id.class) ||
@@ -154,7 +155,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return Optional.empty();
     }
 
-    private Optional<Method> getIdGetter(final Class<?> documentClass) {
+    private static Optional<Method> getIdGetter(final Class<?> documentClass) {
         Method[] methods = documentClass.getDeclaredMethods();
         Optional<Method> maybeGetter = Arrays.stream(methods)
             .filter(method -> method.getName().startsWith("get") &&
@@ -174,7 +175,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return Optional.empty();
     }
 
-    private Optional<Method> getIdSetter(final Class<?> documentClass) {
+    private static Optional<Method> getIdSetter(final Class<?> documentClass) {
         Method[] methods = documentClass.getDeclaredMethods();
         Optional<Method> maybeSetter = Arrays.stream(methods)
             .filter(method -> method.getName().startsWith("set") &&
@@ -194,36 +195,50 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         return Optional.empty();
     }
 
-    private Object extractValue(BsonObjectId value, Class<?> valueType) {
+    /**
+     * This is only used for GENERATING an object id, and since we are only interested in auto-generating ObjectIds, then we only have to
+     * deal with object ids here.
+     *
+     * @param value
+     * @param valueType
+     * @return
+     */
+    private static Object extractIdValue(BsonObjectId value, Class<?> valueType) {
         if (String.class.equals(valueType)) {
             return value.asObjectId().getValue().toHexString();
         } else if (ObjectId.class.equals(valueType)) {
             return value.asObjectId().getValue();
+        } else if (byte[].class.equals(valueType)) {
+            return value.asObjectId().getValue().toByteArray();
+        } else if (Byte[].class.equals(valueType)) {
+            final byte[] inputArray = value.asObjectId().getValue().toByteArray();
+            Byte[] outputArray = new Byte[inputArray.length];
+            for (int i = 0; i < inputArray.length; i++) {
+                outputArray[i] = inputArray[i];
+            }
+            return outputArray;
         }
         throw new IllegalArgumentException("Unsupported ID type: " + value.getClass());
     }
 
-    public static Object extractValueEx(BsonValue value) {
-        switch (value.getBsonType()) {
-            case DOUBLE:
-                return value.asDouble().getValue();
-            case STRING:
-                return value.asString().getValue();
-            case OBJECT_ID:
-                return value.asObjectId().getValue();
-            case INT32:
-                return value.asInt32().getValue();
-            case INT64:
-                return value.asInt64().getValue();
-            case DECIMAL128:
-                return value.asDecimal128().getValue();
-            case NULL:
-                return null;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public static BsonValue constructIdValue(Object value, Optional<? extends AnnotatedElement> element) {
+        if (element.isPresent() && element.get().isAnnotationPresent(org.mongojack.ObjectId.class)) {
+            if (value instanceof String) {
+                return new BsonObjectId(new ObjectId((String) value));
+            }
+            if (value instanceof byte[]) {
+                return new BsonObjectId(new ObjectId((byte[]) value));
+            }
+            if (value instanceof Byte[]) {
+                final Byte[] inputArray = (Byte[]) value;
+                byte[] outputArray = new byte[inputArray.length];
+                for (int i = 0; i < inputArray.length; i++) {
+                    outputArray[i] = inputArray[i];
+                }
+                return new BsonObjectId(new ObjectId(outputArray));
+            }
         }
-        throw new IllegalArgumentException("Unsupported ID type: " + value.getClass());
-    }
-
-    private BsonValue constructValue(Object value) {
         if (value == null) {
             return BsonNull.VALUE;
         } else if (value instanceof Double) {
@@ -239,7 +254,15 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
         } else if (value instanceof Decimal128) {
             return new BsonDecimal128((Decimal128) value);
         }
-        throw new IllegalArgumentException("Unsupported ID type: " + value.getClass());
+        throw new IllegalArgumentException(String.format("Unsupported ID type: %s", value.getClass()));
+    }
+
+    public static Optional<? extends AnnotatedElement> getIdElement(final Class<?> documentClass) {
+        final Optional<Method> maybeIdGetter = getIdGetter(documentClass);
+        if (maybeIdGetter.isPresent()) {
+            return maybeIdGetter;
+        }
+        return getIdField(documentClass);
     }
 
 }

@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -37,8 +40,8 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     private JacksonMongoCollection<MockObject> coll;
 
     @Before
-    public void setup() throws Exception {
-        coll = JacksonMongoCollection.<MockObject> builder().build(getMongoCollection("testJacksonMongoCollection"), MockObject.class);
+    public void setup() {
+        coll = JacksonMongoCollection.builder().build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class);
     }
 
     @Test
@@ -48,7 +51,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.insert(o1, o2, new MockObject("twenty", 20));
 
         List<MockObject> results = coll
-                .find(new Document("string", "ten")).into(new ArrayList<>());
+            .find(new Document("string", "ten")).into(new ArrayList<>());
         assertThat(results, hasSize(2));
         assertThat(results, contains(o1, o2));
     }
@@ -117,20 +120,23 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.insert(mockObject3);
 
         MockObject result1 = coll.findAndModify(DBQuery.is("_id", "id1"), null,
-                null, DBUpdate.set("integer", 20)
-                        .set("string", "twenty"), true, false);
+            null, DBUpdate.set("integer", 20)
+                .set("string", "twenty"), true, false
+        );
         assertThat(result1.integer, equalTo(20));
         assertThat(result1.string, equalTo("twenty"));
 
         MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null,
-                null, DBUpdate.set("integer", 30)
-                        .set("string", "thirty"), true, false);
+            null, DBUpdate.set("integer", 30)
+                .set("string", "thirty"), true, false
+        );
         assertThat(result2.integer, equalTo(30));
         assertThat(result2.string, equalTo("thirty"));
 
         MockObject result3 = coll.findAndModify(DBQuery.is("_id", "id3"), null,
-                null, DBUpdate.pushAll("simpleList", Arrays.asList("1", "2", "3")),
-                true, false);
+            null, DBUpdate.pushAll("simpleList", Arrays.asList("1", "2", "3")),
+            true, false
+        );
         assertThat(result3.simpleList, hasSize(5));
         assertThat(result3.simpleList, hasItems("1", "2", "3"));
 
@@ -143,10 +149,12 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     public void testReplaceOneByNonIdQuery() {
         coll.insert(new MockObject("id1", "ten", 10));
 
-        coll.replaceOne(DBQuery.is("string", "ten"),
-                new MockObject("id1", "twenty", 20),
-                /*upsert*/ false,
-                WriteConcern.W1);
+        coll.replaceOne(
+            DBQuery.is("string", "ten"),
+            new MockObject("id1", "twenty", 20),
+            /*upsert*/ false,
+            WriteConcern.W1
+        );
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
 
@@ -157,10 +165,12 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     public void testReplaceOneByUsesQueryNotId() {
         coll.insert(new MockObject("id1", "ten", 10));
 
-        coll.replaceOne(DBQuery.is("string", "ten"),
-                new MockObject(null, "twenty", 20),
-                /*upsert*/ false,
-                WriteConcern.W1);
+        coll.replaceOne(
+            DBQuery.is("string", "ten"),
+            new MockObject(null, "twenty", 20),
+            /*upsert*/ false,
+            WriteConcern.W1
+        );
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
 
@@ -169,10 +179,12 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
     @Test
     public void testReplaceOneUpsertsIfNoDocumentExistsByQueryAndUpsertTrue() {
-        coll.replaceOne(DBQuery.is("string", "ten"),
-                new MockObject(null, "twenty", 20),
-                /*upsert*/ true,
-                WriteConcern.W1);
+        coll.replaceOne(
+            DBQuery.is("string", "ten"),
+            new MockObject(null, "twenty", 20),
+            /*upsert*/ true,
+            WriteConcern.W1
+        );
 
         MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
 
@@ -181,10 +193,12 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
     @Test
     public void testReplaceOneDoesNotUpsertIfUpsertFalse() {
-        coll.replaceOne(DBQuery.is("string", "ten"),
-                new MockObject(null, "twenty", 20),
-                /*upsert*/ false,
-                WriteConcern.W1);
+        coll.replaceOne(
+            DBQuery.is("string", "ten"),
+            new MockObject(null, "twenty", 20),
+            /*upsert*/ false,
+            WriteConcern.W1
+        );
 
         MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
 
@@ -201,4 +215,21 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
     }
+
+    @Test
+    public void testQueryWithLimitedKeys() {
+        coll.insert(new MockObject("ten", 10));
+        coll.insert(new MockObject("ten", 100));
+        coll.insert(new MockObject("twenty", 20));
+
+        List<MockObject> results = StreamSupport.stream(coll.find(
+            new BasicDBObject("string", "ten")
+        ).projection(new BasicDBObject("string", "something not null")).spliterator(), false).collect(Collectors.toList());
+        assertThat(results, hasSize(2));
+        assertThat(results.get(0).integer, nullValue());
+        assertThat(results.get(0).string, equalTo("ten"));
+        assertThat(results.get(1).integer, nullValue());
+        assertThat(results.get(1).string, equalTo("ten"));
+    }
+
 }

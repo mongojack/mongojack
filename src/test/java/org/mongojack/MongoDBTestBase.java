@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,21 +16,22 @@
  */
 package org.mongojack;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.ConnectionString;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mongojack.testing.DbManager;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
-import com.mongodb.client.MongoDatabase;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * Base class for unit tests that run against MongoDB. Assumes there is a
@@ -39,35 +40,30 @@ import com.mongodb.client.MongoDatabase;
  */
 @RunWith(MongoDBTestCaseRunner.class)
 public abstract class MongoDBTestBase {
- 
+
     private static final Random rand = new Random();
     private static final String dbHostKey = "MONGOJACK_TESTDB_HOST";
     private static final Map<String, String> environment = System.getenv();
 
-    private boolean useStreamParser = true;
-    private boolean useStreamSerialiser = false;
-
     protected MongoClient mongo;
-    protected DB db;
-    protected MongoDatabase mongoDatabase;
+    protected MongoDatabase db;
     private Set<String> collections;
 
     @Before
-    public void connectToDb() throws Exception {
+    public void connectToDb() {
         if (environment.containsKey(dbHostKey)) {
-            mongo = new MongoClient(environment.get(dbHostKey));
+            mongo = MongoClients.create(new ConnectionString(String.format("mongodb://%s", environment.get(dbHostKey))));
         } else {
-            mongo = new MongoClient("localhost", DbManager.PORT);
+            mongo = MongoClients.create(new ConnectionString(String.format("mongodb://localhost:%d", DbManager.PORT)));
         }
 
         String testDatabaseName = "unittest";
-        db = mongo.getDB(testDatabaseName);
-        mongoDatabase = mongo.getDatabase(testDatabaseName);
-        collections = new HashSet<String>();
+        db = mongo.getDatabase(testDatabaseName);
+        collections = new HashSet<>();
     }
 
     @After
-    public void disconnectFromDb() throws Exception {
+    public void disconnectFromDb() {
         for (String collection : collections) {
             db.getCollection(collection).drop();
         }
@@ -77,29 +73,22 @@ public abstract class MongoDBTestBase {
     /**
      * Get a collection with the given name, and store it, so that it will be
      * dropped in clean up
-     * 
-     * @param name
-     *            The name of the collection
+     *
+     * @param name The name of the collection
      * @return The collection
      */
-    protected DBCollection getCollection(String name) {
+    protected <T> MongoCollection<T> getMongoCollection(String name, Class<T> documentClass) {
         collections.add(name);
-        return db.getCollection(name);
-    }
-
-    protected com.mongodb.client.MongoCollection<?> getMongoCollection(String name) {
-        collections.add(name);
-        com.mongodb.client.MongoCollection<?> collection = mongoDatabase.getCollection(name);
-        return collection;
+        return db.getCollection(name, documentClass);
     }
 
     /**
      * Get a collection with a random name. Should grant some degree of
      * isolation from tests running in parallel.
-     * 
+     *
      * @return The collection
      */
-    protected DBCollection getCollection() {
+    protected <T> MongoCollection<T> getMongoCollection(Class<T> documentClass) {
         StringBuilder name = new StringBuilder();
         while (name.length() < 8) {
             char letter = (char) rand.nextInt(26);
@@ -110,57 +99,57 @@ public abstract class MongoDBTestBase {
             }
             name.append(letter);
         }
-        return getCollection(name.toString());
+        return getMongoCollection(name.toString(), documentClass);
     }
 
-    protected <T, K> JacksonDBCollection<T, K> configure(
-            JacksonDBCollection<T, K> collection) {
-        if (useStreamParser) {
-            collection
-                    .enable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        } else {
-            collection
-                    .disable(JacksonDBCollection.Feature.USE_STREAM_DESERIALIZATION);
-        }
-        if (useStreamSerialiser) {
-            collection
-                    .enable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
-        } else {
-            collection
-                    .disable(JacksonDBCollection.Feature.USE_STREAM_SERIALIZATION);
-        }
+    protected <T> JacksonMongoCollection<T> configure(
+        JacksonMongoCollection<T> collection
+    ) {
         return collection;
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
-            Class<K> keyType) {
-        return configure(JacksonDBCollection.wrap(getCollection(), type,
-                keyType));
+    protected <T> JacksonMongoCollection<T> getCollection(Class<T> type) {
+        return configure(
+            JacksonMongoCollection.builder()
+                .withClient(mongo)
+                .build(getMongoCollection(type), type)
+        );
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
-            Class<K> keyType, Class<?> view) {
-        return configure(JacksonDBCollection.wrap(getCollection(), type,
-                keyType, view));
+    protected <T> JacksonMongoCollection<T> getCollectionWithView(Class<T> type, Class<?> view) {
+        return configure(
+            JacksonMongoCollection.builder()
+                .withClient(mongo)
+                .withView(view)
+                .build(getMongoCollection(type), type)
+        );
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
-            Class<K> keyType, String collectionName) {
-        return configure(JacksonDBCollection.wrap(
-                getCollection(collectionName), type, keyType));
+    protected <T> JacksonMongoCollection<T> getCollection(
+        Class<T> type,
+        String collectionName
+    ) {
+        return configure(
+            JacksonMongoCollection.builder()
+                .withClient(mongo)
+                .build(getMongoCollection(collectionName, type), type)
+        );
     }
 
-    protected <T, K> JacksonDBCollection<T, K> getCollection(Class<T> type,
-            Class<K> keyType, ObjectMapper mapper) {
-        return configure(JacksonDBCollection.wrap(getCollection(), type,
-                keyType, mapper));
+    protected <T> JacksonMongoCollection<T> getCollection(
+        Class<T> type,
+        ObjectMapper mapper
+    ) {
+        return configure(
+            JacksonMongoCollection.builder()
+                .withClient(mongo)
+                .withObjectMapper(mapper)
+                .build(getMongoCollection(type), type)
+        );
     }
 
-    public void setUseStreamParser(boolean useStreamParser) {
-        this.useStreamParser = useStreamParser;
+    protected MongoCollection<Document> getUnderlyingCollection(JacksonMongoCollection<?> coll) {
+        return getMongoCollection(coll.getName(), Document.class);
     }
 
-    public void setUseStreamSerialiser(boolean useStreamSerialiser) {
-        this.useStreamSerialiser = useStreamSerialiser;
-    }
 }

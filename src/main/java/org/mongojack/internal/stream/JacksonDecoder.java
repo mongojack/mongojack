@@ -9,6 +9,7 @@ import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.io.BasicOutputBuffer;
+import org.mongojack.JacksonMongoCollection;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,11 +20,13 @@ public class JacksonDecoder<T> implements Decoder<T> {
     private final Class<T> clazz;
     private final ObjectMapper objectMapper;
     private final Class<?> view;
+    private final JacksonMongoCollection<?> collection;
 
-    public JacksonDecoder(Class<T> clazz, Class<?> view, ObjectMapper objectMapper) {
+    public JacksonDecoder(Class<T> clazz, Class<?> view, ObjectMapper objectMapper, JacksonMongoCollection<?> collection) {
         this.clazz = clazz;
         this.objectMapper = objectMapper;
         this.view = view;
+        this.collection = collection;
     }
 
     private T decode(byte[] b) {
@@ -42,7 +45,7 @@ public class JacksonDecoder<T> implements Decoder<T> {
         JacksonDBObject<T> decoded = new JacksonDBObject<T>();
         try (DBDecoderBsonParser parser = new DBDecoderBsonParser(
                 new IOContext(new BufferRecycler(), in, false), 0, in, decoded,
-                null, objectMapper)) {
+                collection, objectMapper)) {
             return objectMapper.reader().forType(clazz).withView(view).readValue(parser);
         }
     }

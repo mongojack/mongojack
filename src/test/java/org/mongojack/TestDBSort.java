@@ -16,19 +16,20 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+
 public class TestDBSort extends MongoDBTestBase {
-    private JacksonDBCollection<MockObject, String> coll;
+
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
     public void setUp() {
-        coll = getCollection(MockObject.class, String.class);
+        coll = getCollection(MockObject.class);
         coll.insert(new MockObject("1", "b", 10));
         coll.insert(new MockObject("2", "a", 30));
         coll.insert(new MockObject("3", "a", 20));

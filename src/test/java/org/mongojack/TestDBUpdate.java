@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,68 +16,68 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
-import java.util.Arrays;
-import java.util.regex.Pattern;
-
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockEmbeddedObject;
 import org.mongojack.mock.MockObject;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.regex.Pattern;
+
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.junit.Assert.*;
 
 /**
  * Test a DBUpdate item
  */
 public class TestDBUpdate extends MongoDBTestBase {
-    private JacksonDBCollection<MockObject, String> coll;
+
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
-    public void setup() throws Exception {
-        coll = getCollection(MockObject.class, String.class);
+    public void setup() {
+        coll = getCollection(MockObject.class);
     }
 
     @Test
-    public void testIncByOne() throws Exception {
+    public void testIncByOne() {
         coll.insert(new MockObject("blah", "string", 10));
         coll.updateById("blah", DBUpdate.inc("integer"));
         assertThat(coll.findOneById("blah").integer, equalTo(11));
     }
 
     @Test
-    public void testInc() throws Exception {
+    public void testInc() {
         coll.insert(new MockObject("blah", "string", 10));
         coll.updateById("blah", DBUpdate.inc("integer", 2));
         assertThat(coll.findOneById("blah").integer, equalTo(12));
     }
 
     @Test
-    public void testSet() throws Exception {
+    public void testSet() {
         coll.insert(new MockObject("blah", "string", 10));
         coll.updateById("blah", DBUpdate.set("integer", 2));
         assertThat(coll.findOneById("blah").integer, equalTo(2));
     }
 
     @Test
-    public void testUnset() throws Exception {
+    public void testUnset() {
         coll.insert(new MockObject("blah", "string", 10));
         coll.updateById("blah", DBUpdate.unset("integer"));
         assertThat(coll.findOneById("blah").integer, nullValue());
     }
 
     @Test
-    public void testPush() throws Exception {
+    public void testPush() {
         MockObject toSave = new MockObject("blah", "string", 10);
-        toSave.simpleList = Arrays.asList("hello");
+        toSave.simpleList = Collections.singletonList("hello");
         coll.insert(toSave);
         coll.updateById("blah", DBUpdate.push("simpleList", "world"));
         MockObject updated = coll.findOneById("blah");
@@ -86,12 +86,14 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testPushAllList() throws Exception {
+    public void testPushAllList() {
         MockObject toSave = new MockObject("blah", "string", 10);
-        toSave.simpleList = Arrays.asList("hello");
+        toSave.simpleList = Collections.singletonList("hello");
         coll.insert(toSave);
-        coll.updateById("blah",
-                DBUpdate.pushAll("simpleList", Arrays.asList("world", "!")));
+        coll.updateById(
+            "blah",
+            DBUpdate.pushAll("simpleList", Arrays.asList("world", "!"))
+        );
         MockObject updated = coll.findOneById("blah");
         assertThat(updated.simpleList, hasSize(3));
         assertThat(updated.simpleList, hasItem("world"));
@@ -99,9 +101,9 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testPushAllVarArgs() throws Exception {
+    public void testPushAllVarArgs() {
         MockObject toSave = new MockObject("blah", "string", 10);
-        toSave.simpleList = Arrays.asList("hello");
+        toSave.simpleList = Collections.singletonList("hello");
         coll.insert(toSave);
         coll.updateById("blah", DBUpdate.pushAll("simpleList", "world", "!"));
         MockObject updated = coll.findOneById("blah");
@@ -111,9 +113,9 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testAddToSetSingle() throws Exception {
+    public void testAddToSetSingle() {
         MockObject toSave = new MockObject("blah", "string", 10);
-        toSave.simpleList = Arrays.asList("hello");
+        toSave.simpleList = Collections.singletonList("hello");
         coll.insert(toSave);
         coll.updateById("blah", DBUpdate.addToSet("simpleList", "world"));
         MockObject updated = coll.findOneById("blah");
@@ -127,21 +129,29 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testAddToSetList() throws Exception {
+    public void testAddToSetList() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
         coll.insert(toSave);
-        coll.updateById("blah",
-                DBUpdate.addToSet("simpleList", Arrays.asList("world", "!")));
+        coll.updateById(
+            "blah",
+            DBUpdate.addToSet("simpleList", Arrays.asList("world", "!"))
+        );
         MockObject updated = coll.findOneById("blah");
         assertThat(updated.simpleList, hasSize(3));
         assertThat(updated.simpleList, hasItem("!"));
     }
 
     @Test
-    public void testAddToSetListWithUpsert() throws Exception {
-        coll.update(DBQuery.is("_id", "blah"), DBUpdate.addToSet("simpleList",
-                Arrays.asList("hello", "world")), true, false);
+    public void testAddToSetListWithUpsert() {
+        coll.updateOne(
+            DBQuery.is("_id", "blah"),
+            DBUpdate.addToSet(
+                "simpleList",
+                Arrays.asList("hello", "world")
+            ),
+            true
+        );
         MockObject inserted = coll.findOneById("blah");
         assertThat(inserted.simpleList, hasSize(2));
         assertThat(inserted.simpleList, hasItem("hello"));
@@ -149,7 +159,7 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testAddToSetVarArgs() throws Exception {
+    public void testAddToSetVarArgs() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
         coll.insert(toSave);
@@ -160,7 +170,7 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testPopFirst() throws Exception {
+    public void testPopFirst() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
         coll.insert(toSave);
@@ -171,7 +181,7 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testPopLast() throws Exception {
+    public void testPopLast() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
         coll.insert(toSave);
@@ -182,7 +192,7 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testPull() throws Exception {
+    public void testPull() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
         coll.insert(toSave);
@@ -193,33 +203,38 @@ public class TestDBUpdate extends MongoDBTestBase {
     }
 
     @Test
-    public void testPullWithQuery() throws Exception {
+    public void testPullWithQuery() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world");
         coll.insert(toSave);
         coll.updateById(
-                "blah",
-                DBUpdate.pull("simpleList",
-                        new BasicDBObject("$regex", Pattern.compile("w??ld"))));
+            "blah",
+            DBUpdate.pull(
+                "simpleList",
+                new BasicDBObject("$regex", Pattern.compile("w??ld"))
+            )
+        );
         MockObject updated = coll.findOneById("blah");
         assertThat(updated.simpleList, hasSize(1));
         assertThat(updated.simpleList, hasItem("hello"));
     }
 
     @Test
-    public void testPullAllList() throws Exception {
+    public void testPullAllList() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world", "!");
         coll.insert(toSave);
-        coll.updateById("blah",
-                DBUpdate.pullAll("simpleList", Arrays.asList("hello", "!")));
+        coll.updateById(
+            "blah",
+            DBUpdate.pullAll("simpleList", Arrays.asList("hello", "!"))
+        );
         MockObject updated = coll.findOneById("blah");
         assertThat(updated.simpleList, hasSize(1));
         assertThat(updated.simpleList, hasItem("world"));
     }
 
     @Test
-    public void testPullAllVarArgs() throws Exception {
+    public void testPullAllVarArgs() {
         MockObject toSave = new MockObject("blah", "string", 10);
         toSave.simpleList = Arrays.asList("hello", "world", "!");
         coll.insert(toSave);
@@ -229,69 +244,83 @@ public class TestDBUpdate extends MongoDBTestBase {
         assertThat(updated.simpleList, hasItem("world"));
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
-    public void testRename() throws Exception {
+    public void testRename() {
         coll.insert(new MockObject("blah", "some string", 10));
         coll.updateById("blah", DBUpdate.rename("string", "something"));
-        DBObject object = coll.getDbCollection().findOne("blah");
+        Document object = db.getCollection(coll.getMongoCollection().getNamespace().getCollectionName()).find(Filters.eq("_id", "blah")).first();
         assertThat(object.get("string"), nullValue());
-        assertThat((String) object.get("something"), equalTo("some string"));
+        assertThat(object.get("something"), equalTo("some string"));
     }
 
     @Test
-    public void testBit() throws Exception {
+    public void testBit() {
         coll.insert(new MockObject("blah", "some string", 1 + 4 + 8));
         coll.updateById("blah", DBUpdate.bit("integer", "and", 4 + 8 + 16));
         assertThat(coll.findOneById("blah").integer, equalTo(4 + 8));
     }
 
     @Test
-    public void testBitTwoOperations() throws Exception {
+    public void testBitTwoOperations() {
         coll.insert(new MockObject("blah", "some string", 1 + 4 + 8));
-        coll.updateById("blah",
-                DBUpdate.bit("integer", "and", 4 + 8 + 16, "or", 32));
+        coll.updateById(
+            "blah",
+            DBUpdate.bit("integer", "and", 4 + 8 + 16, "or", 32)
+        );
         assertThat(coll.findOneById("blah").integer, equalTo(4 + 8 + 32));
     }
 
     @Test
-    public void testBitwiseAnd() throws Exception {
+    public void testBitwiseAnd() {
         coll.insert(new MockObject("blah", "some string", 1 + 4 + 8));
         coll.updateById("blah", DBUpdate.bitwiseAnd("integer", 4 + 8 + 16));
         assertThat(coll.findOneById("blah").integer, equalTo(4 + 8));
     }
 
     @Test
-    public void testBitwiseOr() throws Exception {
+    public void testBitwiseOr() {
         coll.insert(new MockObject("blah", "some string", 1 + 4 + 8));
         coll.updateById("blah", DBUpdate.bitwiseOr("integer", 4 + 8 + 16));
         assertThat(coll.findOneById("blah").integer, equalTo(1 + 4 + 8 + 16));
     }
 
     @Test
-    public void testObjectSerialisation() throws Exception {
-        coll.insert(new MockObject("blah", "some string", 10));
-        coll.updateById("blah",
-                DBUpdate.set("object", new MockEmbeddedObject("hello")));
-        assertThat(coll.findOneById("blah").object,
-                equalTo(new MockEmbeddedObject("hello")));
-    }
-
-    @Test
-    public void testObjectInListSerialisation() throws Exception {
+    public void testObjectSerialisation() {
         coll.insert(new MockObject("blah", "some string", 10));
         coll.updateById(
-                "blah",
-                DBUpdate.pushAll("complexList",
-                        Arrays.asList(new MockEmbeddedObject("hello"))));
-        assertThat(coll.findOneById("blah").complexList,
-                hasItem(new MockEmbeddedObject("hello")));
+            "blah",
+            DBUpdate.set("object", new MockEmbeddedObject("hello"))
+        );
+        assertThat(
+            coll.findOneById("blah").object,
+            equalTo(new MockEmbeddedObject("hello"))
+        );
     }
 
     @Test
-    public void testSameOperationTwice() throws Exception {
+    public void testObjectInListSerialisation() {
         coll.insert(new MockObject("blah", "some string", 10));
-        coll.updateById("blah",
-                DBUpdate.set("string", "other string").set("integer", 20));
+        coll.updateById(
+            "blah",
+            DBUpdate.pushAll(
+                "complexList",
+                Collections.singletonList(new MockEmbeddedObject("hello"))
+            )
+        );
+        assertThat(
+            coll.findOneById("blah").complexList,
+            hasItem(new MockEmbeddedObject("hello"))
+        );
+    }
+
+    @Test
+    public void testSameOperationTwice() {
+        coll.insert(new MockObject("blah", "some string", 10));
+        coll.updateById(
+            "blah",
+            DBUpdate.set("string", "other string").set("integer", 20)
+        );
         MockObject updated = coll.findOneById("blah");
         assertThat(updated.string, equalTo("other string"));
         assertThat(updated.integer, equalTo(20));

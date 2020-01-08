@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 Christopher Exell
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,11 @@
  */
 package org.mongojack;
 
-import com.mongodb.DBObject;
+import org.bson.conversions.Bson;
+import org.mongojack.DBProjection.ProjectionBuilder;
+import org.mongojack.DBQuery.Query;
+import org.mongojack.DBSort.SortBuilder;
+import org.mongojack.internal.query.QueryCondition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,27 +31,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.mongojack.DBProjection.ProjectionBuilder;
-import org.mongojack.DBQuery.Query;
-import org.mongojack.DBSort.SortBuilder;
-import org.mongojack.internal.query.QueryCondition;
-
 /**
  * A Generic Aggregation object that allows the aggregation operations,
  * and the return type of the AggregationResult to be specified.
- * 
+ *
  * @param <T> The type of results to be produced by the aggregation results.
- * 
  * @author Christopher Exell
  * @since 2.1.0
  */
 public class Aggregation<T> {
     private Class<T> resultType;
-    private DBObject initialOp;
-    private DBObject[] additionalOps;
+    private Bson initialOp;
+    private Bson[] additionalOps;
 
-    public Aggregation(Class<T> resultType, DBObject initialOp, DBObject... additionalOps)
-    {
+    public Aggregation(Class<T> resultType, Bson initialOp, Bson... additionalOps) {
         this.resultType = resultType;
         this.initialOp = initialOp;
         this.additionalOps = additionalOps;
@@ -57,16 +54,16 @@ public class Aggregation<T> {
         return resultType;
     }
 
-    public DBObject getInitialOp() {
+    public Bson getInitialOp() {
         return initialOp;
     }
 
-    public DBObject[] getAdditionalOps() {
+    public Bson[] getAdditionalOps() {
         return additionalOps;
     }
 
-    public List<DBObject> getAllOps() {
-        List<DBObject> allOps = new ArrayList<DBObject>();
+    public List<Bson> getAllOps() {
+        List<Bson> allOps = new ArrayList<>();
         allOps.add(initialOp);
         allOps.addAll(Arrays.asList(additionalOps));
         return allOps;
@@ -130,7 +127,9 @@ public class Aggregation<T> {
     }
 
     public static class Group implements Pipeline.Stage<Group.Accumulator> {
-        public enum Op { $addToSet, $avg, $first, $last, $max, $min, $push, $sum };
+        public enum Op {$addToSet, $avg, $first, $last, $max, $min, $push, $sum}
+
+        ;
 
         private static final Accumulator COUNT = sum(Expression.literal(1));
 
@@ -217,7 +216,9 @@ public class Aggregation<T> {
             return COUNT;
         }
 
-        /** Immutable pair of accumulator operation and expression. */
+        /**
+         * Immutable pair of accumulator operation and expression.
+         */
         public static class Accumulator {
             public final Op operator;
             public final Expression<?> expression;
@@ -400,7 +401,7 @@ public class Aggregation<T> {
             return new FieldPath<Object>(path);
         }
     }
-    
+
     public static class Out extends SimpleStage implements Pipeline.Stage<Void> {
         private final String collectionName;
 
@@ -415,12 +416,13 @@ public class Aggregation<T> {
 
     /**
      * A fluent Aggregation builder.
-     *
+     * <p>
      * Type parameter S is the type of value that can be passed to set(String, S), given current latest stage.
      */
     public static class Pipeline<S> {
         public static interface Stage<S> {
             Stage<S> set(String field, S value);
+
             Stage<S> set(Map<String, S> fields);
         }
 
@@ -503,7 +505,7 @@ public class Aggregation<T> {
         public Pipeline<Void> unwind(String... path) {
             return then(new Unwind(path));
         }
-        
+
         public Pipeline<Void> out(String collectionName) {
             return then(new Out(collectionName));
         }
@@ -516,7 +518,9 @@ public class Aggregation<T> {
         }
     }
 
-    /** Expression builder class. */
+    /**
+     * Expression builder class.
+     */
     public static abstract class Expression<T> {
 
         public static Expression<Object> path(String... path) {
@@ -556,7 +560,7 @@ public class Aggregation<T> {
         }
 
         // Boolean Operator Expressions
-        
+
         public static Expression<Boolean> and(Expression<?>... operands) {
             return new OperatorExpression<Boolean>("$and", operands);
         }
@@ -570,7 +574,7 @@ public class Aggregation<T> {
         }
 
         // Set Operator Expressions
-        
+
         public static Expression<Boolean> allElementsTrue(Expression<List<?>> set) {
             return new OperatorExpression<Boolean>("$allElementsTrue", set);
         }
@@ -600,7 +604,7 @@ public class Aggregation<T> {
         }
 
         // Comparison Operator Expressions
-        
+
         public static Expression<Integer> compareTo(Expression<?> value1, Expression<?> value2) {
             return new OperatorExpression<Integer>("$cmp", value1, value2);
         }
@@ -678,7 +682,7 @@ public class Aggregation<T> {
         public static Expression<Integer> size(Expression<List<?>> array) {
             return new OperatorExpression<Integer>("$size", array);
         }
-        
+
         public static <T> Expression<T> arrayElemAt(Expression<List<?>> expression, Expression<Integer> index) {
             return new OperatorExpression<T>("$arrayElemAt", expression, index);
         }
@@ -723,8 +727,10 @@ public class Aggregation<T> {
 
         // Conditional Operator Expressions
 
-        public static <T> Expression<T> cond(Expression<Boolean> condition,
-                Expression<? extends T> consequent, Expression<? extends T> alternative) {
+        public static <T> Expression<T> cond(
+            Expression<Boolean> condition,
+            Expression<? extends T> consequent, Expression<? extends T> alternative
+        ) {
             return new OperatorExpression<T>("$cond", condition, consequent, alternative);
         }
 

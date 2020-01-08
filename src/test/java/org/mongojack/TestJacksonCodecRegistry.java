@@ -16,31 +16,29 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
-
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.Document;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.mock.MockObject;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.TimeZone;
+
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.junit.Assert.*;
 
 public class TestJacksonCodecRegistry extends MongoDBTestBase {
     private com.mongodb.client.MongoCollection<MockObject> coll;
 
     @Before
-    public void setup() throws Exception {
-        com.mongodb.client.MongoCollection<?> collection = getMongoCollection("testCollection");
+    public void setup() {
+        com.mongodb.client.MongoCollection<?> collection = getMongoCollection("testCollection", Document.class);
         JacksonCodecRegistry jacksonCodecRegistry = JacksonCodecRegistry.withDefaultObjectMapper();
         jacksonCodecRegistry.addCodecForClass(MockObject.class);
         coll = collection.withDocumentClass(MockObject.class).withCodecRegistry(jacksonCodecRegistry);
@@ -62,7 +60,7 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
 
     @Test
     public void testCustomSerialization() {
-        long millis = 123456789l;
+        long millis = 123456789L;
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         calendar.setTimeInMillis(millis);
         MockObject o1 = new MockObject("1", "ten", 10);
@@ -103,6 +101,7 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
         assertThat(remaining, Matchers.not(contains(object)));
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testFindAndModify() {
         coll.insertOne(new MockObject("id1", "ten", 10));

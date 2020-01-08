@@ -16,7 +16,7 @@
  */
 package org.mongojack;
 
-import com.mongodb.DBObject;
+import org.bson.conversions.Bson;
 
 /**
  * A database reference object
@@ -26,17 +26,21 @@ import com.mongodb.DBObject;
  */
 public class DBRef<T, K> {
     private final K id;
+    private final Class<T> objectClass;
     private final String collectionName;
+    private final String databaseName;
 
     /**
      * Construct a new database reference with the given id and collection name
-     * 
-     * @param id The id of the database reference to construct
+     *  @param id The id of the database reference to construct
+     * @param objectClass
      * @param collectionName The name of the collection
      */
-    public DBRef(K id, String collectionName) {
+    public DBRef(K id, final Class<T> objectClass, String collectionName, String databaseName) {
         this.id = id;
+        this.objectClass = objectClass;
         this.collectionName = collectionName;
+        this.databaseName = databaseName;
     }
 
     /**
@@ -49,11 +53,13 @@ public class DBRef<T, K> {
      */
     public DBRef(K id, Class<T> type) throws MongoJsonMappingException {
         this.id = id;
+        this.objectClass = type;
         MongoCollection collection = type.getAnnotation(MongoCollection.class);
         if (collection == null) {
             throw new MongoJsonMappingException("Only types that have the @MongoCollection annotation on them can be used with this constructor");
         }
         this.collectionName = collection.name();
+        this.databaseName = null;
     }
 
     /**
@@ -65,6 +71,10 @@ public class DBRef<T, K> {
         return id;
     }
 
+    public Class<T> getObjectClass() {
+        return objectClass;
+    }
+
     /**
      * Get the name of the collection this object lives in
      * 
@@ -72,6 +82,10 @@ public class DBRef<T, K> {
      */
     public String getCollectionName() {
         return collectionName;
+    }
+
+    public String getDatabaseName() {
+        return databaseName;
     }
 
     /**
@@ -97,7 +111,7 @@ public class DBRef<T, K> {
      * @param fields The fields to fetch
      * @return If this DBRef was returned by the mapper, the referenced object, if it exists, or null
      */
-    public T fetch(DBObject fields) {
+    public T fetch(Bson fields) {
         return null;
     }
 }

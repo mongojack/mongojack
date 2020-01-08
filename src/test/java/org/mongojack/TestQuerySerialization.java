@@ -16,89 +16,77 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mongojack.DBQuery.Query;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.mongodb.DBCollection;
+import com.mongodb.client.model.Filters;
+import org.bson.Document;
+import org.junit.Before;
+import org.junit.Test;
+import org.mongojack.DBQuery.Query;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 public class TestQuerySerialization extends MongoDBTestBase {
 
-    private JacksonDBCollection<MockObject, String> coll;
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
     public void setUp() {
-        coll = getCollection(MockObject.class, String.class);
+        coll = getCollection(MockObject.class);
     }
 
     @Test
     public void testSimpleEquals() {
         coll.save(new MockObject());
         String id = coll.findOne().id;
-        // with DBCursor
-        assertNotNull(coll.find().is("_id", id).next());
-        // with DBQuery
         assertNotNull(coll.findOne(DBQuery.is("_id", id)));
+        assertNotNull(coll.findOne(Filters.eq("_id", id)));
+        assertNotNull(coll.find().filter(Filters.eq("_id", id)).iterator().next());
     }
 
     @Test
     public void testIn() {
         coll.save(new MockObject());
         String id = coll.findOne().id;
-        // with DBCursor
-        assertThat(
-                coll.find()
-                        .in("_id", id, new org.bson.types.ObjectId().toString())
-                        .toArray(), hasSize(1));
-        // with DBQuery
-        assertThat(
-                coll.find(DBQuery.in("_id", id, new org.bson.types.ObjectId().toString()))
-                        .toArray(), hasSize(1));
+        assertNotNull(coll.find(DBQuery.in("_id", id, new org.bson.types.ObjectId().toString())).first());
+        assertNotNull(coll.find(Filters.in("_id", id, new org.bson.types.ObjectId().toString())).first());
+        assertNotNull(coll.find().filter(Filters.in("_id", id, new org.bson.types.ObjectId().toString())).first());
     }
 
     @Test
     public void testIn_collectionOfStrings() {
-        DBCollection c1 = getCollection("blah_" + Math.round(Math.random() * 10000d));
-        JacksonDBCollection<MockObjectWithList, String> c2 = JacksonDBCollection.wrap(c1, MockObjectWithList.class, String.class);
-        List<String> x = new ArrayList<String>();
+        final JacksonMongoCollection<MockObjectWithList> c2 = getCollection(MockObjectWithList.class);
+        List<String> x = new ArrayList<>();
         x.add("a");
         x.add("b");
         Query q = DBQuery.in("simpleList", x);
         c2.find(q);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testLessThan() {
         MockObject o = new MockObject();
         o.i = 5;
         coll.save(o);
         // Ensure that the serializer actually worked
-        assertThat((Integer) coll.getDbCollection().findOne().get("i"),
-                equalTo(15));
-        // with DBCursor
-        assertThat(coll.find().lessThan("i", 12).toArray(), hasSize(1));
-        // with DBQuery
-        assertThat(coll.find(DBQuery.lessThan("i", 12)).toArray(), hasSize(1));
+        assertThat(getMongoCollection(coll.getName(), Document.class).find().first().getInteger("i"), equalTo(15));
+        assertNotNull(coll.find(DBQuery.lessThan("i", 12)).first());
+        assertNotNull(coll.find(Filters.lt("i", 12)).first());
+        assertNotNull(coll.find().filter(Filters.lt("i", 12)).first());
     }
 
     @Test
@@ -107,24 +95,20 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.i = 5;
         coll.save(o);
         // Ensure that the serializer actually worked
-        // with DBCursor
-        assertThat(
-                coll.find()
-                        .and(DBQuery.lessThan("i", 12),
-                                DBQuery.greaterThan("i", 4)).toArray(),
-                hasSize(1));
-        assertThat(
-                coll.find()
-                        .and(DBQuery.lessThan("i", 12),
-                                DBQuery.greaterThan("i", 9)).toArray(),
-                hasSize(0));
-        // with DBQuery
-        assertThat(
-            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 4))).toArray(),
-                hasSize(1));
-        assertThat(
-            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 9))).toArray(),
-                hasSize(0));
+        assertNotNull(
+            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 4))).first());
+        assertNull(
+            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 9))).first());
+        assertNotNull(
+            coll.find(Filters.and(Filters.lt("i", 12), Filters.gt("i", 4))).first());
+        assertNull(
+            coll.find(Filters.and(Filters.lt("i", 12), Filters.gt("i", 9))).first());
+        assertNotNull(
+            coll.find()
+                .filter(Filters.and(Filters.lt("i", 12), Filters.gt("i", 4))).first());
+        assertNull(
+            coll.find()
+                .filter(Filters.and(Filters.lt("i", 12), Filters.gt("i", 9))).first());
     }
 
     @Test
@@ -132,14 +116,14 @@ public class TestQuerySerialization extends MongoDBTestBase {
         MockObject o = new MockObject();
         MockObject o1 = new MockObject();
         o1.id = new org.bson.types.ObjectId().toString();
-        o.items = Arrays.asList(o1);
+        o.items = Collections.singletonList(o1);
         coll.save(o);
 
         // Ensure that the serializer actually worked
         // with DBCursor
-        assertThat(coll.find().all("items", o1).toArray(), hasSize(1));
-        // with DBQuery
-        assertThat(coll.find(DBQuery.all("items", o1)).toArray(), hasSize(1));
+        assertNotNull(coll.find(DBQuery.all("items", o1)).first());
+        assertNotNull(coll.find(Filters.all("items", o1)).first());
+        assertNotNull(coll.find().filter(Filters.all("items", o1)).first());
     }
 
     @Test
@@ -147,13 +131,12 @@ public class TestQuerySerialization extends MongoDBTestBase {
         MockObject o = new MockObject();
         MockObject o1 = new MockObject();
         o1.id = new org.bson.types.ObjectId().toString();
-        o.items = Arrays.asList(o1);
+        o.items = Collections.singletonList(o1);
         coll.save(o);
 
-        // with DBCursor
-        assertThat(coll.find().is("items._id", o1.id).toArray(), hasSize(1));
-        // with DBQuery
-        assertThat(coll.find(DBQuery.is("items._id", o1.id)).toArray(), hasSize(1));
+        assertNotNull(coll.find(DBQuery.is("items._id", o1.id)).first());
+        assertNotNull(coll.find(Filters.eq("items._id", o1.id)).first());
+        assertNotNull(coll.find().filter(Filters.eq("items._id", o1.id)).first());
     }
 
     @Test
@@ -161,15 +144,12 @@ public class TestQuerySerialization extends MongoDBTestBase {
         MockObject o = new MockObject();
         MockObject o1 = new MockObject();
         o1.id = new org.bson.types.ObjectId().toString();
-        o.items = Arrays.asList(o1);
+        o.items = Collections.singletonList(o1);
         coll.save(o);
 
-        // with DBCursor
-        assertThat(coll.find().is("items", Arrays.asList(o1)).toArray(),
-                hasSize(1));
-        // with DBQuery
-        assertThat(coll.find(DBQuery.is("items", Arrays.asList(o1))).toArray(),
-                hasSize(1));
+        assertNotNull(coll.find(DBQuery.is("items", Collections.singletonList(o1))).first());
+        assertNotNull(coll.find(Filters.eq("items", Collections.singletonList(o1))).first());
+        assertNotNull(coll.find().filter(Filters.eq("items", Collections.singletonList(o1))).first());
     }
 
     static class MockObject {
@@ -184,6 +164,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         public List<MockObject> items;
     }
 
+    @SuppressWarnings("unused")
     static class MockObjectWithList {
 
         @Id
@@ -212,8 +193,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
     static class PlusTenSerializer extends JsonSerializer<Integer> {
         @Override
         public void serialize(Integer value, JsonGenerator jgen,
-                SerializerProvider provider) throws IOException,
-                JsonProcessingException {
+                SerializerProvider provider) throws IOException {
             jgen.writeNumber(value + 10);
         }
     }
@@ -221,7 +201,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
     static class MinusTenDeserializer extends JsonDeserializer<Integer> {
         @Override
         public Integer deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
+                throws IOException {
             return jp.getValueAsInt() - 10;
         }
     }

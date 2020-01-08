@@ -18,50 +18,35 @@ package org.mongojack.internal;
 
 import com.fasterxml.jackson.databind.JavaType;
 
+import java.util.Objects;
+
 /**
  * A key for uniquely referencing a Jackson Collection, for use in HashMaps
  */
 public class JacksonCollectionKey {
     private final String name;
+    private final String dbName;
     private final JavaType type;
-    private final JavaType keyType;
 
-    public JacksonCollectionKey(String name, JavaType type, JavaType keyType) {
+    public JacksonCollectionKey(String name, final String dbName, JavaType type) {
         this.name = name;
         this.type = type;
-        this.keyType = keyType;
+        this.dbName = dbName;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        JacksonCollectionKey that = (JacksonCollectionKey) o;
-
-        if (keyType != null ? !keyType.equals(that.keyType) : that.keyType != null) {
-            return false;
-        }
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
-        if (type != null ? !type.equals(that.type) : that.type != null) {
-            return false;
-        }
-
-        return true;
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final JacksonCollectionKey that = (JacksonCollectionKey) o;
+        return Objects.equals(getName(), that.getName()) &&
+            Objects.equals(getDbName(), that.getDbName()) &&
+            Objects.equals(getType(), that.getType());
     }
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (type != null ? type.hashCode() : 0);
-        result = 31 * result + (keyType != null ? keyType.hashCode() : 0);
-        return result;
+        return Objects.hash(getName(), getDbName(), getType());
     }
 
     public String getName() {
@@ -72,7 +57,7 @@ public class JacksonCollectionKey {
         return type;
     }
 
-    public JavaType getKeyType() {
-        return keyType;
+    public String getDbName() {
+        return dbName;
     }
 }

@@ -4,7 +4,7 @@
 
   <groupId>org.mongojack</groupId>
   <artifactId>mongojack</artifactId>
-  <version>2.10.1-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
   <name>MongoJack</name>
@@ -19,8 +19,8 @@
   <dependencies>
     <dependency>
       <groupId>org.mongodb</groupId>
-      <artifactId>mongodb-driver-legacy</artifactId>
-      <version>3.11.0</version>
+      <artifactId>mongodb-driver-sync</artifactId>
+      <version>3.12.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

@@ -16,10 +16,10 @@
  */
 package org.mongojack.internal;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.mongojack.DBRef;
-import org.mongojack.JacksonDBCollection;
-
-import com.mongodb.DBObject;
+import org.mongojack.JacksonMongoCollection;
 
 /**
  * DBRef that can be fetched
@@ -28,11 +28,17 @@ import com.mongodb.DBObject;
  * @since 1.2
  */
 public class FetchableDBRef<T, K> extends DBRef<T, K> {
-    private final JacksonDBCollection<T, K> dbCollection;
+
+    private final JacksonMongoCollection<T> dbCollection;
     private T object;
 
-    public FetchableDBRef(K id, JacksonDBCollection<T, K> dbCollection) {
-        super(id, dbCollection.getName());
+    public FetchableDBRef(K id, JacksonMongoCollection<T> dbCollection) {
+        super(
+            id,
+            dbCollection.getValueClass(),
+            dbCollection.getMongoCollection().getNamespace().getCollectionName(),
+            dbCollection.getMongoCollection().getNamespace().getDatabaseName()
+        );
         this.dbCollection = dbCollection;
     }
 
@@ -45,13 +51,14 @@ public class FetchableDBRef<T, K> extends DBRef<T, K> {
     }
 
     @Override
-    public T fetch(DBObject fields) {
+    public T fetch(Bson fields) {
         // No caching, because otherwise we'd have to track which fields were
         // passed in
-        return dbCollection.findOneById(getId(), fields);
+        return dbCollection.find(new Document("_id", getId())).projection(fields).first();
     }
 
     public JacksonCollectionKey getCollectionKey() {
         return dbCollection.getCollectionKey();
     }
+
 }

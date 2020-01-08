@@ -16,17 +16,16 @@
  */
 package org.mongojack.internal;
 
-import java.io.IOException;
-
-import org.mongojack.DBRef;
-import org.mongojack.JacksonDBCollection;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import org.mongojack.DBRef;
+import org.mongojack.JacksonMongoCollection;
+
+import java.io.IOException;
 
 /**
  * Deserializer for DBRefs
@@ -55,9 +54,10 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
     public DBRef deserialize(JsonParser jp, DeserializationContext ctxt)
             throws IOException, JsonProcessingException {
         // First of all, make sure that we can get a copy of the DBCollection
-        if (jp instanceof JacksonDBCollectionProvider) {
+        if (jp instanceof JacksonMongoCollectionProvider) {
             K id = null;
             String collectionName = null;
+            String databaseName = null;
             JsonToken token = jp.getCurrentToken();
             if (token == JsonToken.VALUE_NULL) {
                 return null;
@@ -72,6 +72,7 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
                         id = (K) ((com.mongodb.DBRef) object).getId();
                     }
                     collectionName = ((com.mongodb.DBRef) object).getCollectionName();
+                    databaseName = ((com.mongodb.DBRef) object).getDatabaseName();
                 } else {
                     throw ctxt.instantiationException(DBRef.class,
                             "Don't know what to do with embedded object: "
@@ -88,6 +89,8 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
                         }
                     } else if (jp.getCurrentName().equals("$ref")) {
                         collectionName = jp.getText();
+                    } else if (jp.getCurrentName().equals("$db")) {
+                        databaseName = jp.getText();
                     } else {
                         // Ignore the rest
                     }
@@ -102,15 +105,13 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
                         "DBRef contains no collection name");
             }
 
-            JacksonDBCollection coll = ((JacksonDBCollectionProvider) jp)
-                    .getDBCollection();
-            JacksonDBCollection<T, K> refColl = coll.getReferenceCollection(
-                    collectionName, type, keyType);
+            JacksonMongoCollection coll = ((JacksonMongoCollectionProvider) jp).getDBCollection();
+            JacksonMongoCollection<T> refColl = coll.getReferenceCollection(collectionName, databaseName, type);
             return new FetchableDBRef<T, K>(id, refColl);
         } else {
             throw ctxt.instantiationException(DBRef.class,
                     "DBRef can only be deserialised by this deserializer if parser implements "
-                            + JacksonDBCollectionProvider.class.getName()
+                            + JacksonMongoCollectionProvider.class.getName()
                             + " parser is actually " + jp.getClass().getName());
         }
     }

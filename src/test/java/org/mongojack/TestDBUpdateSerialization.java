@@ -16,11 +16,14 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.mongojack.TestDBUpdateSerialization.NestedIdFieldWithDifferentType.NESTED_ID_FIELD_VALUE;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -29,24 +32,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import static org.hamcrest.core.IsEqual.*;
+import static org.hamcrest.core.IsNull.*;
+import static org.junit.Assert.*;
+import static org.mongojack.TestDBUpdateSerialization.NestedIdFieldWithDifferentType.*;
 
 public class TestDBUpdateSerialization extends MongoDBTestBase {
 
-    private JacksonDBCollection<MockObject, String> coll;
-    private JacksonDBCollection<NestedRepeatedAttributeName, String> coll2;
+    private JacksonMongoCollection<MockObject> coll;
+    private JacksonMongoCollection<NestedRepeatedAttributeName> coll2;
 
     @Before
     public void setUp() {
-        coll = getCollection(MockObject.class, String.class);
+        coll = getCollection(MockObject.class);
     }
 
     @Test
@@ -160,7 +158,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/98
     @Test
     public void testUpdateOfNestedRepeatedAttributeName() {
-        coll2 = getCollection(NestedRepeatedAttributeName.class, String.class);
+        coll2 = getCollection(NestedRepeatedAttributeName.class);
 
         Date d1 = new Date(10000L);
         Date d2 = new Date(20000L);
@@ -181,7 +179,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/127
     @Test
     public void testUpdateOfNestedIdFieldWithDifferentType() {
-        JacksonDBCollection<NestedIdFieldWithDifferentType, String> collection = getCollection(NestedIdFieldWithDifferentType.class, String.class);
+        JacksonMongoCollection<NestedIdFieldWithDifferentType> collection = getCollection(NestedIdFieldWithDifferentType.class);
         
         NestedIdFieldWithDifferentType original = new NestedIdFieldWithDifferentType();
         

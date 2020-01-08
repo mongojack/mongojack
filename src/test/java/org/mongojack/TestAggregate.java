@@ -15,64 +15,72 @@
  */
 package org.mongojack;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.regex.Pattern;
-
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import org.bson.conversions.Bson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectAggregationResult;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class TestAggregate extends MongoDBTestBase {
-    private JacksonDBCollection<MockObject, String> coll;
+    
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
-    public void setup() throws Exception {
-        coll = getCollection(MockObject.class, String.class);
+    public void setup() {
+        coll = getCollection(MockObject.class);
         coll.remove(new BasicDBObject());
     }
 
     @Test
     public void testAggregateSingleOpNothingInCollection() {
-        Aggregation<MockObject> aggregation = new Aggregation<MockObject>(MockObject.class,
-                new BasicDBObject("$match", new BasicDBObject("booleans", true)));
+        Aggregation<MockObject> aggregation = new Aggregation<>(
+            MockObject.class,
+            new BasicDBObject("$match", new BasicDBObject("booleans", true))
+        );
 
-        AggregationResult<MockObject> result = coll.aggregate(aggregation);
+        final List<MockObject> resultList = StreamSupport.stream(coll.aggregate(aggregation.getAllOps(), MockObject.class).spliterator(), false).collect(Collectors.toList());
 
-        Assert.assertEquals(0, result.results().size());
+        Assert.assertEquals(0, resultList.size());
     }
 
     @Test
     public void testAggregateSingleOpItemsInCollection() {
         coll.insert(new MockObject("string1", 1));
         coll.insert(new MockObject("string2", 2));
-        AggregationResult<MockObject> result =
-                coll.aggregate(new Aggregation<MockObject>(MockObject.class,
-                        new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*")))));
-        Assert.assertEquals(2, result.results().size());
+        final List<MockObject> resultList =
+            StreamSupport.stream(coll.aggregate(new Aggregation<>(
+                MockObject.class,
+                new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*")))
+            ).getAllOps(), MockObject.class).spliterator(), false).collect(Collectors.toList());
+        Assert.assertEquals(2, resultList.size());
     }
 
     @Test
     public void testAggregateMultipleOpsItemsInCollection() {
         coll.insert(new MockObject("string1", 1));
         coll.insert(new MockObject("string2", 2));
-        AggregationResult<MockObject> result =
-                coll.aggregate(new Aggregation<MockObject>(MockObject.class,
-                        new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile("string1")))));
-        Assert.assertEquals(1, result.results().size());
-        Assert.assertEquals(1, result.results().get(0).integer.intValue());
-        result =
-                coll.aggregate(new Aggregation<MockObject>(MockObject.class,
-                        new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*"))),
-                        new BasicDBObject("$match", new BasicDBObject("integer", new BasicDBObject("$gt", new Integer(1))))
-                        ));
-        Assert.assertEquals(1, result.results().size());
+        List<MockObject> resultList =
+            StreamSupport.stream(coll.aggregate(new Aggregation<>(MockObject.class,
+                        new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile("string1")))).getAllOps(), MockObject.class).spliterator(), false).collect(Collectors.toList());
+        Assert.assertEquals(1, resultList.size());
+        Assert.assertEquals(1, resultList.get(0).integer.intValue());
+        resultList =
+            StreamSupport.stream(coll.aggregate(new Aggregation<>(
+                MockObject.class,
+                new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*"))),
+                new BasicDBObject("$match", new BasicDBObject("integer", new BasicDBObject("$gt", new Integer(1))))
+            ).getAllOps(), MockObject.class).spliterator(), false).collect(Collectors.toList());
+        Assert.assertEquals(1, resultList.size());
     }
 
     @SuppressWarnings("unchecked")
@@ -106,21 +114,20 @@ public class TestAggregate extends MongoDBTestBase {
 
         // only get values where the distance is greater than 2
         // {$match : {distance : {$gt : 2}}})
-        DBObject match = new BasicDBObject("$match", new BasicDBObject("distance", new BasicDBObject("$gt", 2)));
+        Bson match = new BasicDBObject("$match", new BasicDBObject("distance", new BasicDBObject("$gt", 2)));
 
         // build the object that represents the pipeline
-        Aggregation<MockObjectAggregationResult> aggregation = new Aggregation<MockObjectAggregationResult>(MockObjectAggregationResult.class,
-                new BasicDBObject("$project", projection),
-                new BasicDBObject("$project", projection2),
-                match);
-
-        // run the pipeline
-        AggregationResult<MockObjectAggregationResult> aggregationResult = coll.aggregate(aggregation);
+        Aggregation<MockObjectAggregationResult> aggregation = new Aggregation<>(
+            MockObjectAggregationResult.class,
+            new BasicDBObject("$project", projection),
+            new BasicDBObject("$project", projection2),
+            match
+        );
 
         // verify that our pipeline returns the expected results
-        List<MockObjectAggregationResult> results = aggregationResult.results();
+        List<MockObjectAggregationResult> results = StreamSupport.stream(coll.aggregate(aggregation.getAllOps(), aggregation.getResultType()).spliterator(), false).collect(Collectors.toList());
         Assert.assertEquals(4, results.size());
-        HashMap<String, MockObjectAggregationResult> resultMap = new HashMap<String, MockObjectAggregationResult>(results.size());
+        HashMap<String, MockObjectAggregationResult> resultMap = new HashMap<>(results.size());
         for (MockObjectAggregationResult result : results)
         {
             Assert.assertTrue(result.distance > 2);

@@ -17,8 +17,7 @@ import org.mongojack.MongoJsonMappingException;
 
 import java.io.IOException;
 
-import static java.nio.ByteBuffer.wrap;
-import javax.annotation.Generated;
+import static java.nio.ByteBuffer.*;
 
 public class JacksonEncoder<T> implements Encoder<T> {
 
@@ -26,7 +25,6 @@ public class JacksonEncoder<T> implements Encoder<T> {
     private final Class<?> view;
     private final ObjectMapper objectMapper;
 
-    @Generated("SparkTools")
     public JacksonEncoder(Class<T> clazz, Class<?> view, ObjectMapper objectMapper) {
         this.clazz = clazz;
         this.view = view;
@@ -36,7 +34,7 @@ public class JacksonEncoder<T> implements Encoder<T> {
     private int writeObject(OutputBuffer buf, T object) {
         OutputBufferOutputStream stream = new OutputBufferOutputStream(buf);
         BsonGenerator generator = new DBEncoderBsonGenerator(
-                JsonGenerator.Feature.collectDefaults(), stream);
+            JsonGenerator.Feature.collectDefaults(), stream);
         try {
             objectMapper.writerWithView(view).writeValue(generator, object);
             // The generator buffers everything so that it can write the
