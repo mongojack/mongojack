@@ -31,22 +31,33 @@ import org.mongojack.internal.util.InitializationRequiredForTransformation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * A Generic Aggregation object that allows the aggregation operations,
  * and the return type of the AggregationResult to be specified.
+ * <p>
+ * The Pipeline is a List&lt;Stage&gt;, and Stage is a Bson which makes it compatible with the methods in the JacksonMongoCollection that accept
+ * Bson-list aggregate pipeline objects, and makes those methods interoperable with Mongo's internal Aggregates class.  But be warned
+ * that Pipeline.initialize has to be called before Stage.toBsonDocument, or exceptions will result; similarly the list operations shouldn't be called
+ * before initialize is called.  JacksonMongoCollection takes care of calling initialize for you.
+ * </p>
  *
  * @param <T> The type of results to be produced by the aggregation results.
  * @author Christopher Exell
  * @since 2.1.0
+ *
+ * @deprecated Use com.mongodb.client.model.Aggregates
  */
 @SuppressWarnings("unused")
+@Deprecated
 public class Aggregation<T> {
 
     public static Pipeline<Group.Accumulator> group(Expression<?> key, Map<String, Group.Accumulator> calculatedFields) {
@@ -542,6 +553,30 @@ public class Aggregation<T> {
             return stages();
         }
 
+        @Override
+        public Stage<Object> set(int index, Stage<Object> element) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public void add(int index, Stage<Object> element) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public Stage<Object> remove(int index) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public boolean addAll(int index, Collection<? extends Stage<Object>> c) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public void replaceAll(UnaryOperator<Stage<Object>> operator) {
+            throw new UnsupportedOperationException();
+        }
+        @Override
+        public void sort(Comparator<? super Stage<Object>> c) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     /**

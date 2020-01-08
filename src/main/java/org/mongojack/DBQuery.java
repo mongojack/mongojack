@@ -50,10 +50,18 @@ import java.util.regex.Pattern;
  * Caution needs to be taken when querying entries that are objectIds. The mapper is at this stage unaware whether a
  * field is stored as an ObjectId or not, so you must pass in any values that are stored as ObjectId as type
  * {@link org.bson.types.ObjectId}.
+ * <p>
+ * The Query is a Bson, which makes it compatible with the methods in the JacksonMongoCollection that accept
+ * Bson-query objects, and makes those methods interoperable with Mongo's internal Filters class.  But be warned
+ * that Query.initialize has to be called before Query.toBsonDocument, or exceptions will result.  JacksonMongoCollection takes care of calling initialize for you.
+ * </p>
  *
  * @author James Roper
  * @since 1.2
+ *
+ * @deprecated Use com.mongodb.client.model.Filters
  */
+@Deprecated
 public class DBQuery {
 
     // this was pulled from the original com.mongodb.QueryOperators class, which has been removed

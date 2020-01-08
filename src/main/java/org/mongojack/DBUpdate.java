@@ -38,10 +38,18 @@ import java.util.Map;
  * modifier operations. It also will do serialisation of values, however it
  * won't honour any custom serialisers specified on the fields that those values
  * are being set.
+ * <p>
+ * The Builder is a Bson, which makes it compatible with the methods in the JacksonMongoCollection that accept
+ * Bson-update objects, and makes those methods interoperable with Mongo's internal Updates class.  But be warned
+ * that Builder.initialize has to be called before Builder.toBsonDocument, or exceptions will result.  JacksonMongoCollection takes care of calling initialize for you.
+ * </p>
  *
  * @author James Roper
  * @since 1.1
+ *
+ * @deprecated Use com.mongodb.client.model.Updates
  */
+@Deprecated
 public class DBUpdate {
 
     /**
