@@ -44,6 +44,10 @@ public class FindIterableDelegate<TResult> implements FindIterable<TResult> {
 
     @Override
     public FindIterable<TResult> filter(final Bson filter) {
+        if (filter instanceof InitializationRequiredForTransformation) {
+            ((InitializationRequiredForTransformation) filter).initialize(objectMapper, type, codecRegistry);
+            return delegate.filter(filter);
+        }
         return delegate.filter(DocumentSerializationUtils.serializeFilter(objectMapper, type, filter, codecRegistry));
     }
 

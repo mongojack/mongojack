@@ -25,6 +25,7 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoClient;
@@ -164,7 +165,7 @@ public class JacksonMongoCollection<T> {
     public final void insert(T... objects) throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
         Collections.addAll(objectList, objects);
-        mongoCollection.insertMany(objectList);
+        insert(objectList);
     }
 
     /**
@@ -180,7 +181,7 @@ public class JacksonMongoCollection<T> {
         throws MongoException, MongoBulkWriteException {
         ArrayList<T> objectList = new ArrayList<>(objects.length);
         Collections.addAll(objectList, objects);
-        mongoCollection.withWriteConcern(concern).insertMany(objectList);
+        insert(objectList, concern);
     }
 
     /**
@@ -327,7 +328,10 @@ public class JacksonMongoCollection<T> {
      * @throws MongoWriteException        If the write failed due some other failure specific to the update command
      * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
      * @throws MongoException             If an error occurred
+     *
+     * @deprecated This always calls updateOne, use that instead.
      */
+    @Deprecated
     public UpdateResult update(Bson query, Bson object)
         throws MongoException, MongoWriteException, MongoWriteConcernException {
         return updateOne(query, object, false, null);
@@ -361,6 +365,23 @@ public class JacksonMongoCollection<T> {
     public UpdateResult updateMany(Bson query, Bson update)
         throws MongoException, MongoWriteException, MongoWriteConcernException {
         return updateMany(query, update, false, null);
+    }
+
+    /**
+     * Update all matching records
+     *
+     * @param query  search query for old update to update
+     * @param update update with which to update <tt>query</tt>
+     * @param upsert Upsert?
+     * @return The result
+     * @throws MongoWriteException        If the write failed due some other failure specific to the update command
+     * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
+     * @throws MongoException             If an error occurred
+     */
+    @SuppressWarnings("unused")
+    public UpdateResult updateMany(Bson query, Bson update, boolean upsert)
+        throws MongoException, MongoWriteException, MongoWriteConcernException {
+        return updateMany(query, update, upsert, null);
     }
 
     /**
@@ -762,8 +783,8 @@ public class JacksonMongoCollection<T> {
      * @return The results
      */
     @SuppressWarnings("unused")
-    public <ResultType> List<ResultType> distinct(String key, Class<ResultType> resultClass) {
-        return mongoCollection.distinct(key, resultClass).into(new ArrayList<>());
+    public <ResultType> DistinctIterable<ResultType> distinct(String key, Class<ResultType> resultClass) {
+        return mongoCollection.distinct(key, resultClass);
     }
 
     /**
@@ -774,8 +795,8 @@ public class JacksonMongoCollection<T> {
      * @return The results
      */
     @SuppressWarnings("unused")
-    public <ResultType> List<ResultType> distinct(String key, Bson query, Class<ResultType> resultClass) {
-        return mongoCollection.distinct(key, serializeQueryBson(query), resultClass).into(new ArrayList<>());
+    public <ResultType> DistinctIterable<ResultType> distinct(String key, Bson query, Class<ResultType> resultClass) {
+        return mongoCollection.distinct(key, serializeQueryBson(query), resultClass);
     }
 
     /**
