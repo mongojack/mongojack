@@ -44,10 +44,10 @@ import org.mongojack.internal.ObjectIdSerializer;
 import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.query.CollectionQueryCondition;
 import org.mongojack.internal.query.CompoundQueryCondition;
-import org.mongojack.internal.query.QueryCondition;
+import org.mongojack.QueryCondition;
 import org.mongojack.internal.query.SimpleQueryCondition;
 import org.mongojack.internal.update.MultiUpdateOperationValue;
-import org.mongojack.internal.update.UpdateOperationValue;
+import org.mongojack.UpdateOperationValue;
 
 import java.io.IOException;
 import java.math.BigDecimal;

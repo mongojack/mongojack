@@ -23,10 +23,7 @@ import org.bson.conversions.Bson;
 import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery.Query;
 import org.mongojack.DBSort.SortBuilder;
-import org.mongojack.internal.query.QueryCondition;
-import org.mongojack.internal.util.AbstractDelegateList;
 import org.mongojack.internal.util.DocumentSerializationUtils;
-import org.mongojack.internal.util.InitializationRequiredForTransformation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -448,7 +445,7 @@ public class Aggregation<T> {
      * <p>
      * Type parameter S is the type of value that can be passed to set(String, S), given current latest stage.
      */
-    public static class Pipeline<S> extends AbstractDelegateList<Stage<Object>> implements List<Stage<Object>>, InitializationRequiredForTransformation {
+    public static class Pipeline<S> extends AbstractListDecorator<Stage<Object>> implements List<Stage<Object>>, InitializationRequiredForTransformation {
 
         private final List<Stage<Object>> allStages;
 

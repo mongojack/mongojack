@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mongojack.internal.update;
+package org.mongojack;
 
 /**
  * A DB update operation

@@ -16,6 +16,8 @@
  */
 package org.mongojack.internal.query;
 
+import org.mongojack.QueryCondition;
+
 public class SimpleQueryCondition implements QueryCondition {
 
     private final Object value;

@@ -39,15 +39,12 @@ import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.mongojack.internal.JacksonCollectionKey;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.internal.util.DistinctIterableDecorator;
 import org.mongojack.internal.util.DocumentSerializationUtils;
 import org.mongojack.internal.util.FindIterableDecorator;
-import org.mongojack.internal.util.InitializationRequiredForTransformation;
 import org.mongojack.internal.util.MapReduceIterableDecorator;
-import org.mongojack.internal.util.MongoCollectionDecorator;
 
 import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;

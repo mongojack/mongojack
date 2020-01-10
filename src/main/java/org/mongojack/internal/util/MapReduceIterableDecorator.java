@@ -11,6 +11,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
+import org.mongojack.InitializationRequiredForTransformation;
 import org.mongojack.JacksonCodecRegistry;
 
 import java.util.Collection;

@@ -24,10 +24,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.mongojack.internal.query.CollectionQueryCondition;
 import org.mongojack.internal.query.CompoundQueryCondition;
-import org.mongojack.internal.query.QueryCondition;
 import org.mongojack.internal.query.SimpleQueryCondition;
 import org.mongojack.internal.util.DocumentSerializationUtils;
-import org.mongojack.internal.util.InitializationRequiredForTransformation;
 
 import java.util.ArrayList;
 import java.util.Arrays;

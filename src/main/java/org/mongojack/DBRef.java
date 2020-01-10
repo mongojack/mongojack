@@ -16,8 +16,6 @@
  */
 package org.mongojack;
 
-import org.mongojack.internal.JacksonCollectionKey;
-
 /**
  * A database reference object
  *

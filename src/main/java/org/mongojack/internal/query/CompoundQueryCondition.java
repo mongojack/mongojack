@@ -17,6 +17,7 @@
 package org.mongojack.internal.query;
 
 import org.mongojack.DBQuery;
+import org.mongojack.QueryCondition;
 
 public class CompoundQueryCondition implements QueryCondition {
 

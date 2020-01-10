@@ -25,9 +25,7 @@ import org.bson.conversions.Bson;
 import org.mongojack.internal.update.ComplexUpdateOperationValue;
 import org.mongojack.internal.update.MultiUpdateOperationValue;
 import org.mongojack.internal.update.SingleUpdateOperationValue;
-import org.mongojack.internal.update.UpdateOperationValue;
 import org.mongojack.internal.util.DocumentSerializationUtils;
-import org.mongojack.internal.util.InitializationRequiredForTransformation;
 
 import java.util.HashMap;
 import java.util.List;

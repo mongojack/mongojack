@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import org.bson.conversions.Bson;
-import org.mongojack.internal.JacksonCollectionKey;
 
 import java.util.ArrayList;
 import java.util.Collection;

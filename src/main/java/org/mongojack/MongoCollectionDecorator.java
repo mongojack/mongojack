@@ -1,4 +1,4 @@
-package org.mongojack.internal.util;
+package org.mongojack;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;

@@ -1,4 +1,4 @@
-package org.mongojack.internal.util;
+package org.mongojack;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-public abstract class AbstractDelegateList<E> implements List<E> {
+public abstract class AbstractListDecorator<E> implements List<E> {
 
     protected abstract List<E> delegate();
 
