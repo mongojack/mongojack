@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 /**
  * Wraps a MapReduceIterable so we can map the incoming filters.
  *
- * @param <TResult>
+ * @param <TResult> the type this iterable produces
  */
 public class MapReduceIterableDecorator<TResult> implements MapReduceIterable<TResult> {
 

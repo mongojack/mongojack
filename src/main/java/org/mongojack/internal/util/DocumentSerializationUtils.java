@@ -105,6 +105,7 @@ public class DocumentSerializationUtils {
      *
      * @param objectMapper The object mapper to use to do the serialization
      * @param object       The object to serialize the fields of
+     * @param registry     Codec registry
      * @return The Document, safe for serialization to MongoDB
      */
     public static Bson serializeFields(
@@ -331,6 +332,7 @@ public class DocumentSerializationUtils {
      *
      * @param objectMapper The object mapper to serialize it with
      * @param value        The value to serialize
+     * @param registry     The codec registry to be used for serialization
      * @return The serialized field. May return the same object if no
      * serialization was necessary.
      */

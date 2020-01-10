@@ -121,14 +121,6 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
 
     /**
      * Private.
-     *
-     * @param mongoClient
-     * @param objectMapper
-     * @param jacksonCodecRegistry
-     * @param view
-     * @param valueClass
-     * @param type
-     * @param mongoCollection
      */
     private JacksonMongoCollection(
         final ObjectMapper objectMapper,
@@ -149,7 +141,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     /**
      * A utility to get the DEFAULT_OBJECT_MAPPER which sets it lazily, so it's never constructed if we don't use it.
      *
-     * @return
+     * @return The default object mapper.
      */
     private static ObjectMapper getDefaultObjectMapper() {
         return DEFAULT_OBJECT_MAPPER.updateAndGet((current) -> {
@@ -161,12 +153,12 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     }
 
     /**
-     * Creates builder to build {@link JacksonMongoCollection}.
+     * Creates builder to build JacksonMongoCollection.
      *
      * @return created builder
      */
-    public static <T> JacksonMongoCollectionBuilder<T> builder() {
-        return new JacksonMongoCollectionBuilder<>();
+    public static JacksonMongoCollectionBuilder builder() {
+        return new JacksonMongoCollectionBuilder();
     }
 
     /**
@@ -192,8 +184,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     /**
      * Returns a single object from this collection matching the query.
      *
-     * @param query   the query object
-     * @param project the projection
+     * @param query      the query object
+     * @param projection the projection
      * @return the object found, or <code>null</code> if no such object exists
      */
     public TResult findOne(Bson query, Bson projection) {
@@ -215,8 +207,9 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
      * Creates a document query object for the _id field using the object as the _id. This object is expected to already
      * be in the correct format... Document, Long, String, etc...
      *
-     * @param _id
-     * @return
+     * @param id  An id to search for
+     * @param ids Other ids to search for
+     * @return A Bson query for the id or ids
      */
     public Bson createIdQuery(Object id, Object... ids) {
         if (ids.length == 0) {
@@ -266,7 +259,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     /**
      * Gets the DB name in which the underlying collection is stored
      *
-     * @return
+     * @return The name of the database in which this collection is being stored.
      */
     public String getDatabaseName() {
         return mongoCollection.getNamespace().getDatabaseName();
@@ -275,7 +268,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     /**
      * Gets the name of the underlying collection
      *
-     * @return
+     * @return the name of the collection
      */
     public String getName() {
         return mongoCollection.getNamespace().getCollectionName();
@@ -356,7 +349,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
      * Performs an update operation, replacing the entire document, for the document with this _id.
      *
      * @param _id    the _id of the object to replace
-     * @param object object with which to replace <tt>query</tt>
+     * @param object object with which to replace it
      * @return The result
      * @throws MongoWriteException        If the write failed due some other failure specific to the update command
      * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
@@ -435,6 +428,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     }
 
     /**
+     * Does a simple conversion (using toBsonDocument with this collection's CodecRegistry).
+     *
      * {@inheritDoc}
      */
     @Override
@@ -459,10 +454,12 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     }
 
     /**
+     * Does no real conversion, but it does initialize the pipeline correctly if it is one of the deprecated
+     * mongojack ones..
+     *
      * {@inheritDoc}
      *
      * @param pipeline a list of Bson documents making up an aggregation pipeline
-     * @return
      */
     @Override
     @SuppressWarnings("unchecked")
@@ -495,7 +492,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
      * Performs an update operation.
      *
      * @param _id    The id of the document to update
-     * @param update update with which to update <tt>query</tt>
+     * @param update update with which to update
      * @return The write result
      * @throws MongoWriteException        If the write failed due some other failure specific to the update command
      * @throws MongoWriteConcernException If the write failed due being unable to fulfill the write concern
@@ -571,7 +568,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     /**
      * Builder to build {@link JacksonMongoCollection}.
      */
-    public static final class JacksonMongoCollectionBuilder<T> {
+    public static final class JacksonMongoCollectionBuilder {
         private ObjectMapper objectMapper;
         private Class<?> view;
 
@@ -580,17 +577,22 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
 
         /**
          * Sets the object mapper for this collection.  Optional
+         *
+         * @param objectMapper The object mapper to use
+         * @return the builder
          */
-        public JacksonMongoCollectionBuilder<T> withObjectMapper(ObjectMapper objectMapper) {
+        public JacksonMongoCollectionBuilder withObjectMapper(ObjectMapper objectMapper) {
             this.objectMapper = objectMapper;
             return this;
         }
 
         /**
          * Set a view class for this collection.  Optional.
+         * @param view The jackson view class
+         * @return the builder
          */
         @SuppressWarnings("unused")
-        public JacksonMongoCollectionBuilder<T> withView(Class<?> view) {
+        public JacksonMongoCollectionBuilder withView(Class<?> view) {
             this.view = view;
             return this;
         }
@@ -614,7 +616,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          *
          * @param client       A client
          * @param databaseName Name of the database the collection is in
-         * @param valueType    The class of the value type
+         * @param valueType    The class of the value type.  Must be annotated with {@link org.mongojack.MongoCollection}.
          * @param <CT>         The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
@@ -625,8 +627,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
-         * @param client         A client
-         * @param databaseName   Name of the database the collection is in
+         * @param database         A client
          * @param collectionName Name of the collection itself
          * @param valueType      The class of the value type
          * @param <CT>           The value type
@@ -639,10 +640,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
-         * @param client         A client
-         * @param databaseName   Name of the database the collection is in
-         * @param collectionName Name of the collection itself
-         * @param valueType      The class of the value type
+         * @param database       A client
+         * @param valueType      The class of the value type.  Must be annotated with {@link org.mongojack.MongoCollection}.
          * @param <CT>           The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
@@ -657,10 +656,10 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
-         * @param mongoCollection
-         * @param valueType
-         * @param <CT>
-         * @return
+         * @param mongoCollection The underlying collection
+         * @param valueType       The value type of the collection
+         * @param <CT>            The value type of the collection
+         * @return                A constructed collection
          */
         public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<CT> mongoCollection, Class<CT> valueType) {
             return new JacksonMongoCollection<>(mongoCollection, this.objectMapper, valueType, view);

@@ -41,8 +41,7 @@ import java.util.regex.Pattern;
 /**
  * Builder for MongoDB queries.
  * <p>
- * The primary way in which this case is used is by calling the below methods on {@link DBCursor}, which is an instance
- * if the Builder. The static methods on this class may be used when passing in expressions to and(), or() etc.
+ * It can be used in place of manually constructed queries (new Document("_id", "FOO")), but is now deprecated.
  * <p>
  * Any values that are not basic objects (numbers, Strings, booleans, collections etc) that are passed in are attempted
  * to be serialised using Jackson.

@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 /**
  * Wraps a FindIterable so we can map the incoming filters.
  *
- * @param <TResult>
+ * @param <TResult> the type this iterable produces
  */
 public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
 

@@ -42,9 +42,10 @@ public class DbReferenceManager {
     /**
      * Get a collection for loading a reference of the given type
      *
-     * @param keyType        the type of the id
+     * @param databaseName   Name of the DB that holds the collection
      * @param collectionName The name of the collection
-     * @param type           The type of the object
+     * @param valueClass     The type of the values in the collection
+     * @param <CT>           The type of the values in the collection
      * @return The collection
      */
     @SuppressWarnings("unused")
@@ -58,6 +59,7 @@ public class DbReferenceManager {
      * Get a collection for loading a reference of the given type
      *
      * @param collectionKey The key for the collection
+     * @param <CT>          The type of values in the collection
      * @return The collection
      */
     @SuppressWarnings("unchecked")
@@ -72,33 +74,36 @@ public class DbReferenceManager {
                     .withObjectMapper(objectMapper)
                     .build(
                         (MongoCollection<CT>) mongoClient.getDatabase(databaseName).getCollection(k.getCollectionName()).withDocumentClass(k.getValueType()),
-                        (Class<CT>)k.getValueType()
+                        (Class<CT>) k.getValueType()
                     );
             }
         );
     }
 
+    /**
+     * Fetches the underlying value for a single DBRef.
+     *
+     * @param ref  The reference
+     * @param <R>  The type the  ref points to.
+     * @param <RK> The type of ID the ref points to
+     * @return A ref, or null if the underlying value is nto found
+     */
     public <R, RK> R fetch(DBRef<R, RK> ref) {
         return fetch(ref, null);
     }
 
+    /**
+     * Fetches the underlying value for a single DBRef.
+     *
+     * @param ref    The reference
+     * @param <R>    The type the  ref points to.
+     * @param <RK>   The type of ID the ref points to
+     * @param fields A Bson representing the projection to be used.
+     * @return A ref, or null if the underlying value is nto found
+     */
     public <R, RK> R fetch(DBRef<R, RK> ref, Bson fields) {
         final JacksonMongoCollection<R> collection = getReferenceCollection(ref.getCollectionKey());
         return collection.find(collection.createIdQuery(ref.getId())).projection(fields).first();
-    }
-
-    /**
-     * Fetch a collection of dbrefs. This is more efficient than fetching one at
-     * a time.
-     *
-     * @param collection the collection to fetch
-     * @param <R>        The type of the reference
-     * @return The collection of referenced objcets
-     */
-    public <R, RK> List<R> fetch(
-        Collection<DBRef<R, RK>> collection
-    ) {
-        return fetch(collection, null);
     }
 
     /**
@@ -106,7 +111,24 @@ public class DbReferenceManager {
      * a time.
      *
      * @param refs the refs to fetch
-     * @param fields     The fields to retrieve for each of the documents
+     * @param <R>  The type of the reference
+     * @param <RK> The identifier type
+     * @return The refs of referenced objcets
+     */
+    public <R, RK> List<R> fetch(
+        Collection<DBRef<R, RK>> refs
+    ) {
+        return fetch(refs, null);
+    }
+
+    /**
+     * Fetch a refs of dbrefs. This is more efficient than fetching one at
+     * a time.
+     *
+     * @param refs   the refs to fetch
+     * @param fields The fields to retrieve for each of the documents
+     * @param <R>    The type of the reference
+     * @param <RK>   The identifier type
      * @return The refs of referenced objects
      */
     @SuppressWarnings("unchecked")
@@ -117,7 +139,7 @@ public class DbReferenceManager {
         final Map<JacksonCollectionKey<?>, List<RK>> groupedIdentifiers = refs.stream()
             .collect(Collectors.groupingBy(org.mongojack.DBRef::getCollectionKey, Collectors.mapping(DBRef::getId, Collectors.toList())));
 
-        return (List<R>)groupedIdentifiers.entrySet().stream()
+        return (List<R>) groupedIdentifiers.entrySet().stream()
             .map((entry) -> {
                 final JacksonMongoCollection<?> collection = getReferenceCollection(entry.getKey());
                 return collection.find(collection.createIdInQuery(entry.getValue())).projection(fields).into(new ArrayList<>());
@@ -126,6 +148,11 @@ public class DbReferenceManager {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Register a collection so that it will be used (as opposed to an internally built one) when retrieving references.
+     *
+     * @param collection The collection to register
+     */
     @SuppressWarnings("unused")
     public void registerCollection(JacksonMongoCollection<?> collection) {
         referencedCollectionCache.put(collection.getCollectionKey(), collection);

@@ -34,8 +34,9 @@ public class DBRef<T, K> {
      * Construct a new database reference with the given id and collection name
      *
      * @param id             The id of the database reference to construct
-     * @param objectClass
+     * @param objectClass    The value class of the collection that the ref is pointing to
      * @param collectionName The name of the collection
+     * @param databaseName   The database name holding the collection (optional)
      */
     public DBRef(K id, final Class<T> objectClass, String collectionName, String databaseName) {
         this.id = id;
