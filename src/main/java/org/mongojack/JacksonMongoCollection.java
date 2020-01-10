@@ -1228,25 +1228,25 @@ public class JacksonMongoCollection<T> {
      * Creates builder to build {@link JacksonMongoCollection}.
      * @return created builder
      */
-    public static <T> JacksonMongoCollectionBuilder<T> builder() {
-        return new JacksonMongoCollectionBuilder<T>();
+    public static JacksonMongoCollectionBuilder builder() {
+        return new JacksonMongoCollectionBuilder();
     }
 
     /**
      * Builder to build {@link JacksonMongoCollection}.
      */
-    public static final class JacksonMongoCollectionBuilder<T> {
+    public static final class JacksonMongoCollectionBuilder {
         private ObjectMapper objectMapper;
         private Class<?> view;
 
         private JacksonMongoCollectionBuilder() {}
 
-        public JacksonMongoCollectionBuilder<T> withObjectMapper(ObjectMapper objectMapper) {
+        public JacksonMongoCollectionBuilder withObjectMapper(ObjectMapper objectMapper) {
             this.objectMapper = objectMapper;
             return this;
         }
 
-        public JacksonMongoCollectionBuilder<T> withView(Class<?> view) {
+        public JacksonMongoCollectionBuilder withView(Class<?> view) {
             this.view = view;
             return this;
         }
@@ -1258,8 +1258,8 @@ public class JacksonMongoCollection<T> {
          * @param valueType - The type that this should serialize and deserialize to.
          * @return A new instance of a JacksonMongoCollection
          */
-        public JacksonMongoCollection<T> build(com.mongodb.client.MongoCollection<?> mongoCollection, Class<T> valueType) {
-            return new JacksonMongoCollection<T>(mongoCollection, this.objectMapper, valueType, view);
+        public <E> JacksonMongoCollection<E> build(com.mongodb.client.MongoCollection<?> mongoCollection, Class<E> valueType) {
+            return new JacksonMongoCollection<>(mongoCollection, this.objectMapper, valueType, view);
         }
     }
 }
