@@ -39,6 +39,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
+import org.bson.codecs.configuration.*;
 import org.bson.conversions.Bson;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.internal.object.document.DocumentObjectGenerator;
@@ -48,8 +49,7 @@ import org.mongojack.internal.stream.JacksonCodec;
 import org.mongojack.internal.util.DocumentSerializationUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * A DBCollection that marshals/demarshals objects to/from Jackson annotated
@@ -80,11 +80,12 @@ public class JacksonMongoCollection<T> {
     private JacksonMongoCollection(
             com.mongodb.client.MongoCollection<?> mongoCollection,
             ObjectMapper objectMapper,
+            List<CodecRegistry> extraCodecRegistries,
             Class<T> valueClass,
             Class<?> view) {
         this.objectMapper = objectMapper == null ? DEFAULT_OBJECT_MAPPER : objectMapper;
         this.view = view;
-        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, this.view);
+        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, extraCodecRegistries, this.view);
         jacksonCodecRegistry.addCodecForClass(valueClass);
         this.mongoCollection = mongoCollection.withDocumentClass(valueClass).withCodecRegistry(jacksonCodecRegistry);;
         this.valueClass = valueClass;
@@ -1238,6 +1239,7 @@ public class JacksonMongoCollection<T> {
     public static final class JacksonMongoCollectionBuilder<T> {
         private ObjectMapper objectMapper;
         private Class<?> view;
+        private List<CodecRegistry> extraCodecRegistries;
 
         private JacksonMongoCollectionBuilder() {}
 
@@ -1251,6 +1253,16 @@ public class JacksonMongoCollection<T> {
             return this;
         }
 
+        public JacksonMongoCollectionBuilder<T> withExtraCodecRegistry(CodecRegistry extraCodecRegistry) {
+            if (extraCodecRegistry!=null) {
+                if (extraCodecRegistries == null) {
+                    extraCodecRegistries = new LinkedList<>();
+                }
+                extraCodecRegistries.add(extraCodecRegistry);
+            }
+            return this;
+        }
+
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
@@ -1259,7 +1271,7 @@ public class JacksonMongoCollection<T> {
          * @return A new instance of a JacksonMongoCollection
          */
         public JacksonMongoCollection<T> build(com.mongodb.client.MongoCollection<?> mongoCollection, Class<T> valueType) {
-            return new JacksonMongoCollection<T>(mongoCollection, this.objectMapper, valueType, view);
+            return new JacksonMongoCollection<T>(mongoCollection, this.objectMapper, extraCodecRegistries, valueType, view);
         }
     }
 }
