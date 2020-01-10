@@ -18,6 +18,7 @@ package org.mongojack;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
@@ -150,7 +151,7 @@ public class TestDBUpdate extends MongoDBTestBase {
                 "simpleList",
                 Arrays.asList("hello", "world")
             ),
-            true
+            new UpdateOptions().upsert(true)
         );
         MockObject inserted = coll.findOneById("blah");
         assertThat(inserted.simpleList, hasSize(2));

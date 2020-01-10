@@ -16,12 +16,14 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.Document;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.MockObject;
 
 import java.util.ArrayList;
@@ -39,7 +41,7 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
     @Before
     public void setup() {
         com.mongodb.client.MongoCollection<?> collection = getMongoCollection("testCollection", Document.class);
-        JacksonCodecRegistry jacksonCodecRegistry = JacksonCodecRegistry.withDefaultObjectMapper();
+        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(MongoJackModule.configure(new ObjectMapper()));
         jacksonCodecRegistry.addCodecForClass(MockObject.class);
         coll = collection.withDocumentClass(MockObject.class).withCodecRegistry(jacksonCodecRegistry);
     }

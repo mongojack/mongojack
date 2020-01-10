@@ -41,7 +41,7 @@ public class TestAggregate extends MongoDBTestBase {
     @Before
     public void setup() {
         coll = getCollection(MockObject.class);
-        coll.remove(new BasicDBObject());
+        coll.deleteMany(new BasicDBObject());
     }
 
     @Test

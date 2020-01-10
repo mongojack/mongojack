@@ -20,6 +20,7 @@ import org.bson.types.ObjectId;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -98,9 +99,9 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(new StringId());
         String id = coll.findOne()._id;
         coll.insert(new StringId());
-        assertThat(JacksonMongoCollection.resultsToList(coll.find()), hasSize(2));
+        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
         coll.removeById(id);
-        List<StringId> results = JacksonMongoCollection.resultsToList(coll.find());
+        List<StringId> results = coll.find().into(new ArrayList<>());
         assertThat(results, hasSize(1));
         assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
     }

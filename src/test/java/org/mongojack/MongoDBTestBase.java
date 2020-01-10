@@ -111,15 +111,14 @@ public abstract class MongoDBTestBase {
     protected <T> JacksonMongoCollection<T> getCollection(Class<T> type) {
         return configure(
             JacksonMongoCollection.builder()
-                .withClient(mongo)
                 .build(getMongoCollection(type), type)
         );
     }
 
+    @SuppressWarnings("SameParameterValue")
     protected <T> JacksonMongoCollection<T> getCollectionWithView(Class<T> type, Class<?> view) {
         return configure(
             JacksonMongoCollection.builder()
-                .withClient(mongo)
                 .withView(view)
                 .build(getMongoCollection(type), type)
         );
@@ -131,7 +130,6 @@ public abstract class MongoDBTestBase {
     ) {
         return configure(
             JacksonMongoCollection.builder()
-                .withClient(mongo)
                 .build(getMongoCollection(collectionName, type), type)
         );
     }
@@ -142,7 +140,6 @@ public abstract class MongoDBTestBase {
     ) {
         return configure(
             JacksonMongoCollection.builder()
-                .withClient(mongo)
                 .withObjectMapper(mapper)
                 .build(getMongoCollection(type), type)
         );

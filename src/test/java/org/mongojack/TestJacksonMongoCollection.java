@@ -18,6 +18,9 @@ package org.mongojack;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.hamcrest.Matchers;
@@ -87,7 +90,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         MockObject object = new MockObject("1", "twenty", 20);
         coll.insert(object);
 
-        coll.remove(new Document("string", "ten"));
+        coll.deleteMany(new Document("string", "ten"));
 
         List<MockObject> remaining = coll.find().into(new ArrayList<>());
         assertThat(remaining, Matchers.hasSize(1));
@@ -119,23 +122,28 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         mockObject3.simpleList.add("b");
         coll.insert(mockObject3);
 
-        MockObject result1 = coll.findAndModify(DBQuery.is("_id", "id1"), null,
-            null, DBUpdate.set("integer", 20)
-                .set("string", "twenty"), true, false
+        // Bson query, Bson fields, Bson sort, Bson update, boolean returnNew, boolean upsert
+
+        MockObject result1 = coll.findOneAndUpdate(
+            DBQuery.is("_id", "id1"),
+            DBUpdate.set("integer", 20).set("string", "twenty"),
+            new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false)
         );
         assertThat(result1.integer, equalTo(20));
         assertThat(result1.string, equalTo("twenty"));
 
-        MockObject result2 = coll.findAndModify(DBQuery.is("_id", "id2"), null,
-            null, DBUpdate.set("integer", 30)
-                .set("string", "thirty"), true, false
+        MockObject result2 = coll.findOneAndUpdate(
+            DBQuery.is("_id", "id2"),
+            DBUpdate.set("integer", 30).set("string", "thirty"),
+            new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false)
         );
         assertThat(result2.integer, equalTo(30));
         assertThat(result2.string, equalTo("thirty"));
 
-        MockObject result3 = coll.findAndModify(DBQuery.is("_id", "id3"), null,
-            null, DBUpdate.pushAll("simpleList", Arrays.asList("1", "2", "3")),
-            true, false
+        MockObject result3 = coll.findOneAndUpdate(
+            DBQuery.is("_id", "id3"),
+            DBUpdate.pushAll("simpleList", Arrays.asList("1", "2", "3")),
+            new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false)
         );
         assertThat(result3.simpleList, hasSize(5));
         assertThat(result3.simpleList, hasItems("1", "2", "3"));
@@ -149,11 +157,9 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     public void testReplaceOneByNonIdQuery() {
         coll.insert(new MockObject("id1", "ten", 10));
 
-        coll.replaceOne(
+        coll.withWriteConcern(WriteConcern.W1).replaceOne(
             DBQuery.is("string", "ten"),
-            new MockObject("id1", "twenty", 20),
-            /*upsert*/ false,
-            WriteConcern.W1
+            new MockObject("id1", "twenty", 20)
         );
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
@@ -165,11 +171,9 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     public void testReplaceOneByUsesQueryNotId() {
         coll.insert(new MockObject("id1", "ten", 10));
 
-        coll.replaceOne(
+        coll.withWriteConcern(WriteConcern.W1).replaceOne(
             DBQuery.is("string", "ten"),
-            new MockObject(null, "twenty", 20),
-            /*upsert*/ false,
-            WriteConcern.W1
+            new MockObject(null, "twenty", 20)
         );
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
@@ -182,8 +186,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.replaceOne(
             DBQuery.is("string", "ten"),
             new MockObject(null, "twenty", 20),
-            /*upsert*/ true,
-            WriteConcern.W1
+            new ReplaceOptions().upsert(true)
         );
 
         MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
@@ -195,9 +198,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
     public void testReplaceOneDoesNotUpsertIfUpsertFalse() {
         coll.replaceOne(
             DBQuery.is("string", "ten"),
-            new MockObject(null, "twenty", 20),
-            /*upsert*/ false,
-            WriteConcern.W1
+            new MockObject(null, "twenty", 20)
         );
 
         MockObject found = coll.findOne(DBQuery.is("string", "twenty"));

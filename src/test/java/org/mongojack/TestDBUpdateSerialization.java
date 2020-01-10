@@ -108,8 +108,10 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         c2.simple = "two";
         o.childList = Arrays.asList(c1, c2);
         coll.save(o);
-        coll.update(DBQuery.is("childList.simple", "one"),
-                DBUpdate.set("childList.$.simple", "foo"));
+        coll.updateMany(
+            DBQuery.is("childList.simple", "one"),
+            DBUpdate.set("childList.$.simple", "foo")
+        );
         assertThat(coll.findOneById("id").childList.get(0).simple,
                 equalTo("bar"));
         assertThat(coll.findOneById("id").childList.get(1).simple,
@@ -185,7 +187,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         
         collection.insert(original);
         String newValue = "new value";
-        collection.update(DBQuery.is("nested._id", NESTED_ID_FIELD_VALUE), DBUpdate.set("value", newValue));
+        collection.updateMany(DBQuery.is("nested._id", NESTED_ID_FIELD_VALUE), DBUpdate.set("value", newValue));
         
         NestedIdFieldWithDifferentType updated = collection.findOneById(original._id);
         assertThat(updated, notNullValue());

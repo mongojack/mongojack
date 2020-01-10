@@ -3,13 +3,11 @@ package org.mongojack.internal.stream;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.io.BasicOutputBuffer;
-import org.mongojack.JacksonMongoCollection;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -20,13 +18,11 @@ public class JacksonDecoder<T> implements Decoder<T> {
     private final Class<T> clazz;
     private final ObjectMapper objectMapper;
     private final Class<?> view;
-    private final JacksonMongoCollection<?> collection;
 
-    public JacksonDecoder(Class<T> clazz, Class<?> view, ObjectMapper objectMapper, JacksonMongoCollection<?> collection) {
+    public JacksonDecoder(Class<T> clazz, Class<?> view, ObjectMapper objectMapper) {
         this.clazz = clazz;
         this.objectMapper = objectMapper;
         this.view = view;
-        this.collection = collection;
     }
 
     private T decode(byte[] b) {
@@ -45,7 +41,7 @@ public class JacksonDecoder<T> implements Decoder<T> {
         JacksonDBObject<T> decoded = new JacksonDBObject<T>();
         try (DBDecoderBsonParser parser = new DBDecoderBsonParser(
                 new IOContext(new BufferRecycler(), in, false), 0, in, decoded,
-                collection, objectMapper)) {
+                objectMapper)) {
             return objectMapper.reader().forType(clazz).withView(view).readValue(parser);
         }
     }

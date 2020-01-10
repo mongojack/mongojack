@@ -24,8 +24,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.undercouch.bson4jackson.BsonParser;
 import de.undercouch.bson4jackson.types.ObjectId;
-import org.mongojack.JacksonMongoCollection;
-import org.mongojack.internal.JacksonMongoCollectionProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,21 +35,20 @@ import java.io.InputStream;
  * @author James Roper
  * @since 1.1.2
  */
-public class DBDecoderBsonParser extends BsonParser implements
-    JacksonMongoCollectionProvider {
+public class DBDecoderBsonParser extends BsonParser {
 
     private final JacksonDBObject<?> dbObject;
-    private final JacksonMongoCollection dbCollection;
 
     public DBDecoderBsonParser(
-        IOContext ctxt, int jsonFeatures,
-        InputStream in, JacksonDBObject<?> dbObject,
-        JacksonMongoCollection dbCollection, ObjectMapper objectMapper
+        IOContext ctxt,
+        int jsonFeatures,
+        InputStream in,
+        JacksonDBObject<?> dbObject,
+        ObjectMapper objectMapper
     ) {
         // Honor document length must be true
         super(ctxt, jsonFeatures, Feature.HONOR_DOCUMENT_LENGTH.getMask(), in);
         this.dbObject = dbObject;
-        this.dbCollection = dbCollection;
         setCodec(objectMapper);
     }
 
@@ -95,11 +92,6 @@ public class DBDecoderBsonParser extends BsonParser implements
             return true;
         }
         return false;
-    }
-
-    @Override
-    public JacksonMongoCollection getDBCollection() {
-        return dbCollection;
     }
 
 }

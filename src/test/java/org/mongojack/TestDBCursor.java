@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
@@ -63,7 +64,7 @@ public class TestDBCursor extends MongoDBTestBase {
         MockObject o2 = new MockObject("id2", "blah2", 20);
         MockObject o3 = new MockObject("id3", "blah3", 30);
         coll.insert(o1, o2, o3);
-        List<MockObject> results = JacksonMongoCollection.resultsToList(coll.find().sort(new BasicDBObject("integer", 1)));
+        List<MockObject> results = coll.find().sort(new BasicDBObject("integer", 1)).into(new ArrayList<>());
         assertThat(results, contains(o1, o2, o3));
         assertThat(results, hasSize(3));
     }

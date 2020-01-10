@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -27,6 +28,13 @@ import static org.hamcrest.core.IsNull.*;
 import static org.junit.Assert.*;
 
 public class TestDBRefHandling extends MongoDBTestBase {
+
+    private DbReferenceManager manager;
+
+    @Before
+    public void setUp() {
+        manager = new DbReferenceManager(mongo, db.getName());
+    }
 
     @Test
     public void simpleDbRefShouldBeSavedAsDbRef() {
@@ -43,7 +51,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(saved.ref.getCollectionName(), equalTo(refColl.getName()));
 
         // Try loading it
-        Referenced ref = saved.ref.fetch();
+        Referenced ref = manager.fetch(saved.ref);
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo("hello"));
         assertThat(ref.i, equalTo(10));
@@ -65,7 +73,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(saved.ref.getCollectionName(), equalTo(refColl.getName()));
 
         // Try loading it
-        ObjectIdReferenced ref = saved.ref.fetch();
+        ObjectIdReferenced ref = manager.fetch(saved.ref);
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo(refId));
         assertThat(ref.i, equalTo(10));
@@ -89,7 +97,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
         assertThat(saved.ref.getCollectionName(), equalTo("referenced"));
 
         // Try loading it
-        Referenced ref = saved.ref.fetch();
+        Referenced ref = manager.fetch(saved.ref);
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo("hello"));
         assertThat(ref.i, equalTo(10));
@@ -190,12 +198,12 @@ public class TestDBRefHandling extends MongoDBTestBase {
                 equalTo(refColl.getName()));
 
         // Try loading them
-        Referenced ref = saved.list.get(0).fetch();
+        Referenced ref = manager.fetch(saved.list.get(0));
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo("hello"));
         assertThat(ref.i, equalTo(10));
 
-        ref = saved.list.get(1).fetch();
+        ref = manager.fetch(saved.list.get(1));
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo("world"));
         assertThat(ref.i, equalTo(20));
@@ -219,7 +227,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
         coll.insert(owner);
 
         CollectionOwner saved = coll.findOneById("foo");
-        List<Referenced> fetched = coll.fetch(saved.list);
+        List<Referenced> fetched = manager.fetch(saved.list);
         assertThat(fetched, hasSize(2));
         assertThat(fetched.get(0)._id, equalTo("hello"));
         assertThat(fetched.get(0).i, equalTo(10));
@@ -261,12 +269,12 @@ public class TestDBRefHandling extends MongoDBTestBase {
                 equalTo(refColl.getName()));
 
         // Try loading them
-        ObjectIdReferenced ref = saved.list.get(0).fetch();
+        ObjectIdReferenced ref = manager.fetch(saved.list.get(0));
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo(refId1));
         assertThat(ref.i, equalTo(10));
 
-        ref = saved.list.get(1).fetch();
+        ref = manager.fetch(saved.list.get(1));
         assertThat(ref, notNullValue());
         assertThat(ref._id, equalTo(refId2));
         assertThat(ref.i, equalTo(20));

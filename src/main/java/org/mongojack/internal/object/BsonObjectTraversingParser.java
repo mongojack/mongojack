@@ -27,8 +27,6 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.mongodb.BasicDBObject;
 import org.bson.BSONObject;
-import org.mongojack.JacksonMongoCollection;
-import org.mongojack.internal.JacksonMongoCollectionProvider;
 import org.mongojack.internal.util.VersionUtils;
 
 import java.io.IOException;
@@ -47,10 +45,7 @@ import java.math.BigInteger;
  * @author James Roper
  * @since 1.0
  */
-public class BsonObjectTraversingParser extends ParserMinimalBase implements
-    JacksonMongoCollectionProvider {
-
-    private final JacksonMongoCollection dbCollection;
+public class BsonObjectTraversingParser extends ParserMinimalBase {
 
     /*
      * /********************************************************** /*
@@ -93,10 +88,10 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements
      * /**********************************************************
      */
     public BsonObjectTraversingParser(
-        JacksonMongoCollection dbCollection,
-        Object rootValue, ObjectCodec codec
+        Object rootValue,
+        ObjectCodec codec
     ) {
-        this(dbCollection, new BasicDBObject("root", rootValue), null);
+        this(new BasicDBObject("root", rootValue), null);
         try {
             nextToken();
             nextToken();
@@ -107,11 +102,10 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements
     }
 
     private BsonObjectTraversingParser(
-        JacksonMongoCollection dbCollection,
-        BSONObject o, ObjectCodec codec
+        BSONObject o,
+        ObjectCodec codec
     ) {
         super(0);
-        this.dbCollection = dbCollection;
         objectCodec = codec;
         if (o instanceof Iterable) {
             nextToken = JsonToken.START_ARRAY;
@@ -418,8 +412,4 @@ public class BsonObjectTraversingParser extends ParserMinimalBase implements
         return nodeCursor.currentNode();
     }
 
-    @Override
-    public JacksonMongoCollection getDBCollection() {
-        return dbCollection;
-    }
 }
