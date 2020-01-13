@@ -18,6 +18,7 @@ package org.mongojack;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
@@ -55,6 +56,19 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         List<MockObject> results = coll
             .find(new Document("string", "ten")).into(new ArrayList<>());
+        assertThat(results, hasSize(2));
+        assertThat(results, contains(o1, o2));
+    }
+
+    @Test
+    public void testInsertAndQuery() {
+        MockObject o1 = new MockObject("ten", 10);
+        MockObject o2 = new MockObject("ten", 10);
+        coll.insert(o1, o2, new MockObject("twenty", 20));
+
+        List<MockObject> results = coll
+            .find(Filters.in("_id", o1._id, o2._id))
+            .into(new ArrayList<>());
         assertThat(results, hasSize(2));
         assertThat(results, contains(o1, o2));
     }

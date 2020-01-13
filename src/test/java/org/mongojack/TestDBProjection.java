@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import com.mongodb.client.model.Projections;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
@@ -36,8 +37,10 @@ public class TestDBProjection extends MongoDBTestBase {
         MockObject o = new MockObject("string", 10);
         o.longs = 20l;
         coll.save(o);
-        MockObject result = coll.findOne(DBQuery.empty(),
-                DBProjection.include("string", "integer"));
+        MockObject result = coll.findOne(
+            DBQuery.empty(),
+            DBProjection.include("string", "integer")
+        );
         assertThat(result.string, equalTo("string"));
         assertThat(result.integer, equalTo(10));
         assertNull(result.longs);
@@ -48,10 +51,63 @@ public class TestDBProjection extends MongoDBTestBase {
         MockObject o = new MockObject("string", 10);
         o.longs = 20l;
         coll.save(o);
-        MockObject result = coll.findOne(DBQuery.empty(),
-                DBProjection.exclude("string", "integer"));
+        MockObject result = coll.findOne(
+            DBQuery.empty(),
+            DBProjection.exclude("string", "integer")
+        );
         assertNull(result.string);
         assertNull(result.integer);
         assertThat(result.longs, equalTo(20l));
     }
+
+    @Test
+    public void testProjectionsIncludes() {
+        MockObject o = new MockObject("string", 10);
+        o.longs = 20l;
+        coll.save(o);
+        MockObject result = coll.findOne(
+            DBQuery.empty(),
+            Projections.include("string", "integer")
+        );
+        assertThat(result.string, equalTo("string"));
+        assertThat(result.integer, equalTo(10));
+        assertNull(result.longs);
+    }
+
+    @Test
+    public void testProjectionsExcludes() {
+        MockObject o = new MockObject("string", 10);
+        o.longs = 20l;
+        coll.save(o);
+        MockObject result = coll.findOne(
+            DBQuery.empty(),
+            Projections.exclude("string", "integer")
+        );
+        assertNull(result.string);
+        assertNull(result.integer);
+        assertThat(result.longs, equalTo(20l));
+    }
+
+    @Test
+    public void testProjectionsIterableIncludes() {
+        MockObject o = new MockObject("string", 10);
+        o.longs = 20l;
+        coll.save(o);
+        MockObject result = coll.find().projection(Projections.include("string", "integer")).first();
+        assertThat(result.string, equalTo("string"));
+        assertThat(result.integer, equalTo(10));
+        assertNull(result.longs);
+    }
+
+    @Test
+    public void testProjectionsIterableExcludes() {
+        MockObject o = new MockObject("string", 10);
+        o.longs = 20l;
+        coll.save(o);
+        MockObject result = coll.find().projection(Projections.exclude("string", "integer")).first();
+        assertNull(result.string);
+        assertNull(result.integer);
+        assertThat(result.longs, equalTo(20l));
+    }
+
 }

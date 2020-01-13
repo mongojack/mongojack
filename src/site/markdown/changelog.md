@@ -1,6 +1,13 @@
 Changelog
 =========
 
+3.0.0
+-----
+
+_Released 2020_
+
+* Modify the entire library to conform to the functionality of MongoCollection as provided in mongodb-driver-sync, and drop all support for legacy driver features.
+
 2.1.0
 -----
 

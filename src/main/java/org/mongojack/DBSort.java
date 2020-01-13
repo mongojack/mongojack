@@ -22,7 +22,9 @@ import com.mongodb.BasicDBObject;
  * Helper class for building sort specifications.
  * 
  * @since 2.0.0
+ * @deprecated Prefer com.mongodb.client.model.Sorts
  */
+@Deprecated
 public class DBSort {
 
     /**

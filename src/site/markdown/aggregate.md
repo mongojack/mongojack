@@ -1,35 +1,31 @@
 Aggregate
 =========
 
-Mongojacks supports aggregation operations: it groups values from multiple documents and perform operations to return a single result. You can find more infos about mongoDB Aggregation [here](http://docs.mongodb.org/manual/aggregation/).
+MongoJack supports aggregation operations through the functionality provided by the underlying MongoCollection.  You can find more info about mongoDB Aggregation [here](http://docs.mongodb.org/manual/aggregation/).
 
-Output object
--------------
-An aggregation always produces an object from the generic type `AggregationResult<T>`. This object contains a list of object of desired type T.
+Usage
+-----
 
-Input object
-------------
-An aggregation needs a parameter of type `Aggregation<T>` which defines the operations to be done and specifies the type of the result. The following example defines an aggregation object which operates a match and defines the desired type `Pojo.class`:
+You can find information on using the `aggregate` methods of MongoCollection [here](http://mongodb.github.io/mongo-java-driver/3.12/driver/tutorials/aggregation/).  MongoJack works directly with
+these methods to provide mapping to output POJO's.
 
-```
-DBObject initialOperation = new BasicDBObject("$match", new BasicDBObject("booleans", true));
-Aggretation<Pojo> aggregation = new Aggregation<Pojo>(Pojo.class, initialOperation);
-```
+The aggregate method you will probably want to use looks like this:
 
-The aggregation can define several operations:
+    public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> tResultClass)
+    
+The returned iterable can be iterated over, collected into a list or other object, or saved to a collection.  Pretty much all teh documentation linked to above applies, but a very simple example
+drawn from the mongo documentation might look like:
 
-```
-DBObject initialOperation = new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*")));
-DBObject aditionalOperation = new BasicDBObject("$match", new BasicDBObject("integer", new BasicDBObject("$gt", new Integer(1))));
-Aggregation<MockObject> aggregation = new Aggregation<MockObject>(MockObject.class, initialOperation, aditionalOperation);
-```
+    public class RestaurantsByStar {
+        public String _id;
+        public Integer count;
+    }
 
-Aggregate command
------------------
-Aggregation will be done by calling the JacksonDBCollection aggregate method:
+    collection.aggregate(
+        Arrays.asList(
+            Aggregates.match(Filters.eq("categories", "Bakery")),
+            Aggregates.group("$stars", Accumulators.sum("count", 1))
+        ),
+        RestaurantsByStar.class
+    )
 
-```
-Aggregation<User> aggregation = new Aggregation<User>(User.class, new BasicDBObject("string", Pattern.compile("string1")));
-AggregationResult<User> aggregationResult = collection.aggregate(aggregation);
-```
-Once you have the `AggregationResult` object, it's possible to access the aggregated `User` objects by calling `aggregationResult.results()`.

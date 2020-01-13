@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import com.mongodb.client.model.Sorts;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
@@ -65,6 +66,30 @@ public class TestDBSort extends MongoDBTestBase {
     public void testDescAsc() {
         assertOrder(coll.find().sort(DBSort.desc("string").asc("integer")),
                 "1", "3", "2");
+    }
+
+    @Test
+    public void testSortsAsc() {
+        assertOrder(coll.find().sort(Sorts.ascending("string", "integer")), "3",
+            "2", "1");
+    }
+
+    @Test
+    public void testSortsDesc() {
+        assertOrder(coll.find().sort(Sorts.descending("string", "integer")),
+            "1", "2", "3");
+    }
+
+    @Test
+    public void testSortsAscDesc() {
+        assertOrder(coll.find().sort(Sorts.orderBy(Sorts.ascending("string"), Sorts.descending("integer"))),
+            "2", "3", "1");
+    }
+
+    @Test
+    public void testSortsDescAsc() {
+        assertOrder(coll.find().sort(Sorts.orderBy(Sorts.descending("string"), Sorts.ascending("integer"))),
+            "1", "3", "2");
     }
 
 }
