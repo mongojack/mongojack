@@ -120,17 +120,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
-        <version>3.8.2</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.doxia</groupId>
-            <artifactId>doxia-module-markdown</artifactId>
-            <version>1.9</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <skipDeploy>true</skipDeploy>
-        </configuration>
         <executions>
           <execution>
             <id>stage-for-scm-publish</id>
@@ -230,6 +219,21 @@
                 </pluginExecution>
               </pluginExecutions>
             </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.8.2</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.doxia</groupId>
+              <artifactId>doxia-module-markdown</artifactId>
+              <version>1.9</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <skipDeploy>true</skipDeploy>
           </configuration>
         </plugin>
       </plugins>
@@ -527,7 +531,7 @@
     </snapshotRepository>
     <site>
       <id>github-project-site</id>
-      <url>scm:git:ssh://git@github.com/rlodge/mongojack.git</url>
+      <url>scm:git:ssh://git@github.com/mongojack/mongojack.git</url>
     </site>
   </distributionManagement>
 
