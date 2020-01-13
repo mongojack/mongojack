@@ -120,14 +120,46 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
-        <version>3.7.1</version>
+        <version>3.8.2</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.doxia</groupId>
             <artifactId>doxia-module-markdown</artifactId>
-            <version>1.8</version>
+            <version>1.9</version>
           </dependency>
         </dependencies>
+        <configuration>
+          <skipDeploy>true</skipDeploy>
+        </configuration>
+        <executions>
+          <execution>
+            <id>stage-for-scm-publish</id>
+            <phase>post-site</phase>
+            <goals>
+              <goal>stage</goal>
+            </goals>
+            <configuration>
+              <skipDeploy>false</skipDeploy><!-- MSITE-652: configuration won't be necessary with m-site-p 3.2 -->
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-scm-publish-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>scm-publish</id>
+            <phase>site-deploy</phase>
+            <goals>
+              <goal>publish-scm</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scmBranch>gh-pages</scmBranch>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -167,13 +199,6 @@
       </plugin>
     </plugins>
 
-    <extensions>
-      <extension>
-        <groupId>com.github.stephenc.wagon</groupId>
-        <artifactId>wagon-gitsite</artifactId>
-        <version>0.5</version>
-      </extension>
-    </extensions>
     <pluginManagement>
       <plugins>
         <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
@@ -247,6 +272,13 @@
         <role>Maintainer</role>
       </roles>
       <organizationUrl>https://www.benmccannn.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Ross Lodge</name>
+      <roles>
+        <role>Maintainer</role>
+      </roles>
+      <organizationUrl>https://github.com/rlodge/</organizationUrl>
     </developer>
   </developers>
 
@@ -410,7 +442,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
+            <version>3.2.0</version>
             <executions>
               <execution>
                 <id>attach-sources</id>
@@ -423,7 +455,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
+            <version>3.1.1</version>
             <executions>
               <execution>
                 <id>attach-javadocs</id>
@@ -456,6 +488,26 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.2</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <!-- attached to Maven test phase -->
+              <execution>
+                <id>report</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -475,7 +527,7 @@
     </snapshotRepository>
     <site>
       <id>github-project-site</id>
-      <url>gitsite:git@github.com/mongojack/mongojack.git</url>
+      <url>scm:git:ssh://git@github.com/rlodge/mongojack.git</url>
     </site>
   </distributionManagement>
 
@@ -494,7 +546,20 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.0.1</version>
+        <version>3.1.1</version>
+        <configuration>
+          <source>8</source>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.5</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>3.0.0-M4</version>
       </plugin>
     </plugins>
   </reporting>
