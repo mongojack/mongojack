@@ -93,10 +93,20 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("BSON doesn't yet know how to handle BigInteger")
+    //@Ignore("BSON doesn't yet know how to handle BigInteger")
     public void testInsertRetrieveBigInteger() {
         MockObject object = new MockObject();
         object.bigInteger = BigInteger.valueOf(100);
+        coll.insert(object);
+        MockObject result = coll.findOne();
+        assertEquals(object.bigInteger, result.bigInteger);
+    }
+
+    @Test
+    //@Ignore("BSON doesn't yet know how to handle BigInteger")
+    public void testInsertRetrieveBigInteger2() {
+        MockObject object = new MockObject();
+        object.bigInteger = BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.TEN);
         coll.insert(object);
         MockObject result = coll.findOne();
         assertEquals(object.bigInteger, result.bigInteger);

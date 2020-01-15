@@ -16,8 +16,8 @@
  */
 package org.mongojack.internal.util;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -26,7 +26,10 @@ import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
 import com.mongodb.MongoException;
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
+import org.bson.BsonDocumentWriter;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -40,14 +43,14 @@ import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
 import org.mongojack.MongoJsonMappingException;
+import org.mongojack.QueryCondition;
+import org.mongojack.UpdateOperationValue;
 import org.mongojack.internal.ObjectIdSerializer;
-import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.query.CollectionQueryCondition;
 import org.mongojack.internal.query.CompoundQueryCondition;
-import org.mongojack.QueryCondition;
 import org.mongojack.internal.query.SimpleQueryCondition;
+import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 import org.mongojack.internal.update.MultiUpdateOperationValue;
-import org.mongojack.UpdateOperationValue;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -60,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -190,9 +194,11 @@ public class DocumentSerializationUtils {
         return key.startsWith("$");
     }
 
+    @SuppressWarnings("unchecked")
     private static Object serializeQueryField(
         Object value,
-        JsonSerializer serializer, SerializerProvider serializerProvider,
+        JsonSerializer serializer,
+        SerializerProvider serializerProvider,
         String op
     ) {
         if (serializer == null) {
@@ -249,14 +255,21 @@ public class DocumentSerializationUtils {
                     serializerProvider, value.getClass());
             }
         }
-        BsonObjectGenerator objectGenerator = new BsonObjectGenerator();
-        try {
-            serializer.serialize(value, objectGenerator, serializerProvider);
-        } catch (IOException e) {
-            throw new MongoJsonMappingException("Error serializing value "
-                + value + " in DBQuery operation " + op, e);
+        if (serializer.handledType() != null &&
+            value != null &&
+            !serializer.handledType().isAssignableFrom(value.getClass()) &&
+            (BASIC_TYPES.contains(value.getClass()) || value instanceof BsonValue)) {
+            return value;
         }
-        return objectGenerator.getValue();
+
+        final JsonSerializer ser = serializer;
+
+        return serializeField(
+            generator -> ser.serialize(value, generator, serializerProvider),
+            () -> "Error serializing value "
+                + value + " in DBQuery operation " + op
+        );
+
     }
 
     public static Bson serializeFilter(
@@ -310,7 +323,7 @@ public class DocumentSerializationUtils {
                 serializer = findQuerySerializer(targetIsCollection, key, serializerProvider, serializer);
             }
             List<Object> serializedConditions = new ArrayList<>();
-            for (Object item : (Collection<Object>)condition) {
+            for (Object item : (Collection<Object>) condition) {
                 serializedConditions.add(serializeFilterCondition(serializerProvider, serializer, "$", item, targetIsCollection));
             }
             return serializedConditions;
@@ -318,7 +331,7 @@ public class DocumentSerializationUtils {
             if (!isOperator(key)) {
                 serializer = findQuerySerializer(targetIsCollection, key, serializerProvider, serializer);
             }
-            return serializeFilter(serializerProvider, serializer, (Map<String, Object>)condition);
+            return serializeFilter(serializerProvider, serializer, (Map<String, Object>) condition);
         } else {
             if (!isOperator(key)) {
                 serializer = findQuerySerializer(false, key, serializerProvider, serializer);
@@ -384,16 +397,10 @@ public class DocumentSerializationUtils {
             }
         } else {
             // We don't know what it is, serialise it
-            BsonObjectGenerator generator = new BsonObjectGenerator();
-            try {
-                objectMapper.writeValue(generator, value);
-            } catch (JsonMappingException e) {
-                throw new MongoJsonMappingException(e);
-            } catch (IOException e) {
-                throw new RuntimeException(
-                    "Somehow got an IOException writing to memory", e);
-            }
-            return generator.getValue();
+            return serializeField(
+                generator -> objectMapper.writeValue(generator, value),
+                () -> "Somehow got an IOException writing to memory"
+            );
         }
     }
 
@@ -476,18 +483,34 @@ public class DocumentSerializationUtils {
 
     private static Object serializeUpdateField(
         Object value,
-        JsonSerializer serializer, SerializerProvider serializerProvider,
-        String op, String field
+        JsonSerializer serializer,
+        SerializerProvider serializerProvider,
+        String op,
+        String field
     ) {
-        BsonObjectGenerator objectGenerator = new BsonObjectGenerator();
-        try {
-            serializer.serialize(value, objectGenerator, serializerProvider);
+        return serializeField(
+            jsonGenerator -> serializer.serialize(value, jsonGenerator, serializerProvider),
+            () -> "Error serializing value " + value + " in operation " + op
+        );
+    }
+
+    private static Object serializeField(
+        MappingConsumer<JsonGenerator> serializer,
+        Supplier<String> messageProvider
+    ) {
+        final BsonDocument document = new BsonDocument();
+        try (
+            BsonDocumentWriter writer = new BsonDocumentWriter(document);
+            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+        ) {
+            writer.writeStartDocument();
+            writer.writeName("value");
+            serializer.accept(generator);
+            writer.writeEndDocument();
+            return document.get("value");
         } catch (IOException e) {
-            throw new MongoJsonMappingException(
-                "Error serializing value in DBUpdate operation " + op
-                    + " field " + field, e);
+            throw new MongoJsonMappingException(messageProvider.get(), e);
         }
-        return objectGenerator.getValue();
     }
 
     private static JsonSerializer<?> findUpdateSerializer(

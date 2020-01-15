@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,14 @@ package org.mongojack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonTokenId;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.junit.Before;
@@ -33,8 +35,10 @@ import org.mongojack.DBQuery.Query;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
@@ -152,6 +156,37 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertNotNull(coll.find().filter(Filters.eq("items", Collections.singletonList(o1))).first());
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void testSearchForCustomSerializedFields() {
+        MockObject o1 = new MockObject();
+        o1.wrappedString = new WrappedString("foo:bar");
+        MockObject o2 = new MockObject();
+        o2.wrappedString = new WrappedString("baz:qux");
+        coll.insertMany(Arrays.asList(o1, o2));
+
+        // some sanity checks
+        assertNotNull(o1.id);
+        assertNotNull(o2.id);
+        final MongoCollection<Document> underlyingCollection = getMongoCollection(coll.getName(), Document.class);
+        final Document found = underlyingCollection.find(Filters.eq("wrappedString", "foo:bar")).first();
+        assertEquals("foo:bar", found.getString("wrappedString"));
+
+        assertEquals(o1.id, coll.find(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find(DBQuery.is("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
+
+        assertEquals(o1.id, coll.find(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find(Filters.eq("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.eq("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find(Filters.regex("wrappedString", "foo:.*")).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.regex("wrappedString", "foo:.*")).first().id);
+    }
+
     static class MockObject {
         @ObjectId
         @Id
@@ -162,6 +197,8 @@ public class TestQuerySerialization extends MongoDBTestBase {
         public int i;
 
         public List<MockObject> items;
+
+        public WrappedString wrappedString;
     }
 
     @SuppressWarnings("unused")
@@ -190,10 +227,27 @@ public class TestQuerySerialization extends MongoDBTestBase {
         }
     }
 
+    @JsonSerialize(using = WrappedStringSerializer.class)
+    @JsonDeserialize(using = WrappedStringDeserializer.class)
+    static class WrappedString {
+
+        private final String value;
+
+        WrappedString(final String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
     static class PlusTenSerializer extends JsonSerializer<Integer> {
         @Override
-        public void serialize(Integer value, JsonGenerator jgen,
-                SerializerProvider provider) throws IOException {
+        public void serialize(
+            Integer value, JsonGenerator jgen,
+            SerializerProvider provider
+        ) throws IOException {
             jgen.writeNumber(value + 10);
         }
     }
@@ -201,8 +255,43 @@ public class TestQuerySerialization extends MongoDBTestBase {
     static class MinusTenDeserializer extends JsonDeserializer<Integer> {
         @Override
         public Integer deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException {
+            throws IOException {
             return jp.getValueAsInt() - 10;
+        }
+    }
+
+    static class WrappedStringSerializer extends JsonSerializer<WrappedString> {
+        @Override
+        public void serialize(
+            WrappedString value, JsonGenerator jgen,
+            SerializerProvider provider
+        ) throws IOException {
+            if (value == null) {
+                jgen.writeNull();
+            } else {
+                jgen.writeString(value.getValue());
+            }
+        }
+
+        @Override
+        public Class<WrappedString> handledType() {
+            return WrappedString.class;
+        }
+    }
+
+    static class WrappedStringDeserializer extends JsonDeserializer<WrappedString> {
+        @Override
+        public WrappedString deserialize(JsonParser jp, DeserializationContext ctxt)
+            throws IOException {
+            if (jp.getCurrentTokenId() == JsonTokenId.ID_NULL) {
+                return getNullValue(ctxt);
+            }
+            return new WrappedString(jp.getValueAsString());
+        }
+
+        @Override
+        public Class<?> handledType() {
+            return WrappedString.class;
         }
     }
 
