@@ -21,7 +21,6 @@ import com.mongodb.client.MongoCursor;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongojack.mock.MockEmbeddedObject;
 import org.mongojack.mock.MockObject;
@@ -131,7 +130,6 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("BSON doesn't yet know how to handle BigDecimal")
     public void testInsertRetrieveBigDecimal() {
         MockObject object = new MockObject();
         object.bigDecimal = BigDecimal.valueOf(4, 6);

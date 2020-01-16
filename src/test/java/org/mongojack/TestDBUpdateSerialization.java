@@ -64,17 +64,24 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
+    public void testListCustomSerializerInObject() {
+        final MockObject object = new MockObject();
+        object.list = Arrays.asList("some", "foo");
+        coll.save(object);
+        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("some", "bar")));
+    }
+
+    @Test
+    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
     public void testListSetCustomSerializer() {
         coll.save(new MockObject());
-        coll.updateById("id",
-                DBUpdate.set("list", Arrays.asList("some", "foo")));
+        coll.updateById("id", DBUpdate.set("list", Arrays.asList("some", "foo")));
         assertThat(coll.findOneById("id").list,
                 equalTo(Arrays.asList("some", "bar")));
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
+    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
     public void testListSingleValueCustomSerializer() {
         coll.save(new MockObject());
         coll.updateById("id", DBUpdate.push("list", "foo"));
@@ -82,7 +89,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
+    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
     public void testListMultiValueCustomSerializer() {
         coll.save(new MockObject());
         coll.updateById("id", DBUpdate.pushAll("list", "some", "foo"));
@@ -119,7 +126,16 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
+    public void testMapValueCustomSerializerForObject() {
+        MockObject o = new MockObject();
+        o.customMap = new HashMap<>();
+        o.customMap.put("blah", "foo");
+        coll.save(o);
+        assertThat(coll.findOneById("id").customMap.get("blah"), equalTo("bar"));
+    }
+
+    @Test
+    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
     public void testMapValueCustomSerializer() {
         MockObject o = new MockObject();
         o.customMap = new HashMap<String, String>();
