@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -72,32 +71,6 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
-    public void testListSetCustomSerializer() {
-        coll.save(new MockObject());
-        coll.updateById("id", DBUpdate.set("list", Arrays.asList("some", "foo")));
-        assertThat(coll.findOneById("id").list,
-                equalTo(Arrays.asList("some", "bar")));
-    }
-
-    @Test
-    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
-    public void testListSingleValueCustomSerializer() {
-        coll.save(new MockObject());
-        coll.updateById("id", DBUpdate.push("list", "foo"));
-        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("bar")));
-    }
-
-    @Test
-    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
-    public void testListMultiValueCustomSerializer() {
-        coll.save(new MockObject());
-        coll.updateById("id", DBUpdate.pushAll("list", "some", "foo"));
-        assertThat(coll.findOneById("id").list,
-                equalTo(Arrays.asList("some", "bar")));
-    }
-
-    @Test
     public void testNestedValueCustomSerializer() {
         MockObject o = new MockObject();
         o.child = new MockObject();
@@ -131,17 +104,6 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         o.customMap = new HashMap<>();
         o.customMap.put("blah", "foo");
         coll.save(o);
-        assertThat(coll.findOneById("id").customMap.get("blah"), equalTo("bar"));
-    }
-
-    @Test
-    @Ignore("Ignored until JACKSON-829 is fixed") // note that the DO work for a basic object save
-    public void testMapValueCustomSerializer() {
-        MockObject o = new MockObject();
-        o.customMap = new HashMap<String, String>();
-        o.customMap.put("blah", "blah");
-        coll.save(o);
-        coll.updateById("id", DBUpdate.set("customMap.blah", "foo"));
         assertThat(coll.findOneById("id").customMap.get("blah"), equalTo("bar"));
     }
 

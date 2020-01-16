@@ -329,8 +329,7 @@ public class DocumentSerializationUtils {
         Bson query,
         CodecRegistry registry
     ) {
-        SerializerProvider serializerProvider = JacksonAccessor
-            .getSerializerProvider(objectMapper);
+        SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
         JsonSerializer serializer = JacksonAccessor.findValueSerializer(
             serializerProvider, type);
         final BsonDocument document = new BsonDocument();
@@ -470,7 +469,7 @@ public class DocumentSerializationUtils {
     ) {
         SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
 
-        JsonSerializer<?> serializer = null;
+        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
 
         final BsonDocument document = new BsonDocument();
         try (
@@ -491,11 +490,6 @@ public class DocumentSerializationUtils {
                         writer.writeName("$each");
                     }
                     if (field.getValue().requiresSerialization()) {
-
-                        if (serializer == null) {
-                            serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
-                        }
-
                         JsonSerializer<?> fieldSerializer = findUpdateSerializer(
                             field.getValue().isTargetCollection(),
                             field.getKey(),
@@ -574,6 +568,7 @@ public class DocumentSerializationUtils {
         serializer.serialize(value, generator, serializerProvider);
     }
 
+    @SuppressWarnings({"rawtypes", "StatementWithEmptyBody"})
     private static JsonSerializer<?> findUpdateSerializer(
         boolean targetIsCollection, String fieldPath,
         SerializerProvider serializerProvider, JsonSerializer<?> serializer
@@ -591,19 +586,7 @@ public class DocumentSerializationUtils {
                 if (field.equals("$") || field.matches("\\d+")) {
                     // The current serializer must be a collection
                     if (fieldSerializer instanceof ContainerSerializer) {
-                        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
-                            .getContentSerializer();
-                        if (contentSerializer == null) {
-                            // Work it out
-                            JavaType contentType = ((ContainerSerializer) fieldSerializer)
-                                .getContentType();
-                            if (contentType != null) {
-                                contentSerializer = JacksonAccessor
-                                    .findValueSerializer(
-                                        serializerProvider, contentType);
-                            }
-                        }
-                        fieldSerializer = contentSerializer;
+                        fieldSerializer = getJsonSerializerForContainer(serializerProvider, fieldSerializer);
                     } else {
                         // Give up, don't attempt to serialise it
                         return null;
@@ -613,15 +596,7 @@ public class DocumentSerializationUtils {
                         .findPropertyWriter(
                             (BeanSerializerBase) fieldSerializer, field);
                     if (writer != null) {
-                        fieldSerializer = writer.getSerializer();
-                        if (fieldSerializer == null) {
-                            // Do a generic lookup
-                            fieldSerializer = JacksonAccessor
-                                .findValueSerializer(
-                                    serializerProvider,
-                                    writer.getType()
-                                );
-                        }
+                        fieldSerializer = getJsonSerializerForBean(serializerProvider, writer);
                     } else {
                         // Give up
                         return null;
@@ -656,6 +631,25 @@ public class DocumentSerializationUtils {
         }
     }
 
+    @SuppressWarnings("rawtypes")
+    private static JsonSerializer<?> getJsonSerializerForContainer(final SerializerProvider serializerProvider, JsonSerializer<?> fieldSerializer) {
+        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
+            .getContentSerializer();
+        if (contentSerializer == null) {
+            // Work it out
+            JavaType contentType = ((ContainerSerializer) fieldSerializer)
+                .getContentType();
+            if (contentType != null) {
+                contentSerializer = JacksonAccessor
+                    .findValueSerializer(
+                        serializerProvider, contentType);
+            }
+        }
+        fieldSerializer = contentSerializer;
+        return fieldSerializer;
+    }
+
+    @SuppressWarnings({"StatementWithEmptyBody", "rawtypes"})
     private static JsonSerializer<?> findQuerySerializer(
         boolean targetIsCollection, String fieldPath,
         SerializerProvider serializerProvider, JsonSerializer<?> serializer
@@ -677,37 +671,13 @@ public class DocumentSerializationUtils {
                 // First step into the collection if there is one
                 if (!isIndex) {
                     while (fieldSerializer instanceof ContainerSerializer) {
-                        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
-                            .getContentSerializer();
-                        if (contentSerializer == null) {
-                            // Work it out
-                            JavaType contentType = ((ContainerSerializer) fieldSerializer)
-                                .getContentType();
-                            if (contentType != null) {
-                                contentSerializer = JacksonAccessor
-                                    .findValueSerializer(
-                                        serializerProvider, contentType);
-                            }
-                        }
-                        fieldSerializer = contentSerializer;
+                        fieldSerializer = getJsonSerializerForContainer(serializerProvider, fieldSerializer);
                     }
                 }
 
                 if (isIndex) {
                     if (fieldSerializer instanceof ContainerSerializer) {
-                        JsonSerializer<?> contentSerializer = ((ContainerSerializer) fieldSerializer)
-                            .getContentSerializer();
-                        if (contentSerializer == null) {
-                            // Work it out
-                            JavaType contentType = ((ContainerSerializer) fieldSerializer)
-                                .getContentType();
-                            if (contentType != null) {
-                                contentSerializer = JacksonAccessor
-                                    .findValueSerializer(
-                                        serializerProvider, contentType);
-                            }
-                        }
-                        fieldSerializer = contentSerializer;
+                        fieldSerializer = getJsonSerializerForContainer(serializerProvider, fieldSerializer);
                     } else {
                         // Give up, don't attempt to serialise it
                         return null;
@@ -717,22 +687,11 @@ public class DocumentSerializationUtils {
                         .findPropertyWriter(
                             (BeanSerializerBase) fieldSerializer, field);
                     if (writer != null) {
-                        fieldSerializer = writer.getSerializer();
-                        if (fieldSerializer == null) {
-                            // Do a generic lookup
-                            fieldSerializer = JacksonAccessor
-                                .findValueSerializer(
-                                    serializerProvider,
-                                    writer.getType()
-                                );
-                        }
+                        fieldSerializer = getJsonSerializerForBean(serializerProvider, writer);
                     } else {
                         // Give up
                         return null;
                     }
-                } else if (fieldSerializer instanceof MapSerializer) {
-                    fieldSerializer = ((MapSerializer) fieldSerializer)
-                        .getContentSerializer();
                 } else {
                     // Don't know how to find what the serialiser for this field
                     // is
@@ -760,7 +719,21 @@ public class DocumentSerializationUtils {
         }
     }
 
-    public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, Aggregation.Stage<?> stage) {
+    private static JsonSerializer<?> getJsonSerializerForBean(final SerializerProvider serializerProvider, final BeanPropertyWriter writer) {
+        JsonSerializer<?> fieldSerializer;
+        fieldSerializer = writer.getSerializer();
+        if (fieldSerializer == null) {
+            // Do a generic lookup
+            fieldSerializer = JacksonAccessor
+                .findValueSerializer(
+                    serializerProvider,
+                    writer.getType()
+                );
+        }
+        return fieldSerializer;
+    }
+
+    public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage) {
         SerializerProvider serializerProvider = JacksonAccessor
             .getSerializerProvider(objectMapper);
         JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
@@ -805,7 +778,7 @@ public class DocumentSerializationUtils {
                 if (entry.getValue() instanceof Expression<?>) {
                     object.append(
                         entry.getKey(),
-                        serializeExpression(serializerProvider, serializer, (Expression<?>) entry.getValue())
+                        serializeExpression((Expression<?>) entry.getValue())
                     );
                 } else {
                     object.append(entry.getKey(), entry.getValue());
@@ -815,26 +788,27 @@ public class DocumentSerializationUtils {
         }
         if (stage instanceof Aggregation.Group) {
             Aggregation.Group group = (Aggregation.Group) stage;
-            Document object = new Document("_id", serializeExpression(serializerProvider, serializer, group.key()));
+            Document object = new Document("_id", serializeExpression(group.key()));
             for (Map.Entry<String, Aggregation.Group.Accumulator> field : group.calculatedFields()) {
-                object.append(field.getKey(), serializeAccumulator(serializerProvider, serializer, field.getValue()));
+                object.append(field.getKey(), serializeAccumulator(field.getValue()));
             }
             return new Document("$group", object);
         }
         if (stage instanceof Aggregation.Out) {
-            return new Document("$out", ((Object) ((Aggregation.Out) stage).collectionName()));
+            return new Document("$out", ((Aggregation.Out) stage).collectionName());
         }
         throw new IllegalArgumentException(stage.getClass().getName());
     }
 
-    private static Bson serializeAccumulator(SerializerProvider serializerProvider, JsonSerializer<?> serializer, Accumulator accumulator) {
+    private static Bson serializeAccumulator(Accumulator accumulator) {
         return new Document(
             accumulator.operator.name(),
-            serializeExpression(serializerProvider, serializer, accumulator.expression)
+            serializeExpression(accumulator.expression)
         );
     }
 
-    private static Object serializeExpression(SerializerProvider serializerProvider, JsonSerializer<?> serializer, Expression<?> expression) {
+    @SuppressWarnings({"deprecation", "rawtypes"})
+    private static Object serializeExpression(Expression<?> expression) {
         if (expression instanceof Aggregation.FieldPath) {
             return ((Aggregation.FieldPath) expression).toString();
         }
@@ -846,7 +820,7 @@ public class DocumentSerializationUtils {
             for (Entry<String, Expression<?>> property : ((Aggregation.ExpressionObject) expression).properties()) {
                 object.append(
                     property.getKey(),
-                    serializeExpression(serializerProvider, serializer, property.getValue())
+                    serializeExpression(property.getValue())
                 );
             }
             return object;
@@ -855,7 +829,7 @@ public class DocumentSerializationUtils {
             Aggregation.OperatorExpression<?> oe = (Aggregation.OperatorExpression<?>) expression;
             List<Object> operands = new ArrayList<>();
             for (Expression<?> e : oe.operands()) {
-                operands.add(serializeExpression(serializerProvider, serializer, e));
+                operands.add(serializeExpression(e));
             }
             return new Document(oe.operator(), operands);
         }
