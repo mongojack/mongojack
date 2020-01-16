@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 Christopher Exell
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,11 @@ package org.mongojack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.MongoException;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.Sorts;
 import de.flapdoodle.embed.process.collections.Collections;
+import org.bson.Document;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -149,7 +153,7 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         Assert.assertEquals(2, resultsList.size());
 
     }
-    
+
     @Test
     public void testMatchUnaryComparison() {
 
@@ -170,7 +174,7 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         }
 
     }
-    
+
     @Test
     public void testMatchIn() {
 
@@ -187,18 +191,18 @@ public class TestAggregationBuilder extends MongoDBTestBase {
 
         Assert.assertEquals(2, resultsList.size());
         for (MockObjectAggregationResult mockObjectAggregationResult : resultsList) {
-            Assert.assertTrue(mockObjectAggregationResult.string.equals("foo") ||  mockObjectAggregationResult.string.equals("baz"));
+            Assert.assertTrue(mockObjectAggregationResult.string.equals("foo") || mockObjectAggregationResult.string.equals("baz"));
         }
 
     }
-    
+
     @Test
     public void testOut() {
-    	coll.insert(new MockObject("foo", 1));
+        coll.insert(new MockObject("foo", 1));
         coll.insert(new MockObject("bar", 2));
         coll.insert(new MockObject("baz", 3));
         coll.insert(new MockObject("qux", 4));
-        
+
         Pipeline<?> pipeline = Aggregation.match(DBQuery.greaterThan("integer", 2)).out("testOut");
 
         coll.aggregate(pipeline, MockObject.class).toCollection();
@@ -209,13 +213,13 @@ public class TestAggregationBuilder extends MongoDBTestBase {
             Assert.assertTrue(object.string.equals("baz") || object.string.equals("qux"));
         }
     }
-    
+
     @Test
     public void testProjectArrayElemAt() {
-    	MockObject object = new MockObject();
-    	object.simpleList = new ArrayList<>();
-    	object.simpleList.add("foo");
-    	object.simpleList.add("bar");
+        MockObject object = new MockObject();
+        object.simpleList = new ArrayList<>();
+        object.simpleList.add("foo");
+        object.simpleList.add("bar");
         coll.insert(object);
 
         Pipeline<?> pipeline = Aggregation.project("string", Expression.arrayElemAt(Expression.list("simpleList"), Expression.literal(1)));
@@ -228,9 +232,12 @@ public class TestAggregationBuilder extends MongoDBTestBase {
     }
 
     static class User {
-        @Id String name;
-        @JsonProperty Date joined;
-        @JsonProperty List<String> likes;
+        @Id
+        String name;
+        @JsonProperty
+        Date joined;
+        @JsonProperty
+        List<String> likes;
 
         User(String name, Date joined, List<String> likes) {
             this.name = name;
@@ -264,9 +271,13 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         Assert.assertEquals(0, resultsList.get(2).integer.intValue());
 
         coll.insert(new MockObject("bat", 4)); // simpleList does not exist
-        pipeline = Aggregation.project("integer",
-                Expression.size(Expression.ifNull(Expression.list("simpleList"),
-                        Expression.literal(Collections.newArrayList()))));
+        pipeline = Aggregation.project(
+            "integer",
+            Expression.size(Expression.ifNull(
+                Expression.list("simpleList"),
+                Expression.literal(Collections.newArrayList())
+            ))
+        );
         final AggregateIterable<MockObjectAggregationResult> aggregate2 = coll.aggregate(pipeline, MockObjectAggregationResult.class);
         final List<MockObjectAggregationResult> resultsList2 = StreamSupport.stream(aggregate2.spliterator(), false)
             .collect(Collectors.toList());
@@ -286,8 +297,43 @@ public class TestAggregationBuilder extends MongoDBTestBase {
             .field("month_joined", Expression.month(Expression.date("joined")))
             .set("name", Expression.path("_id"))
             .excludeId())
-                .sort(DBSort.asc("month_joined"));
+            .sort(DBSort.asc("month_joined"));
         List<Object> results = StreamSupport.stream(users.aggregate(pipeline, Object.class).spliterator(), false).collect(Collectors.toList());
+        Assert.assertEquals(2, results.size());
+        Map<String, Object> firstResult = (Map<String, Object>) results.get(0);
+        Assert.assertEquals(3, firstResult.get("month_joined"));
+        Assert.assertEquals("jane", firstResult.get("name"));
+        Assert.assertEquals(2, firstResult.keySet().size());
+        Map<String, Object> secondResult = (Map<String, Object>) results.get(1);
+        Assert.assertEquals(7, secondResult.get("month_joined"));
+        Assert.assertEquals("joe", secondResult.get("name"));
+        Assert.assertEquals(2, secondResult.keySet().size());
+    }
+
+    @Test
+    public void testOperatorExpressions2() throws MongoException, ParseException {
+        // based on http://docs.mongodb.org/manual/tutorial/aggregation-with-user-preference-data/
+        JacksonMongoCollection<User> users = getCollection(User.class);
+        users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Collections.newArrayList("golf", "racquetball")));
+        users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Collections.newArrayList("tennis", "golf", "swimming")));
+
+        List<Object> results = users.aggregate(
+            Arrays.asList(
+                Aggregates.project(
+                    Projections.fields(
+                        Projections.computed(
+                            "month_joined",
+                            new Document("$month", "$joined")
+                        ),
+                        new Document("name", "$_id"),
+                        Projections.excludeId()
+                    )
+                ),
+                Aggregates.sort(Sorts.ascending("month_joined"))
+            ),
+            Object.class
+        )
+            .into(new ArrayList<>());
         Assert.assertEquals(2, results.size());
         Map<String, Object> firstResult = (Map<String, Object>) results.get(0);
         Assert.assertEquals(3, firstResult.get("month_joined"));

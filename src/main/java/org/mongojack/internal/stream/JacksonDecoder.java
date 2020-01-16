@@ -3,17 +3,17 @@ package org.mongojack.internal.stream;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.bson.BsonBinaryWriter;
+import org.bson.AbstractBsonReader;
 import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.bson.io.BasicOutputBuffer;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class JacksonDecoder<T> implements Decoder<T> {
+
+    private static final InputStream EMPTY_INPUT_STREAM = new EmptyInputStream();
 
     private final Class<T> clazz;
     private final ObjectMapper objectMapper;
@@ -25,37 +25,24 @@ public class JacksonDecoder<T> implements Decoder<T> {
         this.view = view;
     }
 
-    private T decode(byte[] b) {
-        try {
-            return decode(new ByteArrayInputStream(b));
-        } catch (IOException e) {
-            // Not possible
-            throw new RuntimeException(
-                    "IOException encountered while reading from a byte array input stream",
-                    e);
-        }
-    }
-
-    private T decode(InputStream in)
-            throws IOException {
-        JacksonDBObject<T> decoded = new JacksonDBObject<T>();
-        try (DBDecoderBsonParser parser = new DBDecoderBsonParser(
-                new IOContext(new BufferRecycler(), in, false), 0, in, decoded,
-                objectMapper)) {
-            return objectMapper.reader().forType(clazz).withView(view).readValue(parser);
-        }
-    }
-
     @Override
     public T decode(BsonReader reader, DecoderContext decoderContext) {
-        BasicOutputBuffer bob = new BasicOutputBuffer();
-        BsonBinaryWriter binaryWriter = new BsonBinaryWriter(bob);
-        try {
-        binaryWriter.pipe(reader);
-        return decode(bob.getInternalBuffer());
-        } finally {
-            binaryWriter.close();
-            bob.close();
+        try (DBDecoderBsonParser parser = new DBDecoderBsonParser(new IOContext(new BufferRecycler(), EMPTY_INPUT_STREAM, false), 0, (AbstractBsonReader) reader, objectMapper)) {
+            return objectMapper.reader().forType(clazz).withView(view).readValue(parser);
+        } catch (IOException e) {
+            throw new RuntimeException("IOException encountered while parsing", e);
         }
     }
+
+    private static class EmptyInputStream extends InputStream {
+        @Override
+        public int available() {
+            return 0;
+        }
+
+        public int read() {
+            return -1;
+        }
+    }
+
 }
