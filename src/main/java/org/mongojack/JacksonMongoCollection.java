@@ -421,7 +421,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         if (update instanceof InitializationRequiredForTransformation) {
             return update;
         }
-        return DocumentSerializationUtils.serializeFields(objectMapper, update, jacksonCodecRegistry);
+        return DocumentSerializationUtils.serializeFields(update, jacksonCodecRegistry);
     }
 
     /**

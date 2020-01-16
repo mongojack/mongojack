@@ -16,7 +16,6 @@
  */
 package org.mongojack.internal.util;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,19 +25,35 @@ import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
 import com.mongodb.MongoException;
+import org.bson.BsonBinary;
+import org.bson.BsonBoolean;
+import org.bson.BsonDateTime;
+import org.bson.BsonDecimal128;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonMaxKey;
+import org.bson.BsonMinKey;
+import org.bson.BsonObjectId;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonString;
+import org.bson.BsonSymbol;
+import org.bson.BsonTimestamp;
+import org.bson.BsonUndefined;
 import org.bson.BsonValue;
+import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.mongojack.Aggregation;
 import org.mongojack.Aggregation.Expression;
 import org.mongojack.Aggregation.Group.Accumulator;
-import org.mongojack.Aggregation.Pipeline;
 import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
@@ -63,7 +78,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
@@ -107,13 +121,11 @@ public class DocumentSerializationUtils {
      * Serialize the fields of the given object using the given object mapper.
      * This will convert POJOs to Documents where necessary.
      *
-     * @param objectMapper The object mapper to use to do the serialization
      * @param object       The object to serialize the fields of
      * @param registry     Codec registry
      * @return The Document, safe for serialization to MongoDB
      */
     public static Bson serializeFields(
-        ObjectMapper objectMapper,
         Bson object,
         CodecRegistry registry
     ) {
@@ -123,397 +135,443 @@ public class DocumentSerializationUtils {
     public static Bson serializeQuery(
         ObjectMapper objectMapper,
         JavaType type,
-        DBQuery.Query query
+        @SuppressWarnings("deprecation") DBQuery.Query query
     ) {
-        SerializerProvider serializerProvider = JacksonAccessor
-            .getSerializerProvider(objectMapper);
-        JsonSerializer serializer = JacksonAccessor.findValueSerializer(
-            serializerProvider, type);
-        return serializeQuery(serializerProvider, serializer, query);
+        SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
+        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, type);
+        final BsonDocument document = new BsonDocument();
+        try (
+            BsonDocumentWriter writer = new BsonDocumentWriter(document);
+            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+        ) {
+            serializeQuery(serializerProvider, serializer, query, writer, generator);
+            return document;
+        } catch (IOException e) {
+            throw new MongoJsonMappingException(e.getMessage(), e);
+        }
     }
 
-    private static Bson serializeQuery(
+    private static void serializeQuery(
         SerializerProvider serializerProvider,
         JsonSerializer<?> serializer,
-        DBQuery.Query query
-    ) {
-        Document serializedQuery = new Document();
+        @SuppressWarnings("deprecation") DBQuery.Query query,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
+        writer.writeStartDocument();
         for (Map.Entry<String, QueryCondition> field : query.conditions()) {
             String key = field.getKey();
             QueryCondition condition = field.getValue();
-            serializedQuery.put(
-                key,
-                serializeQueryCondition(serializerProvider, serializer, key, condition)
-            );
+            writer.writeName(key);
+            serializeQueryCondition(serializerProvider, serializer, key, condition, writer, generator);
         }
-        return serializedQuery;
+        writer.writeEndDocument();
     }
 
-    private static Object serializeQueryCondition(
+    private static void serializeQueryCondition(
         SerializerProvider serializerProvider,
         JsonSerializer<?> serializer,
         String key,
-        QueryCondition condition
-    ) {
+        QueryCondition condition,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
         if (condition instanceof SimpleQueryCondition) {
             SimpleQueryCondition simple = (SimpleQueryCondition) condition;
-            if (!simple.requiresSerialization() || simple.getValue() == null) {
-                return simple.getValue();
-            } else {
-                if (!isOperator(key)) {
-                    serializer = findQuerySerializer(false, key,
-                        serializerProvider, serializer
-                    );
+            if (simple.requiresSerialization() && simple.getValue() != null) {
+                if (keyIsNotOperator(key)) {
+                    serializer = findQuerySerializer(false, key, serializerProvider, serializer);
                 }
-                return serializeQueryField(simple.getValue(), serializer,
-                    serializerProvider, key
-                );
             }
+            serializeQueryField(simple.getValue(), serializer, serializerProvider, writer, generator);
         } else if (condition instanceof CollectionQueryCondition) {
             CollectionQueryCondition coll = (CollectionQueryCondition) condition;
-            if (!isOperator(key)) {
-                serializer = findQuerySerializer(coll.targetIsCollection(),
-                    key, serializerProvider, serializer
-                );
+            if (keyIsNotOperator(key)) {
+                serializer = findQuerySerializer(coll.targetIsCollection(), key, serializerProvider, serializer);
             }
-            List<Object> serializedConditions = new ArrayList<>();
+            writer.writeStartArray();
             for (QueryCondition item : coll.getValues()) {
-                serializedConditions.add(serializeQueryCondition(
-                    serializerProvider, serializer, "$", item));
+                serializeQueryCondition(serializerProvider, serializer, "$", item, writer, generator);
             }
-            return serializedConditions;
+            writer.writeEndArray();
         } else {
             CompoundQueryCondition compound = (CompoundQueryCondition) condition;
-            if (!isOperator(key)) {
+            if (keyIsNotOperator(key)) {
                 serializer = findQuerySerializer(compound.targetIsCollection(), key, serializerProvider, serializer);
             }
-            return serializeQuery(serializerProvider, serializer,
-                compound.getQuery()
-            );
+            serializeQuery(serializerProvider, serializer, compound.getQuery(), writer, generator);
         }
     }
 
-    private static boolean isOperator(String key) {
-        return key.startsWith("$");
+    private static boolean keyIsNotOperator(String key) {
+        return !key.startsWith("$");
     }
 
-    @SuppressWarnings("unchecked")
-    private static Object serializeQueryField(
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void serializeQueryField(
         Object value,
         JsonSerializer serializer,
         SerializerProvider serializerProvider,
-        String op
-    ) {
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
         if (serializer == null) {
-            if (value == null || BASIC_TYPES.contains(value.getClass())) {
-                // Return as is
-                return value;
+            if (value == null) {
+                writer.writeNull();
+                return;
             } else if (value instanceof Collection) {
+                writer.writeStartArray();
                 Collection<?> coll = (Collection<?>) value;
-                List<Object> copy = null;
-                int position = 0;
                 for (Object item : coll) {
-                    Object returned = serializeQueryField(item, null,
-                        serializerProvider, op
-                    );
-                    if (returned != item) {
-                        if (copy == null) {
-                            copy = new ArrayList<>(coll);
-                        }
-                        copy.set(position, returned);
-                    }
-                    position++;
+                    serializeQueryField(item, null, serializerProvider, writer, generator);
                 }
-                if (copy != null) {
-                    return copy;
-                } else {
-                    return coll;
-                }
+                writer.writeEndArray();
+                return;
             } else if (value.getClass().isArray()) {
-                if (BASIC_TYPES.contains(value.getClass().getComponentType())) {
-                    return value;
-                }
+                writer.writeStartArray();
                 Object[] array = (Object[]) value;
-                Object[] copy = null;
-                for (int i = 0; i < array.length; i++) {
-                    Object returned = serializeQueryField(array[i], null,
-                        serializerProvider, op
-                    );
-                    if (returned != array[i]) {
-                        if (copy == null) {
-                            copy = new Object[array.length];
-                            System.arraycopy(array, 0, copy, 0, array.length);
-                        }
-                        copy[i] = returned;
-                    }
+                for (Object o : array) {
+                    serializeQueryField(o, null, serializerProvider, writer, generator);
                 }
-                if (copy != null) {
-                    return copy;
-                } else {
-                    return array;
-                }
+                writer.writeEndArray();
+                return;
             } else {
                 // We don't know what it is, just find a serializer for it
-                serializer = JacksonAccessor.findValueSerializer(
-                    serializerProvider, value.getClass());
+                serializer = JacksonAccessor.findValueSerializer(serializerProvider, value.getClass());
             }
         }
+
         if (serializer.handledType() != null &&
             value != null &&
             !serializer.handledType().isAssignableFrom(value.getClass()) &&
             (BASIC_TYPES.contains(value.getClass()) || value instanceof BsonValue)) {
-            return value;
+            if (writeKnownType(value, writer)) {
+                return;
+            }
+            serializer = JacksonAccessor.findValueSerializer(serializerProvider, value.getClass());
         }
 
-        final JsonSerializer ser = serializer;
-
-        return serializeField(
-            generator -> ser.serialize(value, generator, serializerProvider),
-            () -> "Error serializing value "
-                + value + " in DBQuery operation " + op
-        );
-
+        serializer.serialize(value, generator, serializerProvider);
     }
 
+    private static boolean writeKnownType(
+        Object value,
+        BsonWriter writer
+    ) {
+        if (value instanceof String) {
+            writer.writeString((String)value);
+        } else if (value instanceof Integer) {
+            writer.writeInt32((Integer) value);
+        } else if (value instanceof Boolean) {
+            writer.writeBoolean((Boolean) value);
+        } else if (value instanceof Short) {
+            writer.writeInt32(((Short) value).intValue());
+        } else if (value instanceof Long) {
+            writer.writeInt64((Long) value);
+        } else if (value instanceof BigInteger) {
+            writer.writeString(value.toString());
+        } else if (value instanceof Float) {
+            writer.writeDouble(((Float) value).doubleValue());
+        } else if (value instanceof Double) {
+            writer.writeDouble((Double) value);
+        } else if (value instanceof Byte) {
+            writer.writeInt32(((Byte) value).intValue());
+        } else if (value instanceof BigDecimal) {
+            writer.writeDecimal128(new Decimal128((BigDecimal) value));
+        } else if (value instanceof byte[]) {
+            writer.writeBinaryData(new BsonBinary((byte[]) value));
+        } else if (value instanceof Date) {
+            writer.writeDateTime(((Date) value).getTime());
+        } else if (value instanceof Pattern) {
+            writer.writeRegularExpression(new BsonRegularExpression(((Pattern) value).pattern()));
+        } else if (value instanceof ObjectId) {
+            writer.writeObjectId((ObjectId) value);
+        } else if (value instanceof BsonSymbol) {
+            writer.writeSymbol(((BsonSymbol) value).getSymbol());
+        } else if (value instanceof BsonObjectId) {
+            writer.writeObjectId(((BsonObjectId) value).getValue());
+        } else if (value instanceof BsonBoolean) {
+            writer.writeBoolean(((BsonBoolean) value).getValue());
+        } else if (value instanceof BsonString) {
+            writer.writeString(((BsonString) value).getValue());
+        } else if (value instanceof BsonMaxKey) {
+            writer.writeMaxKey();
+        } else if (value instanceof BsonMinKey) {
+            writer.writeMinKey();
+        } else if (value instanceof BsonInt64) {
+            writer.writeInt64(((BsonInt64) value).getValue());
+        } else if (value instanceof BsonInt32) {
+            writer.writeInt32(((BsonInt32) value).getValue());
+        } else if (value instanceof BsonDouble) {
+            writer.writeDouble(((BsonDouble) value).getValue());
+        } else if (value instanceof BsonDecimal128) {
+            writer.writeDecimal128(((BsonDecimal128) value).getValue());
+        } else if (value instanceof BsonDateTime) {
+            writer.writeDateTime(((BsonDateTime) value).getValue());
+        } else if (value instanceof BsonTimestamp) {
+            writer.writeTimestamp((BsonTimestamp) value);
+        } else if (value instanceof BsonUndefined) {
+            writer.writeUndefined();
+        } else if (value instanceof BsonRegularExpression) {
+            writer.writeRegularExpression((BsonRegularExpression) value);
+        } else if (value instanceof BsonBinary) {
+            writer.writeBinaryData((BsonBinary) value);
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    @SuppressWarnings("rawtypes")
     public static Bson serializeFilter(
         ObjectMapper objectMapper,
-        JavaType type, Bson query, CodecRegistry registry
+        JavaType type,
+        Bson query,
+        CodecRegistry registry
     ) {
         SerializerProvider serializerProvider = JacksonAccessor
             .getSerializerProvider(objectMapper);
         JsonSerializer serializer = JacksonAccessor.findValueSerializer(
             serializerProvider, type);
-        try {
-            return serializeFilter(serializerProvider, serializer, query, registry);
-        } catch (Exception e) {
+        final BsonDocument document = new BsonDocument();
+        try (
+            BsonDocumentWriter writer = new BsonDocumentWriter(document);
+            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+        ) {
+            serializeFilter(serializerProvider, serializer, query, registry, writer, generator);
+            return document;
+        } catch (IOException e) {
             throw new MongoException("Error parsing query", e);
         }
     }
 
-    private static Bson serializeFilter(
+    @SuppressWarnings("unchecked")
+    private static void serializeFilter(
         SerializerProvider serializerProvider,
         JsonSerializer<?> serializer,
         Bson query,
-        CodecRegistry registry
-    ) {
+        CodecRegistry registry,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
         // not sure this is the best way to do it.  But you can't get anything out of a Bson but a BsonDocument...
         final Map<String, Object> decoded = registry.get(Map.class).decode(new BsonDocumentReader(query.toBsonDocument(Document.class, registry)), DecoderContext.builder().build());
-        return serializeFilter(serializerProvider, serializer, decoded);
+        serializeFilter(serializerProvider, serializer, decoded, writer, generator);
     }
 
-    private static Bson serializeFilter(final SerializerProvider serializerProvider, final JsonSerializer<?> serializer, final Map<String, Object> decoded) {
-        Document serializedQuery = new Document();
+    private static void serializeFilter(
+        final SerializerProvider serializerProvider,
+        final JsonSerializer<?> serializer,
+        final Map<String, Object> decoded,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
+        writer.writeStartDocument();
         for (Entry<String, Object> field : decoded.entrySet()) {
             String key = field.getKey();
             Object condition = field.getValue();
-            serializedQuery.put(
-                key,
-                serializeFilterCondition(serializerProvider, serializer, key, condition, key.matches("^\\$(?:in|nin|all)$"))
-            );
+            writer.writeName(key);
+            serializeFilterCondition(serializerProvider, serializer, key, condition, key.matches("^\\$(?:in|nin|all)$"), writer, generator);
         }
-        return serializedQuery;
+        writer.writeEndDocument();
     }
 
-    private static Object serializeFilterCondition(
+    @SuppressWarnings("unchecked")
+    private static void serializeFilterCondition(
         SerializerProvider serializerProvider,
         JsonSerializer<?> serializer,
         String key,
         Object condition,
-        boolean targetIsCollection
-    ) {
+        boolean targetIsCollection,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
         if (condition instanceof Collection) {
-            if (!isOperator(key)) {
+            if (keyIsNotOperator(key)) {
                 serializer = findQuerySerializer(targetIsCollection, key, serializerProvider, serializer);
             }
-            List<Object> serializedConditions = new ArrayList<>();
+            writer.writeStartArray();
             for (Object item : (Collection<Object>) condition) {
-                serializedConditions.add(serializeFilterCondition(serializerProvider, serializer, "$", item, targetIsCollection));
+                serializeFilterCondition(serializerProvider, serializer, "$", item, targetIsCollection, writer, generator);
             }
-            return serializedConditions;
+            writer.writeEndArray();
         } else if (condition instanceof Map) {
-            if (!isOperator(key)) {
+            if (keyIsNotOperator(key)) {
                 serializer = findQuerySerializer(targetIsCollection, key, serializerProvider, serializer);
             }
-            return serializeFilter(serializerProvider, serializer, (Map<String, Object>) condition);
+            serializeFilter(serializerProvider, serializer, (Map<String, Object>) condition, writer, generator);
         } else {
-            if (!isOperator(key)) {
+            if (keyIsNotOperator(key)) {
                 serializer = findQuerySerializer(false, key, serializerProvider, serializer);
             }
-            return serializeQueryField(condition, serializer, serializerProvider, key);
+            serializeQueryField(condition, serializer, serializerProvider, writer, generator);
         }
     }
 
     /**
      * Serialize the given field
-     *
-     * @param objectMapper The object mapper to serialize it with
      * @param value        The value to serialize
+     * @param serializerProvider A SerializerProvider
      * @param registry     The codec registry to be used for serialization
-     * @return The serialized field. May return the same object if no
-     * serialization was necessary.
      */
-    public static Object serializeField(ObjectMapper objectMapper, Object value, CodecRegistry registry) {
-        if (value == null || BASIC_TYPES.contains(value.getClass())) {
-            // Return as is
-            return value;
+    @SuppressWarnings("unchecked")
+    private static void serializeUpdateField(
+        Object value,
+        SerializerProvider serializerProvider,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator,
+        CodecRegistry registry
+    ) throws IOException {
+        @SuppressWarnings("rawtypes") JsonSerializer serializer;
+        if (value == null) {
+            writer.writeNull();
+            return;
         } else if (value instanceof Bson) {
-            return serializeFields(objectMapper, (Bson) value, registry);
+            BsonDocument document = ((Bson) value).toBsonDocument(Document.class, registry);
+            BsonDocumentReader reader = new BsonDocumentReader(document);
+            writer.pipe(reader);
+            return;
         } else if (value instanceof Collection) {
+            writer.writeStartArray();
             Collection<?> coll = (Collection<?>) value;
-            List<Object> copy = null;
-            int position = 0;
             for (Object item : coll) {
-                Object returned = serializeField(objectMapper, item, registry);
-                if (returned != item) {
-                    if (copy == null) {
-                        copy = new ArrayList<>(coll);
-                    }
-                    copy.set(position, returned);
-                }
-                position++;
+                serializeUpdateField(item, serializerProvider, writer, generator, registry);
             }
-            if (copy != null) {
-                return copy;
-            } else {
-                return coll;
-            }
+            writer.writeEndArray();
+            return;
         } else if (value.getClass().isArray()) {
-            if (BASIC_TYPES.contains(value.getClass().getComponentType())) {
-                return value;
-            }
+            writer.writeStartArray();
             Object[] array = (Object[]) value;
-            Object[] copy = null;
-            for (int i = 0; i < array.length; i++) {
-                Object returned = serializeField(objectMapper, array[i], registry);
-                if (returned != array[i]) {
-                    if (copy == null) {
-                        copy = new Object[array.length];
-                        System.arraycopy(array, 0, copy, 0, array.length);
-                    }
-                    copy[i] = returned;
-                }
+            for (Object o : array) {
+                serializeUpdateField(o, serializerProvider, writer, generator, registry);
             }
-            if (copy != null) {
-                return copy;
-            } else {
-                return array;
-            }
+            writer.writeEndArray();
+            return;
         } else {
-            // We don't know what it is, serialise it
-            return serializeField(
-                generator -> objectMapper.writeValue(generator, value),
-                () -> "Somehow got an IOException writing to memory"
-            );
+            serializer = JacksonAccessor.findValueSerializer(serializerProvider, value.getClass());
         }
+
+        if (serializer.handledType() != null &&
+            !serializer.handledType().isAssignableFrom(value.getClass()) &&
+            (BASIC_TYPES.contains(value.getClass()) || value instanceof BsonValue)) {
+            if (writeKnownType(value, writer)) {
+                return;
+            }
+        }
+
+        serializer.serialize(value, generator, serializerProvider);
     }
 
     public static Bson serializeDBUpdate(
-        Map<String, Map<String, UpdateOperationValue>> update,
-        ObjectMapper objectMapper, JavaType javaType, CodecRegistry registry
+        Map<String, Map<String,UpdateOperationValue>> update,
+        ObjectMapper objectMapper,
+        JavaType javaType,
+        CodecRegistry registry
     ) {
-        SerializerProvider serializerProvider = JacksonAccessor
-            .getSerializerProvider(objectMapper);
-        Document dbObject = new Document();
+        SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
 
         JsonSerializer<?> serializer = null;
 
-        for (Map.Entry<String, Map<String, UpdateOperationValue>> op : update
-            .entrySet()) {
-            Document opObject = new Document();
-            for (Map.Entry<String, UpdateOperationValue> field : op.getValue()
-                .entrySet()) {
-                Object value;
-                if (field.getValue().requiresSerialization()) {
-
-                    if (serializer == null) {
-                        serializer = JacksonAccessor.findValueSerializer(
-                            serializerProvider, javaType);
-                    }
-
-                    JsonSerializer<?> fieldSerializer = findUpdateSerializer(field
-                            .getValue().isTargetCollection(), field.getKey(),
-                        serializerProvider, serializer
-                    );
-                    if (fieldSerializer != null) {
-                        value = serializeUpdateField(field.getValue(),
-                            fieldSerializer, serializerProvider,
-                            op.getKey(), field.getKey()
-                        );
-                    } else {
-                        // Try default serializers
-                        value = serializeField(objectMapper, field.getValue()
-                            .getValue(), registry);
-                    }
-                } else {
-                    value = field.getValue().getValue();
-                }
-                if ((op.getKey().equals("$addToSet") || op.getKey().equals("$push"))
-                    && field.getValue() instanceof MultiUpdateOperationValue) {
-                    // Add to set needs $each for multi values
-                    // Same for $push with MultiUpdateOperation
-                    opObject.put(field.getKey(), new Document(
-                        "$each",
-                        value
-                    ));
-                } else {
-                    opObject.put(field.getKey(), value);
-                }
-            }
-            dbObject.append(op.getKey(), opObject);
-        }
-        return dbObject;
-    }
-
-    private static Object serializeUpdateField(
-        UpdateOperationValue value,
-        JsonSerializer<?> serializer, SerializerProvider serializerProvider,
-        String op, String field
-    ) {
-        if (value instanceof MultiUpdateOperationValue) {
-            List<Object> results = new ArrayList<>();
-            for (Object item : ((MultiUpdateOperationValue) value).getValues()) {
-                results.add(serializeUpdateField(item, serializer,
-                    serializerProvider, op, field
-                ));
-            }
-            return results;
-        } else {
-            return serializeUpdateField(value.getValue(), serializer,
-                serializerProvider, op, field
-            );
-        }
-    }
-
-    private static Object serializeUpdateField(
-        Object value,
-        JsonSerializer serializer,
-        SerializerProvider serializerProvider,
-        String op,
-        String field
-    ) {
-        return serializeField(
-            jsonGenerator -> serializer.serialize(value, jsonGenerator, serializerProvider),
-            () -> "Error serializing value " + value + " in operation " + op
-        );
-    }
-
-    private static Object serializeField(
-        MappingConsumer<JsonGenerator> serializer,
-        Supplier<String> messageProvider
-    ) {
         final BsonDocument document = new BsonDocument();
         try (
             BsonDocumentWriter writer = new BsonDocumentWriter(document);
             DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
         ) {
             writer.writeStartDocument();
-            writer.writeName("value");
-            serializer.accept(generator);
+            for (Map.Entry<String, Map<String, UpdateOperationValue>> op : update.entrySet()) {
+                writer.writeName(op.getKey());
+                writer.writeStartDocument();
+                for (Map.Entry<String, UpdateOperationValue> field : op.getValue().entrySet()) {
+                    writer.writeName(field.getKey());
+                    boolean subDocument = false;
+                    if ((op.getKey().equals("$addToSet") || op.getKey().equals("$push"))
+                        && field.getValue() instanceof MultiUpdateOperationValue) {
+                        subDocument = true;
+                        writer.writeStartDocument();
+                        writer.writeName("$each");
+                    }
+                    if (field.getValue().requiresSerialization()) {
+
+                        if (serializer == null) {
+                            serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
+                        }
+
+                        JsonSerializer<?> fieldSerializer = findUpdateSerializer(
+                            field.getValue().isTargetCollection(),
+                            field.getKey(),
+                            serializerProvider,
+                            serializer
+                        );
+                        if (fieldSerializer != null) {
+                            serializeUpdateField(
+                                field.getValue(),
+                                fieldSerializer,
+                                serializerProvider,
+                                writer,
+                                generator
+                            );
+                        } else {
+                            // Try default serializers
+                            serializeUpdateField(
+                                field.getValue().getValue(),
+                                serializerProvider, writer, generator, registry
+                            );
+                        }
+                    } else {
+                        serializeUpdateField(
+                            field.getValue().getValue(),
+                            serializerProvider, writer, generator, registry
+                        );
+                    }
+                    if (subDocument) {
+                        writer.writeEndDocument();
+                    }
+                }
+                writer.writeEndDocument();
+            }
             writer.writeEndDocument();
-            return document.get("value");
+            return document;
         } catch (IOException e) {
-            throw new MongoJsonMappingException(messageProvider.get(), e);
+            throw new MongoJsonMappingException(e.getMessage(), e);
         }
+    }
+
+    private static void serializeUpdateField(
+        UpdateOperationValue value,
+        JsonSerializer<?> serializer,
+        SerializerProvider serializerProvider,
+        BsonDocumentWriter writer,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
+        if (value instanceof MultiUpdateOperationValue) {
+            writer.writeStartArray();
+            for (Object item : ((MultiUpdateOperationValue) value).getValues()) {
+                serializeUpdateField(
+                    item,
+                    serializer,
+                    serializerProvider,
+                    generator
+                );
+            }
+            writer.writeEndArray();
+        } else {
+            serializeUpdateField(
+                value.getValue(),
+                serializer,
+                serializerProvider,
+                generator
+            );
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void serializeUpdateField(
+        Object value,
+        @SuppressWarnings("rawtypes") JsonSerializer serializer,
+        SerializerProvider serializerProvider,
+        DBEncoderBsonGenerator generator
+    ) throws IOException {
+        serializer.serialize(value, generator, serializerProvider);
     }
 
     private static JsonSerializer<?> findUpdateSerializer(
@@ -702,18 +760,6 @@ public class DocumentSerializationUtils {
         }
     }
 
-    public static List<Bson> serializePipeline(ObjectMapper objectMapper, JavaType type, Pipeline<?> pipeline) {
-        SerializerProvider serializerProvider = JacksonAccessor
-            .getSerializerProvider(objectMapper);
-        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
-            serializerProvider, type);
-        List<Bson> serializedPipeline = new ArrayList<>();
-        for (Aggregation.Stage<?> stage : pipeline.stages()) {
-            serializedPipeline.add(serializePipelineStage(serializerProvider, serializer, stage));
-        }
-        return serializedPipeline;
-    }
-
     public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, Aggregation.Stage<?> stage) {
         SerializerProvider serializerProvider = JacksonAccessor
             .getSerializerProvider(objectMapper);
@@ -722,8 +768,10 @@ public class DocumentSerializationUtils {
         return serializePipelineStage(serializerProvider, serializer, stage);
     }
 
+    @SuppressWarnings("deprecation")
     private static Bson serializePipelineStage(
-        SerializerProvider serializerProvider, JsonSerializer<?> serializer,
+        SerializerProvider serializerProvider,
+        JsonSerializer<?> serializer,
         Aggregation.Stage<?> stage
     ) {
         if (stage instanceof Aggregation.Limit) {
@@ -739,9 +787,16 @@ public class DocumentSerializationUtils {
             return new Document("$unwind", ((Object) ((Aggregation.Unwind) stage).path()).toString());
         }
         if (stage instanceof Aggregation.Match) {
-            return new Document("$match", serializeQuery(serializerProvider, serializer,
-                ((Aggregation.Match) stage).query()
-            ));
+            final BsonDocument document = new BsonDocument();
+            try (
+                BsonDocumentWriter writer = new BsonDocumentWriter(document);
+                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+            ) {
+                serializeQuery(serializerProvider, serializer, ((Aggregation.Match) stage).query(), writer, generator);
+                return new Document("$match", document);
+            } catch (IOException e) {
+                throw new MongoJsonMappingException(e.getMessage(), e);
+            }
         }
         if (stage instanceof Aggregation.Project) {
             ProjectionBuilder builder = ((Aggregation.Project) stage).builder();
