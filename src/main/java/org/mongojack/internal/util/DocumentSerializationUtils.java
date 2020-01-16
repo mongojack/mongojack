@@ -122,7 +122,8 @@ public class DocumentSerializationUtils {
 
     public static Bson serializeQuery(
         ObjectMapper objectMapper,
-        JavaType type, DBQuery.Query query
+        JavaType type,
+        DBQuery.Query query
     ) {
         SerializerProvider serializerProvider = JacksonAccessor
             .getSerializerProvider(objectMapper);
@@ -132,7 +133,8 @@ public class DocumentSerializationUtils {
     }
 
     private static Bson serializeQuery(
-        SerializerProvider serializerProvider, JsonSerializer<?> serializer,
+        SerializerProvider serializerProvider,
+        JsonSerializer<?> serializer,
         DBQuery.Query query
     ) {
         Document serializedQuery = new Document();
@@ -147,10 +149,11 @@ public class DocumentSerializationUtils {
         return serializedQuery;
     }
 
-
     private static Object serializeQueryCondition(
-        SerializerProvider serializerProvider, JsonSerializer<?> serializer,
-        String key, QueryCondition condition
+        SerializerProvider serializerProvider,
+        JsonSerializer<?> serializer,
+        String key,
+        QueryCondition condition
     ) {
         if (condition instanceof SimpleQueryCondition) {
             SimpleQueryCondition simple = (SimpleQueryCondition) condition;
