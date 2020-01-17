@@ -19,25 +19,25 @@ package org.mongojack;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonTokenId;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.mongodb.DBRef;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongojack.DBQuery.Query;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -73,11 +73,61 @@ public class TestQuerySerialization extends MongoDBTestBase {
     @Test
     public void testIn_collectionOfStrings() {
         final JacksonMongoCollection<MockObjectWithList> c2 = getCollection(MockObjectWithList.class);
+        MockObjectWithList o = new MockObjectWithList();
+        o.simpleList = Arrays.asList("a", "d");
+        c2.save(o);
+        assertNotNull(o._id);
         List<String> x = new ArrayList<>();
         x.add("a");
         x.add("b");
-        Query q = DBQuery.in("simpleList", x);
-        c2.find(q);
+
+        assertEquals(o._id, c2.findOne(DBQuery.in("simpleList", x))._id);
+        assertEquals(o._id, c2.findOne(Filters.in("simpleList", x))._id);
+        assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.in("simpleList", x)).first())._id);
+    }
+
+    @Test
+    public void testEqual_collectionOfStrings() {
+        final JacksonMongoCollection<MockObjectWithList> c2 = getCollection(MockObjectWithList.class);
+        MockObjectWithList o = new MockObjectWithList();
+        o.simpleList = Arrays.asList("a", "d");
+        c2.save(o);
+        assertNotNull(o._id);
+
+        assertEquals(o._id, c2.findOne(DBQuery.is("simpleList", "a"))._id);
+        assertEquals(o._id, c2.findOne(Filters.eq("simpleList", "d"))._id);
+        assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.eq("simpleList", "a")).first())._id);
+    }
+
+    @Test
+    public void testIn_collectionOfRefs() {
+        final JacksonMongoCollection<MockObjectWithList> c2 = getCollection(MockObjectWithList.class);
+        MockObjectWithList o = new MockObjectWithList();
+        org.bson.types.ObjectId oid = new org.bson.types.ObjectId();
+        o.refList = Arrays.asList(new DBRef("db1", "c1", "id1"), new DBRef("db1", "c1", oid));
+        c2.save(o);
+        assertNotNull(o._id);
+        List<DBRef> x = new ArrayList<>();
+        x.add(new DBRef("db2", "c2", new org.bson.types.ObjectId()));
+        x.add(new DBRef("db1", "c1", "id1"));
+
+        assertEquals(o._id, c2.findOne(DBQuery.in("refList", x))._id);
+        assertEquals(o._id, c2.findOne(Filters.in("refList", x))._id);
+        assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.in("refList", x)).first())._id);
+    }
+
+    @Test
+    public void testEqual_collectionOfRefs() {
+        final JacksonMongoCollection<MockObjectWithList> c2 = getCollection(MockObjectWithList.class);
+        MockObjectWithList o = new MockObjectWithList();
+        org.bson.types.ObjectId oid = new org.bson.types.ObjectId();
+        o.refList = Arrays.asList(new DBRef("db1", "c1", "id1"), new DBRef("db1", "c1", oid));
+        c2.save(o);
+        assertNotNull(o._id);
+
+        assertEquals(o._id, c2.findOne(DBQuery.is("refList", new DBRef("db1", "c1", "id1")))._id);
+        assertEquals(o._id, c2.findOne(Filters.eq("refList", new DBRef("db1", "c1", oid)))._id);
+        assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.eq("refList", new DBRef("db1", "c1", "id1"))).first())._id);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -187,6 +237,37 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertEquals(o1.id, coll.find().filter(Filters.regex("wrappedString", "foo:.*")).first().id);
     }
 
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
+    @Test
+    public void testSearchForCustomSerializedFieldsInList() {
+        MockObject o1 = new MockObject();
+        o1.wrappedStringList = Collections.singletonList(new WrappedString("foo:bar"));
+        MockObject o2 = new MockObject();
+        o2.wrappedStringList = Collections.singletonList(new WrappedString("baz:qux"));
+        coll.insertMany(Arrays.asList(o1, o2));
+
+        // some sanity checks
+        assertNotNull(o1.id);
+        assertNotNull(o2.id);
+        final MongoCollection<Document> underlyingCollection = getMongoCollection(coll.getName(), Document.class);
+        final Document found = underlyingCollection.find(Filters.eq("wrappedStringList", "foo:bar")).first();
+        assertEquals("foo:bar", ((List<String>)found.get("wrappedStringList")).get(0));
+
+        assertEquals(o1.id, coll.find(DBQuery.is("wrappedStringList", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedStringList", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find(DBQuery.is("wrappedStringList", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedStringList", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find(DBQuery.regex("wrappedStringList", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.regex("wrappedStringList", Pattern.compile("foo:.*"))).first().id);
+
+        assertEquals(o1.id, coll.find(Filters.eq("wrappedStringList", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.eq("wrappedStringList", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, coll.find(Filters.eq("wrappedStringList", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.eq("wrappedStringList", "foo:bar")).first().id);
+        assertEquals(o1.id, coll.find(Filters.regex("wrappedStringList", "foo:.*")).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.regex("wrappedStringList", "foo:.*")).first().id);
+    }
+
     static class MockObject {
         @ObjectId
         @Id
@@ -199,6 +280,8 @@ public class TestQuerySerialization extends MongoDBTestBase {
         public List<MockObject> items;
 
         public WrappedString wrappedString;
+
+        public List<WrappedString> wrappedStringList;
     }
 
     @SuppressWarnings("unused")
@@ -209,6 +292,8 @@ public class TestQuerySerialization extends MongoDBTestBase {
 
         @JsonProperty
         private List<String> simpleList;
+
+        private List<DBRef> refList;
 
         public String get_id() {
             return _id;
@@ -225,11 +310,22 @@ public class TestQuerySerialization extends MongoDBTestBase {
         public void setSimpleList(List<String> simpleList) {
             this.simpleList = simpleList;
         }
+
+        public List<DBRef> getRefList() {
+            return refList;
+        }
+
+        public void setRefList(final List<DBRef> refList) {
+            this.refList = refList;
+        }
     }
 
     @JsonSerialize(using = WrappedStringSerializer.class)
-    @JsonDeserialize(using = WrappedStringDeserializer.class)
-    static class WrappedString {
+    interface StringWrapper {
+        String getValue();
+    }
+
+    static class WrappedString implements StringWrapper {
 
         private final String value;
 
@@ -260,10 +356,10 @@ public class TestQuerySerialization extends MongoDBTestBase {
         }
     }
 
-    static class WrappedStringSerializer extends JsonSerializer<WrappedString> {
+    static class WrappedStringSerializer extends JsonSerializer<StringWrapper> {
         @Override
         public void serialize(
-            WrappedString value, JsonGenerator jgen,
+            StringWrapper value, JsonGenerator jgen,
             SerializerProvider provider
         ) throws IOException {
             if (value == null) {
@@ -274,24 +370,8 @@ public class TestQuerySerialization extends MongoDBTestBase {
         }
 
         @Override
-        public Class<WrappedString> handledType() {
-            return WrappedString.class;
-        }
-    }
-
-    static class WrappedStringDeserializer extends JsonDeserializer<WrappedString> {
-        @Override
-        public WrappedString deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException {
-            if (jp.getCurrentTokenId() == JsonTokenId.ID_NULL) {
-                return getNullValue(ctxt);
-            }
-            return new WrappedString(jp.getValueAsString());
-        }
-
-        @Override
-        public Class<?> handledType() {
-            return WrappedString.class;
+        public Class<StringWrapper> handledType() {
+            return StringWrapper.class;
         }
     }
 

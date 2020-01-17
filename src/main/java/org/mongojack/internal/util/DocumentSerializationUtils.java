@@ -22,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
+import com.fasterxml.jackson.databind.ser.std.AsArraySerializerBase;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
-import com.mongodb.MongoException;
 import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
 import org.bson.BsonDateTime;
@@ -215,11 +215,12 @@ public class DocumentSerializationUtils {
         BsonDocumentWriter writer,
         DBEncoderBsonGenerator generator
     ) throws IOException {
+        if (value == null) {
+            writer.writeNull();
+            return;
+        }
         if (serializer == null) {
-            if (value == null) {
-                writer.writeNull();
-                return;
-            } else if (value instanceof Collection) {
+            if (value instanceof Collection) {
                 writer.writeStartArray();
                 Collection<?> coll = (Collection<?>) value;
                 for (Object item : coll) {
@@ -242,12 +243,13 @@ public class DocumentSerializationUtils {
         }
 
         if (serializer.handledType() != null &&
-            value != null &&
             !serializer.handledType().isAssignableFrom(value.getClass()) &&
             (BASIC_TYPES.contains(value.getClass()) || value instanceof BsonValue)) {
             if (writeKnownType(value, writer)) {
                 return;
             }
+            serializer = JacksonAccessor.findValueSerializer(serializerProvider, value.getClass());
+        } else if (serializer instanceof AsArraySerializerBase && !(value instanceof Iterable)) {
             serializer = JacksonAccessor.findValueSerializer(serializerProvider, value.getClass());
         }
 
@@ -339,8 +341,8 @@ public class DocumentSerializationUtils {
         ) {
             serializeFilter(serializerProvider, serializer, query, registry, writer, generator);
             return document;
-        } catch (IOException e) {
-            throw new MongoException("Error parsing query", e);
+        } catch (Exception e) {
+            return query;
         }
     }
 
