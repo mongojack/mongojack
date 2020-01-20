@@ -9,7 +9,7 @@ or
 
     MongoCollection<BlogPost> coll = JacksonMongoCollection.builder().build(existingMongoClient, "databaseName", "collectionName", BlogPost.class);
 
-You can then use teh returned collection like any other MongoCollection instance, expecting it to accept and return mapped instances of your POJOs.
+You can then use the returned collection like any other MongoCollection instance, expecting it to accept and return mapped instances of your POJOs.
 
 Inserting looks very similar to using the MongoDB Java driver:
 

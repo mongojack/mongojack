@@ -13,7 +13,7 @@ The aggregate method you will probably want to use looks like this:
 
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> tResultClass)
     
-The returned iterable can be iterated over, collected into a list or other object, or saved to a collection.  Pretty much all teh documentation linked to above applies, but a very simple example
+The returned iterable can be iterated over, collected into a list or other object, or saved to a collection.  Pretty much all the documentation linked to above applies, but a very simple example
 drawn from the mongo documentation might look like:
 
     public class RestaurantsByStar {

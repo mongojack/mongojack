@@ -16,7 +16,7 @@ This is what using MongoJack looks like:
     String id = myObject.getId();
     MyObject savedObject = coll.findOneById(id);
 
-The object stored by teh collection is strongly typed, and does not need to be reconstructed from Bson on retrieval.
+The object stored by the collection is strongly typed, and does not need to be reconstructed from Bson on retrieval.
 If the id is generated, it will be written into the inserted documents.
 
 Features
