@@ -103,38 +103,3 @@ or `com.mongodb.client.model.Updates`.
 
 MongoJack's older DBQuery, DBUpdate, and Aggregation helpers should all still work with the new JacksonMongoCollection, but they have been deprecated as the Mongo driver provides a set of useful builders
 for all of these things in the `com.mongodb.client.model` package.  The implementation attempts to do mapping on any `Bson` inputs.
-
-Releasing
------------
-
-This section is relevant only for project maintainers.
-
-NOTE: [do not release from any location which load balances outgoing HTTP requests between internet connections](https://issues.sonatype.org/browse/OSSRH-6262)
-
-Make sure you have the file `~/.m2/settings.xml`:
-
-    <settings>
-      <servers>
-        <server>
-          <id>sonatype-nexus-staging</id>
-          <username></username>
-          <password></password>
-        </server>
-        <server>
-          <id>github-project-site</id>
-          <username>git</username>
-        </server>
-      </servers>
-    </settings>
-
-Now run the following:
-
-    mvn release:prepare
-    mvn release:perform
-
-Then log into oss.sonatype.org, close the repository, and release the repository.
-
-To deploy the latest version of the website:
-
-    mvn site:site
-    mvn site:deploy
