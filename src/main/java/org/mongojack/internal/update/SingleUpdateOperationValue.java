@@ -16,6 +16,8 @@
  */
 package org.mongojack.internal.update;
 
+import org.mongojack.UpdateOperationValue;
+
 /**
  * A single update operation value
  */

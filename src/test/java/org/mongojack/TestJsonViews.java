@@ -16,23 +16,21 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-
+import com.fasterxml.jackson.annotation.JsonView;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.fasterxml.jackson.annotation.JsonView;
+import static org.hamcrest.core.IsEqual.*;
+import static org.hamcrest.core.IsNull.*;
+import static org.junit.Assert.*;
 
 public class TestJsonViews extends MongoDBTestBase {
 
-    private JacksonDBCollection<ObjectWithView, String> coll;
+    private JacksonMongoCollection<ObjectWithView> coll;
 
     @Before
     public void setUp() {
-        coll = getCollection(ObjectWithView.class, String.class,
-                MockView1.class);
+        coll = getCollectionWithView(ObjectWithView.class, MockView1.class);
     }
 
     @Test
@@ -57,7 +55,7 @@ public class TestJsonViews extends MongoDBTestBase {
     public void testDisabledPropertyWithViewAfterUpdate() {
         ObjectWithView obj = new ObjectWithView("id", "normal", "view1", "view2");
         coll.save(obj);
-        coll.update(DBQuery.is("_id", "id"), obj);
+        coll.replaceOne(DBQuery.is("_id", "id"), obj);
         assertThat(coll.findOneById("id").view2, nullValue());
     }
 

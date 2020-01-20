@@ -15,20 +15,19 @@
  */
 package org.mongojack.internal.util;
 
-import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
-import java.util.Calendar;
-
+import com.fasterxml.jackson.databind.SerializerProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mongojack.internal.CalendarSerializer;
-import org.mongojack.internal.object.BsonObjectGenerator;
+import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
-import com.fasterxml.jackson.databind.SerializerProvider;
+import java.io.IOException;
+import java.util.Calendar;
+
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the {@link CalendarSerializer}.
@@ -42,7 +41,7 @@ public class CalendarSerializerTest {
     @Mock
     private SerializerProvider serializerProvider;
     @Mock
-    private BsonObjectGenerator jsonGenerator;
+    private DBEncoderBsonGenerator jsonGenerator;
     @Mock
     private Calendar calendar;
 

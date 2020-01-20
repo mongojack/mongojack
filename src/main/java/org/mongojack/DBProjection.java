@@ -22,7 +22,9 @@ import com.mongodb.BasicDBObject;
  * Helper class for building projections.
  * 
  * @since 2.0.0
+ * @deprecated Prefer com.mongodb.client.model.Projections
  */
+@Deprecated
 public class DBProjection {
     /**
      * Include the given fields in the results.

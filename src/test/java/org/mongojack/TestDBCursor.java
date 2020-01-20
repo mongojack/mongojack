@@ -16,29 +16,29 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
-
-import java.util.List;
-
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.MongoCursor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
 
-import com.mongodb.BasicDBObject;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.*;
 
 /**
  * Test the Json DB Cursor
  */
 public class TestDBCursor extends MongoDBTestBase {
-    private JacksonDBCollection<MockObject, String> coll;
+
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
     public void setup() throws Exception {
-        coll = getCollection(MockObject.class, String.class);
+        coll = getCollection(MockObject.class);
     }
 
     @Test
@@ -47,17 +47,14 @@ public class TestDBCursor extends MongoDBTestBase {
         MockObject o2 = new MockObject("id2", "blah2", 20);
         MockObject o3 = new MockObject("id3", "blah3", 30);
         coll.insert(o1, o2, o3);
-        DBCursor<MockObject> cursor = coll.find().sort(
-                new BasicDBObject("integer", 1));
+        final MongoCursor<MockObject> cursor = coll.find().sort(
+            new BasicDBObject("integer", 1)).iterator();
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(o1));
-        assertThat(cursor.curr(), equalTo(o1));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(o2));
-        assertThat(cursor.curr(), equalTo(o2));
         assertThat(cursor.hasNext(), equalTo(true));
         assertThat(cursor.next(), equalTo(o3));
-        assertThat(cursor.curr(), equalTo(o3));
         assertThat(cursor.hasNext(), equalTo(false));
     }
 
@@ -67,17 +64,9 @@ public class TestDBCursor extends MongoDBTestBase {
         MockObject o2 = new MockObject("id2", "blah2", 20);
         MockObject o3 = new MockObject("id3", "blah3", 30);
         coll.insert(o1, o2, o3);
-        List<MockObject> results = coll.find()
-                .sort(new BasicDBObject("integer", 1)).toArray();
+        List<MockObject> results = coll.find().sort(new BasicDBObject("integer", 1)).into(new ArrayList<>());
         assertThat(results, contains(o1, o2, o3));
         assertThat(results, hasSize(3));
     }
 
-    @Test
-    public void testPutGroup() {
-        DBCursor<MockObject> cursor = coll.find(DBQuery.and(DBQuery.exists("string")));
-        String queryBefore = cursor.getQuery().toString();
-        assertThat(cursor.and(DBQuery.lessThan("integer", 20)).getQuery().toString(),
-                not(equalTo(queryBefore)));
-    }
 }

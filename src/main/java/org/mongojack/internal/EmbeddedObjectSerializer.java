@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-import org.mongojack.internal.object.BsonObjectGenerator;
 import org.mongojack.internal.object.document.DocumentObjectGenerator;
 import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
@@ -29,16 +28,16 @@ import java.io.IOException;
 
 /**
  * Safe embedded object serializer.
- *
+ * <p>
  * When used with BsonObjectGenerator or DBEncoderBsonGenerator, passes values straight through.
- *
+ * <p>
  * When used with a {@link TokenBuffer} (as by {@link
  * com.fasterxml.jackson.databind.deser.BeanDeserializer#deserializeWithUnwrapped}),
  * temporarily clears the TokenBuffer codec before passing the value through,
  * so it will be properly serialized as an embedded object.
  * (Failure to do so would blow up the stack, as the TokenBuffer would
  * pass the object right back to the ObjectMapper.)
- *
+ * <p>
  * When used with other JsonSerializers, throws {@link java.lang.IllegalArgumentException}
  * with a message that it's designed for use only with BsonObjectGenerator or
  * DBEncoderBsonGenerator or TokenBuffer.
@@ -49,8 +48,8 @@ import java.io.IOException;
 public abstract class EmbeddedObjectSerializer<T> extends JsonSerializer<T> {
 
     protected void writeEmbeddedObject(T value, JsonGenerator jgen)
-            throws IOException {
-        if (jgen instanceof BsonObjectGenerator || jgen instanceof DBEncoderBsonGenerator || jgen instanceof DocumentObjectGenerator) {
+        throws IOException {
+        if (jgen instanceof DBEncoderBsonGenerator || jgen instanceof DocumentObjectGenerator) {
             jgen.writeObject(value);
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
@@ -60,21 +59,21 @@ public abstract class EmbeddedObjectSerializer<T> extends JsonSerializer<T> {
             buffer.setCodec(codec);
         } else {
             String message = "JsonGenerator of type "
-                    + jgen.getClass().getName()
-                    + " not supported: " + getClass().getName()
-                    + " is designed for use only with "
-                    + BsonObjectGenerator.class.getName()
-                    + " or "
-                    + DBEncoderBsonGenerator.class.getName()
-                    + " or "
-                    + TokenBuffer.class.getName();
+                + jgen.getClass().getName()
+                + " not supported: " + getClass().getName()
+                + " is designed for use only with "
+                + DBEncoderBsonGenerator.class.getName()
+                + " or "
+                + TokenBuffer.class.getName();
             throw new IllegalArgumentException(message);
         }
     }
 
     @Override
-    public void serialize(T value, JsonGenerator jgen,
-            SerializerProvider provider) throws IOException {
+    public void serialize(
+        T value, JsonGenerator jgen,
+        SerializerProvider provider
+    ) throws IOException {
         writeEmbeddedObject(value, jgen);
     }
 }

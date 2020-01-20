@@ -1,7 +1,10 @@
 package org.mongojack;
 
-import org.bson.types.ObjectId;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.junit.Before;
 import org.junit.Test;
+import org.mongojack.internal.MongoJackModule;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -17,9 +20,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.core.IsEqual.*;
+import static org.junit.Assert.*;
 
 /**
  * class TestJavaTimeHandling: Tests the java.time.* handling in MongoJack.
@@ -28,9 +30,17 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestJavaTimeHandling extends MongoDBTestBase {
 
+    private ObjectMapper timestampWritingObjectMapper;
+
     public static class LocalDateContainer {
         public org.bson.types.ObjectId _id;
         public LocalDate localDate;
+    }
+    
+    @Before
+    public void setUp() {
+        timestampWritingObjectMapper = MongoJackModule.configure(new ObjectMapper());
+        timestampWritingObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
     }
 
     @Test
@@ -42,11 +52,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.localDate = LocalDate.now();
 
         // get a container
-        JacksonDBCollection<LocalDateContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<LocalDateContainer> coll = getCollection(LocalDateContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -68,11 +74,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.localDate = LocalDate.now();
 
         // get a container
-        JacksonDBCollection<LocalDateContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<LocalDateContainer> coll = getCollection(LocalDateContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -96,15 +98,10 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalTimeContainer object = new LocalTimeContainer();
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
-        LocalTime time = LocalTime.now();
-        object.localTime = time;
+        object.localTime = LocalTime.now();
 
         // get a container
-        JacksonDBCollection<LocalTimeContainer, org.bson.types.ObjectId> coll = getCollection(LocalTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<LocalTimeContainer> coll = getCollection(LocalTimeContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -123,15 +120,10 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalTimeContainer object = new LocalTimeContainer();
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
-        LocalTime time = LocalTime.now();
-        object.localTime = time;
+        object.localTime = LocalTime.now();
 
         // get a container
-        JacksonDBCollection<LocalTimeContainer, org.bson.types.ObjectId> coll = getCollection(LocalTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<LocalTimeContainer> coll = getCollection(LocalTimeContainer.class);
 
         // save the object
         coll.insert(object);
@@ -155,15 +147,10 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalDateTimeContainer object = new LocalDateTimeContainer();
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
-        LocalDateTime time = LocalDateTime.now();
-        object.localDateTime = time;
+        object.localDateTime = LocalDateTime.now();
 
         // get a container
-        JacksonDBCollection<LocalDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<LocalDateTimeContainer> coll = getCollection(LocalDateTimeContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -182,15 +169,10 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalDateTimeContainer object = new LocalDateTimeContainer();
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
-        LocalDateTime time = LocalDateTime.now();
-        object.localDateTime = time;
+        object.localDateTime = LocalDateTime.now();
 
         // get a container
-        JacksonDBCollection<LocalDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(LocalDateTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<LocalDateTimeContainer> coll = getCollection(LocalDateTimeContainer.class);
 
         // save the object
         coll.insert(object);
@@ -227,11 +209,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.zonedDateTime = zoned;
 
         // get a container
-        JacksonDBCollection<ZonedDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(ZonedDateTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<ZonedDateTimeContainer> coll = getCollection(ZonedDateTimeContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -254,15 +232,10 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object._id = id;
         LocalDateTime time = LocalDateTime.now();
         ZoneId paris = ZoneId.of("Europe/Paris");
-        ZonedDateTime zoned = time.atZone(paris);
-        object.zonedDateTime = zoned;
+        object.zonedDateTime = time.atZone(paris);
 
         // get a container
-        JacksonDBCollection<ZonedDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(ZonedDateTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<ZonedDateTimeContainer> coll = getCollection(ZonedDateTimeContainer.class);
 
         // save the object
         coll.insert(object);
@@ -289,11 +262,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.year = Year.now();
 
         // get a container
-        JacksonDBCollection<YearContainer, org.bson.types.ObjectId> coll = getCollection(YearContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<YearContainer> coll = getCollection(YearContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -315,11 +284,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.year = Year.now();
 
         // get a container
-        JacksonDBCollection<YearContainer, org.bson.types.ObjectId> coll = getCollection(YearContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<YearContainer> coll = getCollection(YearContainer.class);
 
         // save the object
         coll.insert(object);
@@ -346,11 +311,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.yearMonth = YearMonth.now();
 
         // get a container
-        JacksonDBCollection<YearMonthContainer, org.bson.types.ObjectId> coll = getCollection(YearMonthContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<YearMonthContainer> coll = getCollection(YearMonthContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -372,11 +333,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.yearMonth = YearMonth.now();
 
         // get a container
-        JacksonDBCollection<YearMonthContainer, org.bson.types.ObjectId> coll = getCollection(YearMonthContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<YearMonthContainer> coll = getCollection(YearMonthContainer.class);
 
         // save the object
         coll.insert(object);
@@ -403,11 +360,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.monthDay = MonthDay.now();
 
         // get a container
-        JacksonDBCollection<MonthDayContainer, org.bson.types.ObjectId> coll = getCollection(MonthDayContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<MonthDayContainer> coll = getCollection(MonthDayContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -429,11 +382,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.monthDay = MonthDay.now();
 
         // get a container
-        JacksonDBCollection<MonthDayContainer, org.bson.types.ObjectId> coll = getCollection(MonthDayContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<MonthDayContainer> coll = getCollection(MonthDayContainer.class);
 
         // save the object
         coll.insert(object);
@@ -458,16 +407,11 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
         LocalTime now = LocalTime.now();
-        OffsetTime offsetTime = OffsetTime.of(now, ZoneOffset.UTC);
 
-        object.offsetTime = offsetTime;
+        object.offsetTime = OffsetTime.of(now, ZoneOffset.UTC);
 
         // get a container
-        JacksonDBCollection<OffsetTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<OffsetTimeContainer> coll = getCollection(OffsetTimeContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -487,16 +431,11 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
         LocalTime now = LocalTime.now();
-        OffsetTime offsetTime = OffsetTime.of(now, ZoneOffset.UTC);
 
-        object.offsetTime = offsetTime;
+        object.offsetTime = OffsetTime.of(now, ZoneOffset.UTC);
 
         // get a container
-        JacksonDBCollection<OffsetTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<OffsetTimeContainer> coll = getCollection(OffsetTimeContainer.class);
 
         // save the object
         coll.insert(object);
@@ -529,11 +468,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.offsetDateTime = offsetTime;
 
         // get a container
-        JacksonDBCollection<OffsetDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetDateTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<OffsetDateTimeContainer> coll = getCollection(OffsetDateTimeContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -553,16 +488,11 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         OffsetDateTimeContainer object = new OffsetDateTimeContainer();
         org.bson.types.ObjectId id = new org.bson.types.ObjectId();
         object._id = id;
-        OffsetDateTime offsetTime = OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC);
 
-        object.offsetDateTime = offsetTime;
+        object.offsetDateTime = OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC);
 
         // get a container
-        JacksonDBCollection<OffsetDateTimeContainer, org.bson.types.ObjectId> coll = getCollection(OffsetDateTimeContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<OffsetDateTimeContainer> coll = getCollection(OffsetDateTimeContainer.class);
 
         // save the object
         coll.insert(object);
@@ -593,11 +523,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.duration = Duration.ofMinutes(2047);
 
         // get a container
-        JacksonDBCollection<DurationContainer, org.bson.types.ObjectId> coll = getCollection(DurationContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<DurationContainer> coll = getCollection(DurationContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -620,11 +546,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.duration = Duration.ofMinutes(2047);
 
         // get a container
-        JacksonDBCollection<DurationContainer, org.bson.types.ObjectId> coll = getCollection(DurationContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<DurationContainer> coll = getCollection(DurationContainer.class);
 
         // save the object
         coll.insert(object);
@@ -655,11 +577,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.instant = Instant.now().plus(Duration.ofHours(3).plusMinutes(8));
 
         // get a container
-        JacksonDBCollection<InstantContainer, org.bson.types.ObjectId> coll = getCollection(InstantContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.enable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<InstantContainer> coll = getCollection(InstantContainer.class, timestampWritingObjectMapper);
 
         // save the object
         coll.insert(object);
@@ -682,11 +600,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         object.instant = Instant.now().plus(Duration.ofHours(3).plusMinutes(8));
 
         // get a container
-        JacksonDBCollection<InstantContainer, org.bson.types.ObjectId> coll = getCollection(InstantContainer.class,
-                org.bson.types.ObjectId.class);
-
-        // enable as timestamps.
-        coll.disable(JacksonDBCollection.Feature.WRITE_DATES_AS_TIMESTAMPS);
+        JacksonMongoCollection<InstantContainer> coll = getCollection(InstantContainer.class);
 
         // save the object
         coll.insert(object);

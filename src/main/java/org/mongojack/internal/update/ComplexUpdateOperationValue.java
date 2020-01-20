@@ -17,6 +17,7 @@
 package org.mongojack.internal.update;
 
 import com.mongodb.DBObject;
+import org.mongojack.UpdateOperationValue;
 
 /**
  * A complex update operation value

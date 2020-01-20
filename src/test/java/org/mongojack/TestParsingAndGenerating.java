@@ -16,11 +16,15 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import com.mongodb.MongoException;
+import com.mongodb.client.MongoCursor;
+import org.bson.Document;
+import org.bson.types.Binary;
+import org.junit.Before;
+import org.junit.Test;
+import org.mongojack.mock.MockEmbeddedObject;
+import org.mongojack.mock.MockObject;
+import org.mongojack.mock.MockObjectIntId;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -28,26 +32,20 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.mongojack.mock.MockEmbeddedObject;
-import org.mongojack.mock.MockObject;
-import org.mongojack.mock.MockObjectIntId;
-
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.MongoException;
+import static org.hamcrest.core.IsEqual.*;
+import static org.hamcrest.core.IsInstanceOf.*;
+import static org.junit.Assert.*;
 
 /**
  * Test for parser and generator
  */
 public class TestParsingAndGenerating extends MongoDBTestBase {
-    private JacksonDBCollection<MockObject, String> coll;
+
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
     public void setup() throws Exception {
-        coll = getCollection(MockObject.class, String.class);
+        coll = getCollection(MockObject.class);
     }
 
     @Test
@@ -94,10 +92,20 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("BSON doesn't yet know how to handle BigInteger")
+    //@Ignore("BSON doesn't yet know how to handle BigInteger")
     public void testInsertRetrieveBigInteger() {
         MockObject object = new MockObject();
         object.bigInteger = BigInteger.valueOf(100);
+        coll.insert(object);
+        MockObject result = coll.findOne();
+        assertEquals(object.bigInteger, result.bigInteger);
+    }
+
+    @Test
+    //@Ignore("BSON doesn't yet know how to handle BigInteger")
+    public void testInsertRetrieveBigInteger2() {
+        MockObject object = new MockObject();
+        object.bigInteger = BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.TEN);
         coll.insert(object);
         MockObject result = coll.findOne();
         assertEquals(object.bigInteger, result.bigInteger);
@@ -122,7 +130,6 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("BSON doesn't yet know how to handle BigDecimal")
     public void testInsertRetrieveBigDecimal() {
         MockObject object = new MockObject();
         object.bigDecimal = BigDecimal.valueOf(4, 6);
@@ -154,7 +161,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         MockObject object = new MockObject();
         object.date = new Date(10000);
         coll.insert(object);
-        DBObject result = coll.getDbCollection().findOne();
+        Document result = getMongoCollection(coll.getName(), Document.class).find().first();
         assertEquals(object.date, result.get("date"));
     }
 
@@ -241,8 +248,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         MockObjectIntId object = new MockObjectIntId();
         object._id = 123456;
 
-        JacksonDBCollection<MockObjectIntId, Integer> coll = getCollectionAs(
-                MockObjectIntId.class, Integer.class);
+        JacksonMongoCollection<MockObjectIntId> coll = getCollection(MockObjectIntId.class);
 
         coll.insert(object);
         MockObjectIntId result = coll.findOne();
@@ -251,27 +257,25 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
 
     @Test(expected = MongoException.class)
     public void testParseErrors() {
-        DBCursor<MockObject> cursor = coll.find(new BasicDBObject("integer",
-                new BasicDBObject("$thisisinvalid", "true")));
+        final MongoCursor<MockObject> cursor = coll.find(new Document("integer", new Document("$thisisinvalid", "true"))).cursor();
         cursor.hasNext();
     }
 
     @Test
-    public void testByteArray() throws Exception {
+    public void testByteArray() {
         ObjectWithByteArray object = new ObjectWithByteArray();
         object._id = "id";
         object.bytes = new byte[] {1, 2, 3, 4, 5};
 
-        JacksonDBCollection<ObjectWithByteArray, String> coll = getCollectionAs(
-                ObjectWithByteArray.class, String.class);
+        JacksonMongoCollection<ObjectWithByteArray> coll = getCollection(ObjectWithByteArray.class);
         coll.insert(object);
 
         ObjectWithByteArray result = coll.findOne();
         assertThat(result.bytes, equalTo(object.bytes));
 
         // Ensure that it is actually stored as binary
-        DBObject dbObject = coll.getDbCollection().findOne();
-        assertThat(dbObject.get("bytes"), instanceOf(byte[].class));
+        Document dbObject = getMongoCollection(coll.getName(), Document.class).find().first();
+        assertThat(dbObject.get("bytes"), instanceOf(Binary.class));
     }
 
     public static class ObjectWithByteArray {
@@ -279,8 +283,4 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         public byte[] bytes;
     }
 
-    private <T, K> JacksonDBCollection<T, K> getCollectionAs(Class<T> type,
-            Class<K> keyType) {
-        return getCollection(type, keyType, coll.getName());
-    }
 }

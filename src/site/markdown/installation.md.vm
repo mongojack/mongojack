@@ -13,4 +13,4 @@ You can download the dependency directly from here:
 
 http://repo1.maven.org/maven2/org/mongojack/mongojack/${siteProjectVersion}/mongojack-${siteProjectVersion}.jar
 
-Source code can be obtained from the [GitHub project](https://github.com/devbliss/mongojack).
+Source code can be obtained from the [GitHub project](https://github.com/mongojack/mongojack).

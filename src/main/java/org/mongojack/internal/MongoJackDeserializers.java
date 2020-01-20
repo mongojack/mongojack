@@ -16,19 +16,18 @@
  */
 package org.mongojack.internal;
 
-import java.time.Instant;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.UUID;
-
-import org.mongojack.DBRef;
-
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.module.SimpleDeserializers;
+import org.mongojack.DBRef;
+
+import java.time.Instant;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.UUID;
 
 /**
  * Deserializers for MongoJack
@@ -42,6 +41,7 @@ public class MongoJackDeserializers extends SimpleDeserializers {
         addDeserializer(Instant.class, new MongoJackInstantDeserializer());
         addDeserializer(Calendar.class, new CalendarDeserializer());
         addDeserializer(UUID.class, new UUIDDeserializer());
+        addDeserializer(com.mongodb.DBRef.class, new MongoDBRefDeserializer());
     }
 
     @Override

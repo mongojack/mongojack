@@ -1,7 +1,8 @@
 Database References
 ===================
 
-The [MongoDB documentation](http://www.mongodb.org/display/DOCS/Database+References) for database references recommends against using database references, because it is usually simpler to just use direct/manual references.  The author of this documentation is of the same opinion.  However, MongoJack does support this convention of storage.
+The [MongoDB documentation](http://www.mongodb.org/display/DOCS/Database+References) for database references recommends against using database references, because it is usually simpler to just use direct/manual references.
+The author of this documentation is of the same opinion.  However, MongoJack does support this convention of storage.
 
 Declaring
 ---------
@@ -21,9 +22,10 @@ Constructing
 
 Constructing the type can be done using a constructor:
 
-    DBRef berlinRef = new DBRef<City, String>("Berlin", "cities");
+    DBRef berlinRef = new DBRef<City, String>("Berlin", City.class, "cities", null);
 
-The first argument is the id of the referenced document, and the second is the name of the collection the document lives in.  An alternative method for constructing DBRefs may be used, by annotating the referenced class with a `org.mongojack.MongoCollection` annotation, which describes the name of the collection the type belongs to:
+The arguments are the id of the referenced document, the document class, the collection name and database name of the collection.
+ An alternative method for constructing DBRefs may be used, by annotating the referenced class with a `org.mongojack.MongoCollection` annotation, which describes the name of the collection the type belongs to:
 
     @MongoCollection(name = "cities")
     public class City {
@@ -40,38 +42,12 @@ If the referenced class has this annotation, you can then construct a DBRef by p
 Using and fetching
 ------------------
 
-The ID and name of the collection can be accessed using simple getters.  You may want to fetch the referenced object though, this can be done by using the convenient `fetch()` method on DBRef:
+The ID and name of the collection can be accessed using simple getters.
 
     User user = userCollection.findOneById("userId");
-    City city = user.city.fetch();
 
-The fetch method may only be used for DBRefs that have been returned by a `JacksonDBCollection`, calling `fetch()` on a DBRef that you constructed yourself will always return null.  You may also fetch only a subset of fields:
+If you want to fetch the referenced object, you can use `DbReferenceManager`, which can fetch single or multiple references from different collections.  We recommend initializing `DbReferenceManager`
+with specific constructed collections, but it is possible to have `DbReferenceManager` create the necessary collection references for you, if they need no special setup.
 
-    City city = user.city.fetch(new BasicDbObject("population" : 1));
-
-Collections of DBRefs
----------------------
-
-You may use DBRefs in a collection or as values for a `Map`.  A common problem in object database mappers is the n+1 selects problem, where you want to get a collection of documents associated with another document, so you need to do one query to get the parent document, and then n queries to get each referenced document.  MongoJack provides a means of avoiding this by supplying a `fetch()` method on `JacksonDBCollection`:
-
-    public class BlogPost {
-        @Id
-        public String blogId;
-        public List<DBRef<Comment, String>> comments;
-    }
-
-    BlogPost post = blogsCollection.findOneById(blogId);
-    List<Comment> comments = blogsCollection.fetch(post.comments);
-
-Using this method, only one query will be made to retrieve the saved comments.  If the references come from multiple different collections, then one query per collection will be made.  Simlarly to fetching a single reference, a list of fields to limit fetching to can be supplied.
-
-ObjectIds
----------
-
-DBRef ids will not automatically be stored as ObjectIds if the referenced object uses an ObjectId id.  To store a DBRef id as an ObjectId, either use `org.bson.types.ObjectId` as the type of its id, or annotate the reference with `@ObjectId`.  More details about ObjectIds can be read [here](./object-ids.html).
-
-Deserialisation of references
------------------------------
-
-References are deserialised using the same `ObjectMapper` that the collection that the referring document came from uses.  This means any custom Jackson configuration required for the `ObjectMapper` of the reference needs to be also in the `ObjectMapper` of the referring collection.
-
+    DbReferenceManager manager = new DbReferenceManager(mongoClient, "locations") // where "locations" is the default default database name to be used by the manager if the ref's contain no DB Name.
+    City city = manager.fetch(user.city);

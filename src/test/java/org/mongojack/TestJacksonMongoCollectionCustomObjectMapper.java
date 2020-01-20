@@ -16,10 +16,6 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.Version;
@@ -30,13 +26,15 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-
-import java.io.IOException;
-
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.internal.MongoJackModule;
+
+import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBase {
 
@@ -46,7 +44,7 @@ public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBas
     public void setUp() {
         coll = JacksonMongoCollection.<MockObject> builder()
             .withObjectMapper(createObjectMapper())
-            .build(getMongoCollection("testJacksonMongoCollection"), MockObject.class);
+            .build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class);
     }
 
     @Test

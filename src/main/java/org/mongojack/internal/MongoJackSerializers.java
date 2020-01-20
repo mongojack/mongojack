@@ -16,13 +16,12 @@
  */
 package org.mongojack.internal;
 
+import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import org.bson.types.ObjectId;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
-
-import org.bson.types.ObjectId;
-
-import com.fasterxml.jackson.databind.module.SimpleSerializers;
 
 /**
  * Serializers for MongoJack
@@ -33,6 +32,7 @@ import com.fasterxml.jackson.databind.module.SimpleSerializers;
 public class MongoJackSerializers extends SimpleSerializers {
     public MongoJackSerializers() {
         addSerializer(new DBRefSerializer());
+        addSerializer(new MongoDBRefSerializer());
         addSerializer(ObjectId.class, new ObjectIdSerializer());
         addSerializer(Date.class, new DateSerializer());
         addSerializer(Calendar.class, new CalendarSerializer());

@@ -16,15 +16,14 @@
  */
 package org.mongojack.internal;
 
-import java.io.IOException;
-
-import org.bson.types.ObjectId;
-import org.mongojack.DBRef;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import org.bson.types.ObjectId;
+import org.mongojack.DBRef;
+
+import java.io.IOException;
 
 /**
  * Serializer for object ids, serialises strings or byte arrays to an ObjectId
@@ -71,7 +70,7 @@ public class ObjectIdSerializer extends EmbeddedObjectSerializer {
             if (id == null) {
                 return null;
             }
-            return new com.mongodb.DBRef(dbRef.getCollectionName(), id);
+            return new com.mongodb.DBRef(dbRef.getDatabaseName(), dbRef.getCollectionName(), id);
         } else if (value instanceof ObjectId) {
             return value;
         } else {

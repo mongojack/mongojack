@@ -19,7 +19,7 @@ package org.mongojack.internal;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import org.mongojack.DBRef;
+import com.mongodb.DBRef;
 
 import java.io.IOException;
 
@@ -29,8 +29,7 @@ import java.io.IOException;
  * @author James Roper
  * @since 1.2
  */
-@SuppressWarnings("rawtypes")
-public class DBRefSerializer extends JsonSerializer<DBRef> {
+public class MongoDBRefSerializer extends JsonSerializer<DBRef> {
 
     @Override
     public void serialize(final DBRef value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
@@ -54,4 +53,5 @@ public class DBRefSerializer extends JsonSerializer<DBRef> {
     public Class<DBRef> handledType() {
         return DBRef.class;
     }
+
 }

@@ -16,16 +16,6 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-
-import java.io.IOException;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mongojack.internal.MongoJackModule;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.Version;
@@ -36,15 +26,23 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.mongodb.DBObject;
+import org.bson.Document;
+import org.junit.Before;
+import org.junit.Test;
+import org.mongojack.internal.MongoJackModule;
+
+import java.io.IOException;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 public class TestCustomObjectMapper extends MongoDBTestBase {
 
-    private JacksonDBCollection<MockObject, String> coll;
+    private JacksonMongoCollection<MockObject> coll;
 
     @Before
     public void setUp() {
-        coll = getCollection(MockObject.class, String.class,
+        coll = getCollection(MockObject.class,
                 createObjectMapper());
     }
 
@@ -53,11 +51,10 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
         MockObject obj = new MockObject();
         obj.custom = new Custom("hello", "world");
         coll.insert(obj);
-        DBObject custom = (DBObject) coll.getDbCollection().findOne()
-                .get("custom");
+        Document custom = getMongoCollection(coll.getName(), Document.class).find().first().get("custom", Document.class);
         assertNotNull(custom);
-        assertThat((String) custom.get("v1"), equalTo("hello"));
-        assertThat((String) custom.get("v2"), equalTo("world"));
+        assertThat(custom.getString("v1"), equalTo("hello"));
+        assertThat(custom.getString("v2"), equalTo("world"));
     }
 
     @Test

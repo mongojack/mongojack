@@ -14,22 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mongojack.internal;
+package org.mongojack;
 
-import org.mongojack.JacksonDBCollection;
-
-/**
- * Provides a JacksonDBCollection
- * 
- * @author James Roper
- * @since 1.2
- */
-public interface JacksonDBCollectionProvider {
-
-    /**
-     * Get the JacksonDBCollection that this object knows about
-     * 
-     * @return The JackosnDBCollection
-     */
-    JacksonDBCollection getDBCollection();
+public interface QueryCondition {
 }

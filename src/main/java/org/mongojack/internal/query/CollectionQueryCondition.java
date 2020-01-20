@@ -16,6 +16,8 @@
  */
 package org.mongojack.internal.query;
 
+import org.mongojack.QueryCondition;
+
 import java.util.ArrayList;
 import java.util.Collection;
 

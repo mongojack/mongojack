@@ -16,11 +16,13 @@
  */
 package org.mongojack;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.junit.Assert.assertThat;
-import static org.mongojack.TestDBUpdateSerialization.NestedIdFieldWithDifferentType.NESTED_ID_FIELD_VALUE;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -29,24 +31,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import static org.hamcrest.core.IsEqual.*;
+import static org.hamcrest.core.IsNull.*;
+import static org.junit.Assert.*;
+import static org.mongojack.TestDBUpdateSerialization.NestedIdFieldWithDifferentType.*;
 
 public class TestDBUpdateSerialization extends MongoDBTestBase {
 
-    private JacksonDBCollection<MockObject, String> coll;
-    private JacksonDBCollection<NestedRepeatedAttributeName, String> coll2;
+    private JacksonMongoCollection<MockObject> coll;
+    private JacksonMongoCollection<NestedRepeatedAttributeName> coll2;
 
     @Before
     public void setUp() {
-        coll = getCollection(MockObject.class, String.class);
+        coll = getCollection(MockObject.class);
     }
 
     @Test
@@ -66,30 +63,11 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
-    public void testListSetCustomSerializer() {
-        coll.save(new MockObject());
-        coll.updateById("id",
-                DBUpdate.set("list", Arrays.asList("some", "foo")));
-        assertThat(coll.findOneById("id").list,
-                equalTo(Arrays.asList("some", "bar")));
-    }
-
-    @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
-    public void testListSingleValueCustomSerializer() {
-        coll.save(new MockObject());
-        coll.updateById("id", DBUpdate.push("list", "foo"));
-        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("bar")));
-    }
-
-    @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
-    public void testListMultiValueCustomSerializer() {
-        coll.save(new MockObject());
-        coll.updateById("id", DBUpdate.pushAll("list", "some", "foo"));
-        assertThat(coll.findOneById("id").list,
-                equalTo(Arrays.asList("some", "bar")));
+    public void testListCustomSerializerInObject() {
+        final MockObject object = new MockObject();
+        object.list = Arrays.asList("some", "foo");
+        coll.save(object);
+        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("some", "bar")));
     }
 
     @Test
@@ -110,8 +88,10 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         c2.simple = "two";
         o.childList = Arrays.asList(c1, c2);
         coll.save(o);
-        coll.update(DBQuery.is("childList.simple", "one"),
-                DBUpdate.set("childList.$.simple", "foo"));
+        coll.updateMany(
+            DBQuery.is("childList.simple", "one"),
+            DBUpdate.set("childList.$.simple", "foo")
+        );
         assertThat(coll.findOneById("id").childList.get(0).simple,
                 equalTo("bar"));
         assertThat(coll.findOneById("id").childList.get(1).simple,
@@ -119,13 +99,11 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     }
 
     @Test
-    @Ignore("Ignored until JACKSON-829 is fixed")
-    public void testMapValueCustomSerializer() {
+    public void testMapValueCustomSerializerForObject() {
         MockObject o = new MockObject();
-        o.customMap = new HashMap<String, String>();
-        o.customMap.put("blah", "blah");
+        o.customMap = new HashMap<>();
+        o.customMap.put("blah", "foo");
         coll.save(o);
-        coll.updateById("id", DBUpdate.set("customMap.blah", "foo"));
         assertThat(coll.findOneById("id").customMap.get("blah"), equalTo("bar"));
     }
 
@@ -160,7 +138,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/98
     @Test
     public void testUpdateOfNestedRepeatedAttributeName() {
-        coll2 = getCollection(NestedRepeatedAttributeName.class, String.class);
+        coll2 = getCollection(NestedRepeatedAttributeName.class);
 
         Date d1 = new Date(10000L);
         Date d2 = new Date(20000L);
@@ -181,13 +159,13 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/127
     @Test
     public void testUpdateOfNestedIdFieldWithDifferentType() {
-        JacksonDBCollection<NestedIdFieldWithDifferentType, String> collection = getCollection(NestedIdFieldWithDifferentType.class, String.class);
+        JacksonMongoCollection<NestedIdFieldWithDifferentType> collection = getCollection(NestedIdFieldWithDifferentType.class);
         
         NestedIdFieldWithDifferentType original = new NestedIdFieldWithDifferentType();
         
         collection.insert(original);
         String newValue = "new value";
-        collection.update(DBQuery.is("nested._id", NESTED_ID_FIELD_VALUE), DBUpdate.set("value", newValue));
+        collection.updateMany(DBQuery.is("nested._id", NESTED_ID_FIELD_VALUE), DBUpdate.set("value", newValue));
         
         NestedIdFieldWithDifferentType updated = collection.findOneById(original._id);
         assertThat(updated, notNullValue());

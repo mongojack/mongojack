@@ -3,41 +3,52 @@ Querying
 
 MongoJack allows you to query MongoDB in exactly the same way that you query using the Java MongoDB driver, with a few extra features for convenience.
 
-DBQuery
--------
+Usage
+-----
 
-`org.mongojack.DBQuery` is a utility class for building queries, which provides methods that implement the [query operators](http://www.mongodb.org/display/DOCS/Advanced+Queries) that MongoDB provides.  It is similar to `com.mongodb.QueryBuilder`, however it allows a slightly more terse syntax.  The most simple element it supports is `is`, for example:
+It is recommended that you use the driver's query builders.  The JacksonMongoCollection will try and serialize the fields of your query correctly using the mapper.
 
-    coll.find(DBQuery.is("username", "jsmith"));
+Queries will always return a FindIterable of the type backing the collection, and you map call any methods on that iterable freely.
+
+Examples
+--------
+
+Simple equality:
+
+    coll.find(Filters.eq("username", "jsmith"));
 
 Multiple operators can be chained together:
 
-    coll.find(DBQuery.greaterThan("age", 21).exists("parent"));
+    coll.find(Filters.gte("age", 21).exists("parent"));
 
-DBCursor
---------
+You can pass a filter to the returned iterable:
 
-`org.mongojack.DBCursor` also implements the same `DBQuery` interface, allowing even simpler chaining of commands:
-
-    List<BlogPost> posts = coll.find().in("tags", "mongodb", "java", "jackson")
-            .is("published", true).limit(10).toArray();
+    List<BlogPost> posts = coll.find().filter(
+        Filters
+            .in("tags", "mongodb", "java", "jackson")
+            .is("published", true)
+    )
+        .limt(10)
+        .into(new ArrayList<>());
 
 Sorting
 -------
 
-MongoJack provides a convenient helper utility for building sort specifications called `org.mongojack.DBSort`:
+MongoJack works as with standard MongoCollection iterables:
 
-    List<BlogPost> posts = coll.find().sort(DBSort.desc("date")).toArray();
+    FindIterable<BlogPost> posts = coll.find().sort(Sorts.orderBy(Sorts.descending("field1"), Sorts.ascending("field2")));
 
 Projections
 -----------
 
-If you don't want to load the entire object, you can use projections to either include or exclude fields.  MongoJack provides a helper utility for building these called `org.mongojack.DBProjection`:
+If you don't want to load the entire object, you can use projections to either include or exclude fields.  Use them just as you would with FindIterable:
 
-    List<BlogPost> posts = coll.find(DBQuery.is("published", true),
-            DBProjection.include("title", "author")).toArray();
+    List<BlogPost> posts = coll.find(DBQuery.is("published", true))
+        .projection(Projections.include("title", "author"))
+        .into(new ArrayList<>());
 
 Serialization
 -------------
 
-MongoJack will attempt to serialise values according to the serialisation configuration of the bean.  This is, however, only done on a best effort basis.  In some cases it may not be possible to serialise all values, for example, when using polymorphic types or ungenercised collections.
+MongoJack will attempt to serialise values according to the serialisation configuration of the bean.  This is, however, only done on a best effort basis.  In some cases it may not be possible to
+serialise all values, for example, when using polymorphic types or ungenercised collections.

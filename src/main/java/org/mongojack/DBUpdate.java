@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,37 +16,43 @@
  */
 package org.mongojack;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bson.Document;
-import org.mongojack.internal.update.ComplexUpdateOperationValue;
-import org.mongojack.internal.update.MultiUpdateOperationValue;
-import org.mongojack.internal.update.SingleUpdateOperationValue;
-import org.mongojack.internal.update.UpdateOperationValue;
-import org.mongojack.internal.util.DocumentSerializationUtils;
-import org.mongojack.internal.util.SerializationUtils;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import org.bson.BsonDocument;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
+import org.mongojack.internal.update.ComplexUpdateOperationValue;
+import org.mongojack.internal.update.MultiUpdateOperationValue;
+import org.mongojack.internal.update.SingleUpdateOperationValue;
+import org.mongojack.internal.util.DocumentSerializationUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A database update. This can be used to build queries using the MongoDB
  * modifier operations. It also will do serialisation of values, however it
  * won't honour any custom serialisers specified on the fields that those values
  * are being set.
- * 
+ * <p>
+ * The Builder is a Bson, which makes it compatible with the methods in the JacksonMongoCollection that accept
+ * Bson-update objects, and makes those methods interoperable with Mongo's internal Updates class.  But be warned
+ * that Builder.initialize has to be called before Builder.toBsonDocument, or exceptions will result.  JacksonMongoCollection takes care of calling initialize for you.
+ * </p>
+ *
  * @author James Roper
  * @since 1.1
+ *
+ * @deprecated Use com.mongodb.client.model.Updates
  */
+@Deprecated
 public class DBUpdate {
 
     /**
      * Increment the given field atomically by one
-     * 
+     *
      * @param field
      *            The field to increment
      * @return this object
@@ -57,7 +63,7 @@ public class DBUpdate {
 
     /**
      * Increment the given field atomically by the given value
-     * 
+     *
      * @param field
      *            The field to increment
      * @param by
@@ -71,7 +77,7 @@ public class DBUpdate {
     /**
      * Set the given field (can be multiple levels deep) to the given value
      * atomically
-     * 
+     *
      * @param field
      *            The field to set
      * @param value
@@ -84,7 +90,7 @@ public class DBUpdate {
 
     /**
      * Unset the given field atomically
-     * 
+     *
      * @param field
      *            The field to unset
      * @return this object
@@ -95,7 +101,7 @@ public class DBUpdate {
 
     /**
      * Add the given value to the array value at the specified field atomically
-     * 
+     *
      * @param field
      *            The field to add the value to
      * @param value
@@ -109,7 +115,7 @@ public class DBUpdate {
     /**
      * Add all of the given values to the array value at the specified field
      * atomically
-     * 
+     *
      * @param field
      *            The field to add the values to
      * @param values
@@ -123,7 +129,7 @@ public class DBUpdate {
     /**
      * Add all of the given values to the array value at the specified field
      * atomically
-     * 
+     *
      * @param field
      *            The field to add the values to
      * @param values
@@ -137,7 +143,7 @@ public class DBUpdate {
     /**
      * Add the given value to the array value if it doesn't already exist in the
      * specified field atomically
-     * 
+     *
      * @param field
      *            The field to add the value to
      * @param value
@@ -151,7 +157,7 @@ public class DBUpdate {
     /**
      * Add the given values to the array value if they don't already exist in
      * the specified field atomically
-     * 
+     *
      * @param field
      *            The field to add the values to
      * @param values
@@ -165,7 +171,7 @@ public class DBUpdate {
     /**
      * Add the given values to the array value if they don't already exist in
      * the specified field atomically
-     * 
+     *
      * @param field
      *            The field to add the values to
      * @param values
@@ -178,7 +184,7 @@ public class DBUpdate {
 
     /**
      * Remove the first value from the array specified by field atomically
-     * 
+     *
      * @param field
      *            The field to remove the value from
      * @return this object
@@ -189,7 +195,7 @@ public class DBUpdate {
 
     /**
      * Remove the last value from the array specified by field atomically
-     * 
+     *
      * @param field
      *            The field to remove the value from
      * @return this object
@@ -200,7 +206,7 @@ public class DBUpdate {
 
     /**
      * Remove all occurances of value from the array at field
-     * 
+     *
      * @param field
      *            The field to remove the value from
      * @param value
@@ -213,7 +219,7 @@ public class DBUpdate {
 
     /**
      * Remove all occurances of the values from the array at field
-     * 
+     *
      * @param field
      *            The field to remove the values from
      * @param values
@@ -226,7 +232,7 @@ public class DBUpdate {
 
     /**
      * Remove all occurances of the values from the array at field
-     * 
+     *
      * @param field
      *            The field to remove the values from
      * @param values
@@ -239,7 +245,7 @@ public class DBUpdate {
 
     /**
      * Rename the given field to the new field name
-     * 
+     *
      * @param oldFieldName
      *            The old field name
      * @param newFieldName
@@ -252,7 +258,7 @@ public class DBUpdate {
 
     /**
      * Perform a bit operation on the given field
-     * 
+     *
      * @param field
      *            The field to perform the operation on
      * @param operation
@@ -267,7 +273,7 @@ public class DBUpdate {
 
     /**
      * Perform two bit operations on the given field
-     * 
+     *
      * @param field
      *            The field to perform the operations on
      * @param operation1
@@ -287,7 +293,7 @@ public class DBUpdate {
 
     /**
      * Perform a bitwise and on the given field
-     * 
+     *
      * @param field
      *            The field to perform the and on
      * @param value
@@ -300,7 +306,7 @@ public class DBUpdate {
 
     /**
      * Perform a bitwise or on the given field
-     * 
+     *
      * @param field
      *            The field to perform the or on
      * @param value
@@ -314,12 +320,16 @@ public class DBUpdate {
     /**
      * The builder
      */
-    public static class Builder {
+    public static class Builder implements Bson, InitializationRequiredForTransformation {
+
         private final Map<String, Map<String, UpdateOperationValue>> update = new HashMap<String, Map<String, UpdateOperationValue>>();
+        private ObjectMapper objectMapper;
+        private JavaType type;
+        private CodecRegistry codecRegistry;
 
         /**
          * Increment the given field atomically by one
-         * 
+         *
          * @param field
          *            The field to increment
          * @return this object
@@ -330,7 +340,7 @@ public class DBUpdate {
 
         /**
          * Increment the given field atomically by the given value
-         * 
+         *
          * @param field
          *            The field to increment
          * @param by
@@ -345,7 +355,7 @@ public class DBUpdate {
         /**
          * Set the given field (can be multiple levels deep) to the given value
          * atomically
-         * 
+         *
          * @param field
          *            The field to set
          * @param value
@@ -359,7 +369,7 @@ public class DBUpdate {
 
         /**
          * Unset the given field atomically
-         * 
+         *
          * @param field
          *            The field to unset
          * @return this object
@@ -372,7 +382,7 @@ public class DBUpdate {
         /**
          * Add the given value to the array value at the specified field
          * atomically
-         * 
+         *
          * @param field
          *            The field to add the value to
          * @param value
@@ -387,7 +397,7 @@ public class DBUpdate {
         /**
          * Add all of the given values to the array value at the specified field
          * atomically
-         * 
+         *
          * @param field
          *            The field to add the values to
          * @param values
@@ -402,7 +412,7 @@ public class DBUpdate {
         /**
          * Add all of the given values to the array value at the specified field
          * atomically
-         * 
+         *
          * @param field
          *            The field to add the values to
          * @param values
@@ -417,7 +427,7 @@ public class DBUpdate {
         /**
          * Add the given value to the array value if it doesn't already exist in
          * the specified field atomically
-         * 
+         *
          * @param field
          *            The field to add the value to
          * @param value
@@ -432,7 +442,7 @@ public class DBUpdate {
         /**
          * Add the given values to the array value if they don't already exist
          * in the specified field atomically
-         * 
+         *
          * @param field
          *            The field to add the values to
          * @param values
@@ -447,7 +457,7 @@ public class DBUpdate {
         /**
          * Add the given values to the array value if they don't already exist
          * in the specified field atomically
-         * 
+         *
          * @param field
          *            The field to add the values to
          * @param values
@@ -461,7 +471,7 @@ public class DBUpdate {
 
         /**
          * Remove the first value from the array specified by field atomically
-         * 
+         *
          * @param field
          *            The field to remove the value from
          * @return this object
@@ -473,7 +483,7 @@ public class DBUpdate {
 
         /**
          * Remove the last value from the array specified by field atomically
-         * 
+         *
          * @param field
          *            The field to remove the value from
          * @return this object
@@ -485,7 +495,7 @@ public class DBUpdate {
 
         /**
          * Remove all occurances of value from the array at field
-         * 
+         *
          * @param field
          *            The field to remove the value from
          * @param value
@@ -499,7 +509,7 @@ public class DBUpdate {
 
         /**
          * Remove all occurances of the values from the array at field
-         * 
+         *
          * @param field
          *            The field to remove the values from
          * @param values
@@ -513,7 +523,7 @@ public class DBUpdate {
 
         /**
          * Remove all occurances of the values from the array at field
-         * 
+         *
          * @param field
          *            The field to remove the values from
          * @param values
@@ -527,7 +537,7 @@ public class DBUpdate {
 
         /**
          * Rename the given field to the new field name
-         * 
+         *
          * @param oldFieldName
          *            The old field name
          * @param newFieldName
@@ -541,7 +551,7 @@ public class DBUpdate {
 
         /**
          * Perform a bit operation on the given field
-         * 
+         *
          * @param field
          *            The field to perform the operation on
          * @param operation
@@ -557,7 +567,7 @@ public class DBUpdate {
 
         /**
          * Perform two bit operations on the given field
-         * 
+         *
          * @param field
          *            The field to perform the operations on
          * @param operation1
@@ -579,7 +589,7 @@ public class DBUpdate {
 
         /**
          * Perform a bitwise and on the given field
-         * 
+         *
          * @param field
          *            The field to perform the and on
          * @param value
@@ -592,7 +602,7 @@ public class DBUpdate {
 
         /**
          * Perform a bitwise or on the given field
-         * 
+         *
          * @param field
          *            The field to perform the or on
          * @param value
@@ -608,7 +618,7 @@ public class DBUpdate {
          * features that aren't yet available through this interface, or if
          * something has been left out. Note that no serialisation will be
          * attempted of the values.
-         * 
+         *
          * @param op
          *            The operation
          * @param field
@@ -624,7 +634,7 @@ public class DBUpdate {
 
         /**
          * Add an operation to the update
-         * 
+         *
          * @param modifier
          *            The modifier of the operation
          * @param field
@@ -648,38 +658,24 @@ public class DBUpdate {
         }
 
         /**
-         * Serialise the values of the query and get them
-         * 
-         * @param objectMapper
-         *            The object mapper to use to serialise values
-         * @return The object
-         */
-        public DBObject serialiseAndGet(ObjectMapper objectMapper,
-                JavaType javaType) {
-            return SerializationUtils.serializeDBUpdate(update, objectMapper,
-                    javaType);
-        }
-
-        /**
-         * Serialise the values of the query and get them
-         * 
-         * @param objectMapper
-         *            The object mapper to use to serialise values
-         * @return The object
-         */
-        public Document serializeAndGetAsDocument(ObjectMapper objectMapper,
-                JavaType javaType) {
-            return DocumentSerializationUtils.serializeDBUpdate(update, objectMapper,
-                    javaType);
-        }
-
-        /**
          * Checks if the update is empty
          *
          * @return true if the update is empty
          */
         public boolean isEmpty() {
             return update.isEmpty();
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            return DocumentSerializationUtils.serializeDBUpdate(update, objectMapper, type, codecRegistry).toBsonDocument(tDocumentClass, codecRegistry);
+        }
+
+        @Override
+        public void initialize(final ObjectMapper objectMapper, final JavaType type, final JacksonCodecRegistry codecRegistry) {
+            this.objectMapper = objectMapper;
+            this.type = type;
+            this.codecRegistry = codecRegistry;
         }
 
     }
