@@ -1,6 +1,0 @@
-org.mongojack
-org.mongojack.internal
-org.mongojack.internal.object
-org.mongojack.internal.stream
-org.mongojack.internal.update
-org.mongojack.internal.util
