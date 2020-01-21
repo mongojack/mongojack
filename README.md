@@ -45,7 +45,7 @@ Maven:
 
 Gradle:
 
-    implementation 'org.mongojack:mongojack:2.10.1'
+    implementation 'org.mongojack:mongojack:3.0.0'
 
 ### Writing code
 
