@@ -256,7 +256,7 @@ public class DocumentSerializationUtils {
         serializer.serialize(value, generator, serializerProvider);
     }
 
-    private static boolean writeKnownType(
+    public static boolean writeKnownType(
         Object value,
         BsonWriter writer
     ) {

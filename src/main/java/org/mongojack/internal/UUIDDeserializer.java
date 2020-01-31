@@ -1,12 +1,13 @@
 package org.mongojack.internal;
 
-import java.io.IOException;
-import java.util.UUID;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import org.bson.BsonBinary;
+
+import java.io.IOException;
+import java.util.UUID;
 
 /**
  * A simple deserializer for Java UUIDs which prevents the regular Java
@@ -27,6 +28,8 @@ public class UUIDDeserializer extends JsonDeserializer<UUID> {
 
             if (object instanceof UUID) {
                 return (UUID) object;
+            } else if (object instanceof BsonBinary) {
+                return ((BsonBinary) object).asUuid();
             }
         }
 

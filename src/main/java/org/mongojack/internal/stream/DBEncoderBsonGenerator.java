@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.mongodb.DBRef;
 import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
+import org.mongojack.internal.util.DocumentSerializationUtils;
 
 import java.io.IOException;
 import java.util.Calendar;
@@ -60,7 +61,9 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
             }
             writeEndObject();
         } else {
-            super._writeSimpleObject(value);
+            if (!DocumentSerializationUtils.writeKnownType(value, writer)) {
+                super._writeSimpleObject(value);
+            }
         }
     }
 }
