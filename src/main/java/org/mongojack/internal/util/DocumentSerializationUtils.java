@@ -121,8 +121,8 @@ public class DocumentSerializationUtils {
      * Serialize the fields of the given object using the given object mapper.
      * This will convert POJOs to Documents where necessary.
      *
-     * @param object       The object to serialize the fields of
-     * @param registry     Codec registry
+     * @param object   The object to serialize the fields of
+     * @param registry Codec registry
      * @return The Document, safe for serialization to MongoDB
      */
     public static Bson serializeFields(
@@ -261,7 +261,7 @@ public class DocumentSerializationUtils {
         BsonWriter writer
     ) {
         if (value instanceof String) {
-            writer.writeString((String)value);
+            writer.writeString((String) value);
         } else if (value instanceof Integer) {
             writer.writeInt32((Integer) value);
         } else if (value instanceof Boolean) {
@@ -322,6 +322,82 @@ public class DocumentSerializationUtils {
             return false;
         }
         return true;
+    }
+
+    @SuppressWarnings("RedundantIfStatement")
+    public static boolean isKnownType(
+        Object value
+    ) {
+        if (value instanceof String ||
+            value instanceof Integer ||
+            value instanceof Boolean ||
+            value instanceof Short ||
+            value instanceof Long ||
+            value instanceof BigInteger ||
+            value instanceof Float ||
+            value instanceof Double ||
+            value instanceof Byte ||
+            value instanceof BigDecimal ||
+            value instanceof byte[] ||
+            value instanceof Date ||
+            value instanceof Pattern ||
+            value instanceof ObjectId ||
+            value instanceof BsonSymbol ||
+            value instanceof BsonObjectId ||
+            value instanceof BsonBoolean ||
+            value instanceof BsonString ||
+            value instanceof BsonMaxKey ||
+            value instanceof BsonMinKey ||
+            value instanceof BsonInt64 ||
+            value instanceof BsonInt32 ||
+            value instanceof BsonDouble ||
+            value instanceof BsonDecimal128 ||
+            value instanceof BsonDateTime ||
+            value instanceof BsonTimestamp ||
+            value instanceof BsonUndefined ||
+            value instanceof BsonRegularExpression ||
+            value instanceof BsonBinary) {
+            return true;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("RedundantIfStatement")
+    public static boolean isKnownClass(
+        Class<?> value
+    ) {
+        if (value.equals(String.class) ||
+            value.equals(Integer.class) ||
+            value.equals(Boolean.class) ||
+            value.equals(Short.class) ||
+            value.equals(Long.class) ||
+            value.equals(BigInteger.class) ||
+            value.equals(Float.class) ||
+            value.equals(Double.class) ||
+            value.equals(Byte.class) ||
+            value.equals(BigDecimal.class) ||
+            value.equals(byte[].class) ||
+            value.equals(Date.class) ||
+            value.equals(Pattern.class) ||
+            value.equals(ObjectId.class) ||
+            value.equals(BsonSymbol.class) ||
+            value.equals(BsonObjectId.class) ||
+            value.equals(BsonBoolean.class) ||
+            value.equals(BsonString.class) ||
+            value.equals(BsonMaxKey.class) ||
+            value.equals(BsonMinKey.class) ||
+            value.equals(BsonInt64.class) ||
+            value.equals(BsonInt32.class) ||
+            value.equals(BsonDouble.class) ||
+            value.equals(BsonDecimal128.class) ||
+            value.equals(BsonDateTime.class) ||
+            value.equals(BsonTimestamp.class) ||
+            value.equals(BsonUndefined.class) ||
+            value.equals(BsonRegularExpression.class) ||
+            value.equals(BsonBinary.class)) {
+            return true;
+        }
+        return false;
     }
 
     @SuppressWarnings("rawtypes")
@@ -411,9 +487,10 @@ public class DocumentSerializationUtils {
 
     /**
      * Serialize the given field
-     * @param value        The value to serialize
+     *
+     * @param value              The value to serialize
      * @param serializerProvider A SerializerProvider
-     * @param registry     The codec registry to be used for serialization
+     * @param registry           The codec registry to be used for serialization
      */
     @SuppressWarnings("unchecked")
     private static void serializeUpdateField(
@@ -464,7 +541,7 @@ public class DocumentSerializationUtils {
     }
 
     public static Bson serializeDBUpdate(
-        Map<String, Map<String,UpdateOperationValue>> update,
+        Map<String, Map<String, UpdateOperationValue>> update,
         ObjectMapper objectMapper,
         JavaType javaType,
         CodecRegistry registry

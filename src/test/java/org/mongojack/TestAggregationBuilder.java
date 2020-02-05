@@ -22,6 +22,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
 import de.flapdoodle.embed.process.collections.Collections;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.Assert;
 import org.junit.Before;
@@ -316,6 +317,17 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         JacksonMongoCollection<User> users = getCollection(User.class);
         users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Collections.newArrayList("golf", "racquetball")));
         users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Collections.newArrayList("tennis", "golf", "swimming")));
+
+        final BsonDocument bsonDocument = Aggregates.project(
+            Projections.fields(
+                Projections.computed(
+                    "month_joined",
+                    new Document("$month", "$joined")
+                ),
+                new Document("name", "$_id"),
+                Projections.excludeId()
+            )
+        ).toBsonDocument(User.class, users.getCodecRegistry());
 
         List<Object> results = users.aggregate(
             Arrays.asList(

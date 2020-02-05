@@ -18,6 +18,7 @@ package org.mongojack;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.Assert;
@@ -26,6 +27,7 @@ import org.junit.Test;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectAggregationResult;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -84,6 +86,23 @@ public class TestAggregate extends MongoDBTestBase {
                 new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*"))),
                 new BasicDBObject("$match", new BasicDBObject("integer", new BasicDBObject("$gt", 1)))
             ), MockObject.class).spliterator(), false).collect(Collectors.toList());
+        Assert.assertEquals(1, resultList.size());
+    }
+
+    @Test
+    public void testAggregateMultipleOpsItemsInCollection2() {
+        coll.insert(new MockObject("string1", 1));
+        coll.insert(new MockObject("string2", 2));
+        List<MockObject> resultList = coll.aggregate(Collections.singletonList(Aggregates.match(Filters.eq("string", Pattern.compile("string1")))), MockObject.class).into(new ArrayList<>());
+        Assert.assertEquals(1, resultList.size());
+        Assert.assertEquals(1, resultList.get(0).integer.intValue());
+        resultList = coll.aggregate(
+            Arrays.asList(
+                Aggregates.match(Filters.eq("string", Pattern.compile(".*"))),
+                Aggregates.match(Filters.gt("integer", 1))
+            ),
+            MockObject.class
+        ).into(new ArrayList<>());
         Assert.assertEquals(1, resultList.size());
     }
 

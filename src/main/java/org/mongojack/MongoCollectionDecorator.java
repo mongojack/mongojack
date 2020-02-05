@@ -41,7 +41,7 @@ import java.util.List;
 
 /**
  * A base class for decorating a MongoCollection.
- *
+ * <p>
  * {@inheritDoc}
  */
 public abstract class MongoCollectionDecorator<TDocument> implements MongoCollection<TDocument> {
@@ -57,9 +57,9 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      * Manage the input Bson in any way necessary to produce a proper update.  The expectation
      * is that this is passed through the mapper or the codec, but the implementation is free
      * to do what it wants as long as the returned Bson is valid.
-     * 
+     *
      * @param update a valid Bson update document (e.g. containing $set, etc).
-     * @return  a valid Bson update document (e.g. containing $set, etc) transformed as necessary
+     * @return a valid Bson update document (e.g. containing $set, etc) transformed as necessary
      */
     protected abstract Bson manageUpdateBson(Bson update);
 
@@ -69,7 +69,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      * to do what it wants as long as the returned Bson is valid.
      *
      * @param update a valid Bson update pipeline (e.g. containing $set, etc).
-     * @return  a valid Bson update pipeline (e.g. containing $set, etc) transformed as necessary
+     * @return a valid Bson update pipeline (e.g. containing $set, etc) transformed as necessary
      */
     protected abstract List<Bson> manageUpdatePipeline(List<? extends Bson> update);
 
@@ -79,7 +79,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      * to do what it wants as long as the returned Bson is valid.
      *
      * @param filter a valid Bson filter document.
-     * @return  a valid Bson filter document transformed as necessary
+     * @return a valid Bson filter document transformed as necessary
      */
     protected abstract Bson manageFilterBson(Bson filter);
 
@@ -89,16 +89,24 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      * to do what it wants as long as the returned Bson is valid.
      *
      * @param pipeline a list of Bson documents making up an aggregation pipeline
-     * @return  a list of Bson documents making up an aggregation pipeline, transformed as necessary
+     * @return a list of Bson documents making up an aggregation pipeline, transformed as necessary
      */
     protected abstract List<Bson> manageAggregationPipeline(List<? extends Bson> pipeline);
+
+    /**
+     * Manages the input write bson for a bulk write.
+     *
+     * @param requests A list of WriteModel instances
+     * @return A list of WriteModel instances with filter and update BSON documents updated with the mapper
+     */
+    protected abstract List<WriteModel<TDocument>> manageBulkWriteRequests(List<? extends WriteModel<? extends TDocument>> requests);
 
     /**
      * Wraps an iterable that supports further .filter() calls so that we can perform mapping on them.
      *
      * @param input a valid iterable
      * @param <T>   return type of the iterable
-     * @return      a wrapped iterable that supports some extended filter operations
+     * @return a wrapped iterable that supports some extended filter operations
      */
     protected abstract <T> DistinctIterable<T> wrapIterable(DistinctIterable<T> input);
 
@@ -107,7 +115,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      *
      * @param input a valid iterable
      * @param <T>   return type of the iterable
-     * @return      a wrapped iterable that supports some extended filter operations
+     * @return a wrapped iterable that supports some extended filter operations
      */
     protected abstract <T> FindIterable<T> wrapIterable(FindIterable<T> input);
 
@@ -116,7 +124,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      *
      * @param input a valid iterable
      * @param <T>   return type of the iterable
-     * @return      a wrapped iterable that supports some extended filter operations
+     * @return a wrapped iterable that supports some extended filter operations
      */
     protected abstract <T> MapReduceIterable<T> wrapIterable(MapReduceIterable<T> input);
 
@@ -533,7 +541,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      */
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests) {
-        return mongoCollection().bulkWrite(requests);
+        return mongoCollection().bulkWrite(manageBulkWriteRequests(requests));
     }
 
     /**
@@ -541,7 +549,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      */
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests, final BulkWriteOptions options) {
-        return mongoCollection().bulkWrite(requests, options);
+        return mongoCollection().bulkWrite(manageBulkWriteRequests(requests), options);
     }
 
     /**
@@ -549,7 +557,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      */
     @Override
     public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends TDocument>> requests) {
-        return mongoCollection().bulkWrite(clientSession, requests);
+        return mongoCollection().bulkWrite(clientSession, manageBulkWriteRequests(requests));
     }
 
     /**
@@ -561,7 +569,7 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
         final List<? extends WriteModel<? extends TDocument>> requests,
         final BulkWriteOptions options
     ) {
-        return mongoCollection().bulkWrite(clientSession, requests, options);
+        return mongoCollection().bulkWrite(clientSession, manageBulkWriteRequests(requests), options);
     }
 
     /**

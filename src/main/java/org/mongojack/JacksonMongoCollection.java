@@ -31,10 +31,17 @@ import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.DeleteManyModel;
+import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -392,10 +399,12 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
             }
             return UpdateResult.acknowledged(0, 1L, codec.getDocumentId(object));
         } else {
+            BsonDocument query = new BsonDocument();
+            query.put("_id", _id);
             if (concern != null) {
-                return withWriteConcern(concern).replaceOne(new Document("_id", _id), object, new ReplaceOptions().upsert(true));
+                return withWriteConcern(concern).replaceOne(query, object, new ReplaceOptions().upsert(true));
             }
-            return mongoCollection().replaceOne(new Document("_id", _id), object, new ReplaceOptions().upsert(true));
+            return replaceOne(query, object, new ReplaceOptions().upsert(true));
         }
     }
 
@@ -463,6 +472,44 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     protected List<Bson> manageAggregationPipeline(final List<? extends Bson> pipeline) {
         initializeIfNecessary(pipeline);
         return (List<Bson>) pipeline;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Override
+    protected List<WriteModel<TResult>> manageBulkWriteRequests(final List<? extends WriteModel<? extends TResult>> requests) {
+        return requests.stream()
+            .map(
+                request -> {
+                    if (request instanceof DeleteOneModel) {
+                        final DeleteOneModel<TResult> deleteRequest = (DeleteOneModel) request;
+                        return new DeleteOneModel<TResult>(manageFilterBson(deleteRequest.getFilter()), deleteRequest.getOptions());
+                    }
+                    if (request instanceof DeleteManyModel) {
+                        final DeleteManyModel<TResult> deleteRequest = (DeleteManyModel) request;
+                        return new DeleteManyModel<TResult>(manageFilterBson(deleteRequest.getFilter()), deleteRequest.getOptions());
+                    }
+                    if (request instanceof ReplaceOneModel) {
+                        final ReplaceOneModel<TResult> replaceRequest = (ReplaceOneModel) request;
+                        return new ReplaceOneModel<>(manageFilterBson(replaceRequest.getFilter()), replaceRequest.getReplacement(), replaceRequest.getReplaceOptions());
+                    }
+                    if (request instanceof UpdateOneModel) {
+                        final UpdateOneModel<TResult> updateRequest = (UpdateOneModel) request;
+                        if (updateRequest.getUpdatePipeline() != null) {
+                            return new UpdateOneModel<TResult>(manageFilterBson(updateRequest.getFilter()), manageUpdatePipeline(updateRequest.getUpdatePipeline()), updateRequest.getOptions());
+                        }
+                        return new UpdateOneModel<TResult>(manageFilterBson(updateRequest.getFilter()), manageUpdateBson(updateRequest.getUpdate()), updateRequest.getOptions());
+                    }
+                    if (request instanceof UpdateManyModel) {
+                        final UpdateManyModel<TResult> updateRequest = (UpdateManyModel) request;
+                        if (updateRequest.getUpdatePipeline() != null) {
+                            return new UpdateManyModel<TResult>(manageFilterBson(updateRequest.getFilter()), manageUpdatePipeline(updateRequest.getUpdatePipeline()), updateRequest.getOptions());
+                        }
+                        return new UpdateManyModel<TResult>(manageFilterBson(updateRequest.getFilter()), manageUpdateBson(updateRequest.getUpdate()), updateRequest.getOptions());
+                    }
+                    return (WriteModel<TResult>)request;
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     @Override

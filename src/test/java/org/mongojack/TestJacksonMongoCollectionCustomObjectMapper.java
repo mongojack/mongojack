@@ -52,7 +52,7 @@ public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBas
         MockObject obj = new MockObject();
         obj.custom = new Custom("hello", "world");
         coll.insert(obj);
-        Document custom = coll.getMongoCollection().find(Document.class).first();
+        Document custom = getMongoCollection(coll.getName(), Document.class).find().first();
         System.out.println(custom);
         assertNotNull(custom);
         assertThat(((Document) custom.get("custom")).get("v1"), equalTo("hello"));
