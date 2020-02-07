@@ -31,39 +31,3 @@ The community is essential to spread the bliss of development. We improve our op
 * Submit a pull request to the repository in the devbliss organization. [see this link](https://help.github.com/articles/creating-a-pull-request)
 * Write an informative pull request description.
 * Please don't add information to `changelog.md`.
-
-## How to make a release
-
-User with appropriate rights can create two kind of releases: snaphost and normal releases. We are using the [maven -release-plugin](http://maven.apache.org/maven-release/maven-release-plugin/). Be sure your sonatype credentials are present in your settings.xml:
-
-```
-<server>
-  <id>sonatype-nexus-snapshots</id>
-  <username>{YOUR_USERNAME}</username>
-  <password>{YOUR_PASSWORD}</password>
-</server>
-<server>
-  <id>sonatype-nexus-staging</id>
-  <username>{YOUR_USERNAME}</username>
-  <password>{YOUR_PASSWORD}</password>
-</server>
-```
-
-### For a normal release:
-* mvn release:clean
-* mvn release:prepare <-> prepare for a release in SCM
-* mvn release:perform <-> perform a release from SCM
-
-You can now check that there is a new tag on [github](https://github.com/devbliss/mongojack/releases). Then, on [oss.sonatype.org](http://oss.sonatype.org), after logging in, the mongojack release can be found under `Staging Repositories`. Select it and click on `Close` then on `Release`. After a while, the Maven Central repository will be updated and you can find the new version of mongojack under [search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22mongojack%22).
-
-To update the documentation, be sure you have the correct server configuration in your settings.xml:
-```
-<server>
-  <id>github-project-site</id>
-  <username>git</username>
-</server>
-```
-Then checkout the tag you just created and run run `mvn clean site-deploy` to create and deploy the site. Check on [mongojack.org](http://mongojack.org) that the update was successful.
-
-### For a snapshot release:
-* mvn clean deploy <-> deploy a snapshot version of mongojack on https://oss.sonatype.org/index.html

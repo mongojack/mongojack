@@ -40,3 +40,4 @@ Documentation
     * [Building Queries](./queries.html)
     * [ObjectId Handling](./object-ids.html)
     * [Database References](./dbrefs.html)
+* [Migrating from 2.x](./migrating.html)
