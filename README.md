@@ -56,6 +56,8 @@ MongoJack now supports _only_ usage of the java mongo driver's 3.x API.  There a
 1) Use the JacksonCodecRegistry class
 2) Use the JacksonMongoCollection class
 
+For a more detailed look at migration from 2.x to 3.x, see [the migration guide](MIGRATING.md)
+
 ### Using JacksonCodecRegistry
 The java mongo 3.0 and higher driver supports the usage of codecs to map to specific types. MongoJack provides a Codec Registry which can be used for this purpose. Some example code making use of the JacksonCodecRegistry can be seen below:
     
