@@ -40,12 +40,12 @@ Maven:
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>3.0.0</version>
+      <version>3.0.1</version>
     </dependency>
 
 Gradle:
 
-    implementation 'org.mongojack:mongojack:3.0.0'
+    implementation 'org.mongojack:mongojack:3.0.1'
 
 ### Writing code
 
