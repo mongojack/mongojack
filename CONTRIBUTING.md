@@ -63,7 +63,7 @@ To update the documentation, be sure you have the correct server configuration i
   <username>git</username>
 </server>
 ```
-Then run `mvn site:site` to generate the documentation and `mvn site:deploy` to deploy it. Check on [mongojack.org](http://mongojack.org) that the update was successful.
+Then checkout the tag you just created and run run `mvn clean site-deploy` to create and deploy the site. Check on [mongojack.org](http://mongojack.org) that the update was successful.
 
 ### For a snapshot release:
 * mvn clean deploy <-> deploy a snapshot version of mongojack on https://oss.sonatype.org/index.html
