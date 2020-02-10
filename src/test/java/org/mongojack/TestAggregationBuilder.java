@@ -209,7 +209,7 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.aggregate(pipeline, MockObject.class).toCollection();
 
         JacksonMongoCollection<MockObject> outCollection = getCollection(MockObject.class, "testOut");
-        Assert.assertEquals(2, outCollection.count());
+        Assert.assertEquals(2, outCollection.countDocuments());
         for (final MockObject object : outCollection.find()) {
             Assert.assertTrue(object.string.equals("baz") || object.string.equals("qux"));
         }

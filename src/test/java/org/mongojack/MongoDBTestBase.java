@@ -18,11 +18,13 @@ package org.mongojack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -52,9 +54,19 @@ public abstract class MongoDBTestBase {
     @Before
     public void connectToDb() {
         if (environment.containsKey(dbHostKey)) {
-            mongo = MongoClients.create(new ConnectionString(String.format("mongodb://%s", environment.get(dbHostKey))));
+            mongo = MongoClients.create(
+                MongoClientSettings.builder()
+                    .applyConnectionString(new ConnectionString(String.format("mongodb://%s", environment.get(dbHostKey))))
+                    .uuidRepresentation(UuidRepresentation.JAVA_LEGACY)
+                    .build()
+            );
         } else {
-            mongo = MongoClients.create(new ConnectionString(String.format("mongodb://localhost:%d", DbManager.PORT)));
+            mongo = MongoClients.create(
+                MongoClientSettings.builder()
+                    .applyConnectionString(new ConnectionString(String.format("mongodb://localhost:%d", DbManager.PORT)))
+                    .uuidRepresentation(UuidRepresentation.JAVA_LEGACY)
+                    .build()
+            );
         }
 
         String testDatabaseName = "unittest";

@@ -2,7 +2,6 @@ package org.mongojack.internal.util;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.Block;
 import com.mongodb.CursorType;
 import com.mongodb.Function;
 import com.mongodb.client.FindIterable;
@@ -85,15 +84,6 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     @Override
     public FindIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         return delegate.maxAwaitTime(maxAwaitTime, timeUnit);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public FindIterable<TResult> modifiers(final Bson modifiers) {
-        return delegate.modifiers(modifiers);
     }
 
     /**
@@ -204,15 +194,6 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
      * {@inheritDoc}
      */
     @Override
-    @Deprecated
-    public FindIterable<TResult> maxScan(final long maxScan) {
-        return delegate.maxScan(maxScan);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public FindIterable<TResult> returnKey(final boolean returnKey) {
         return delegate.returnKey(returnKey);
     }
@@ -223,15 +204,6 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     @Override
     public FindIterable<TResult> showRecordId(final boolean showRecordId) {
         return delegate.showRecordId(showRecordId);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public FindIterable<TResult> snapshot(final boolean snapshot) {
-        return delegate.snapshot(snapshot);
     }
 
     /**
@@ -265,15 +237,6 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     @Override
     public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
         return delegate.map(mapper);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public void forEach(final Block<? super TResult> block) {
-        delegate.forEach(block);
     }
 
     /**

@@ -2,7 +2,6 @@ package org.mongojack.internal.util;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCursor;
@@ -209,15 +208,6 @@ public class MapReduceIterableDecorator<TResult> implements MapReduceIterable<TR
     @Override
     public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
         return delegate.map(mapper);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public void forEach(final Block<? super TResult> block) {
-        delegate.forEach(block);
     }
 
     /**

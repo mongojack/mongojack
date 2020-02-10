@@ -2,7 +2,6 @@ package org.mongojack.internal.util;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
@@ -20,7 +19,7 @@ import java.util.function.Consumer;
 
 /**
  * Wraps a DistinctIterable so we can map filters
- *
+ * <p>
  * {@inheritDoc}
  */
 public class DistinctIterableDecorator<TResult> implements DistinctIterable<TResult> {
@@ -104,15 +103,6 @@ public class DistinctIterableDecorator<TResult> implements DistinctIterable<TRes
     @Override
     public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
         return delegate.map(mapper);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public void forEach(final Block<? super TResult> block) {
-        delegate.forEach(block);
     }
 
     /**

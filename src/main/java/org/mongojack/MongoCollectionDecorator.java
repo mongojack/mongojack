@@ -31,6 +31,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertManyResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
@@ -174,60 +176,6 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
     @Override
     public ReadConcern getReadConcern() {
         return mongoCollection().getReadConcern();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public long count() {
-        return mongoCollection().count();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public long count(final Bson filter) {
-        return mongoCollection().count(manageFilterBson(filter));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public long count(final Bson filter, final CountOptions options) {
-        return mongoCollection().count(manageFilterBson(filter), options);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public long count(final ClientSession clientSession) {
-        return mongoCollection().count(clientSession);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public long count(final ClientSession clientSession, final Bson filter) {
-        return mongoCollection().count(clientSession, manageFilterBson(filter));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public long count(final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        return mongoCollection().count(clientSession, manageFilterBson(filter), options);
     }
 
     /**
@@ -576,64 +524,64 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      * {@inheritDoc}
      */
     @Override
-    public void insertOne(final TDocument tDocument) {
-        mongoCollection().insertOne(tDocument);
+    public InsertOneResult insertOne(final TDocument tDocument) {
+        return mongoCollection().insertOne(tDocument);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertOne(final TDocument tDocument, final InsertOneOptions options) {
-        mongoCollection().insertOne(tDocument, options);
+    public InsertOneResult insertOne(final TDocument tDocument, final InsertOneOptions options) {
+        return mongoCollection().insertOne(tDocument, options);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertOne(final ClientSession clientSession, final TDocument tDocument) {
-        mongoCollection().insertOne(clientSession, tDocument);
+    public InsertOneResult insertOne(final ClientSession clientSession, final TDocument tDocument) {
+        return mongoCollection().insertOne(clientSession, tDocument);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertOne(final ClientSession clientSession, final TDocument tDocument, final InsertOneOptions options) {
-        mongoCollection().insertOne(clientSession, tDocument, options);
+    public InsertOneResult insertOne(final ClientSession clientSession, final TDocument tDocument, final InsertOneOptions options) {
+        return mongoCollection().insertOne(clientSession, tDocument, options);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertMany(final List<? extends TDocument> tDocuments) {
-        mongoCollection().insertMany(tDocuments);
+    public InsertManyResult insertMany(final List<? extends TDocument> tDocuments) {
+        return mongoCollection().insertMany(tDocuments);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertMany(final List<? extends TDocument> tDocuments, final InsertManyOptions options) {
-        mongoCollection().insertMany(tDocuments, options);
+    public InsertManyResult insertMany(final List<? extends TDocument> tDocuments, final InsertManyOptions options) {
+        return mongoCollection().insertMany(tDocuments, options);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> tDocuments) {
-        mongoCollection().insertMany(clientSession, tDocuments);
+    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends TDocument> tDocuments) {
+        return mongoCollection().insertMany(clientSession, tDocuments);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> tDocuments, final InsertManyOptions options) {
-        mongoCollection().insertMany(clientSession, tDocuments, options);
+    public InsertManyResult insertMany(final ClientSession clientSession, final List<? extends TDocument> tDocuments, final InsertManyOptions options) {
+        return mongoCollection().insertMany(clientSession, tDocuments, options);
     }
 
     /**
@@ -712,15 +660,6 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
      * {@inheritDoc}
      */
     @Override
-    @Deprecated
-    public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
-        return mongoCollection().replaceOne(manageFilterBson(filter), replacement, updateOptions);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions replaceOptions) {
         return mongoCollection().replaceOne(manageFilterBson(filter), replacement, replaceOptions);
     }
@@ -731,20 +670,6 @@ public abstract class MongoCollectionDecorator<TDocument> implements MongoCollec
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement) {
         return mongoCollection().replaceOne(clientSession, manageFilterBson(filter), replacement);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Deprecated
-    public UpdateResult replaceOne(
-        final ClientSession clientSession,
-        final Bson filter,
-        final TDocument replacement,
-        final UpdateOptions updateOptions
-    ) {
-        return mongoCollection().replaceOne(clientSession, manageFilterBson(filter), replacement, updateOptions);
     }
 
     /**

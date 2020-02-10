@@ -116,9 +116,10 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     ) {
         this.objectMapper = objectMapper != null ? objectMapper : getDefaultObjectMapper();
         this.view = view;
-        jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, this.view);
+        final MongoCollection<TResult> underlyingCollection = mongoCollection.withDocumentClass(valueClass);
+        jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, underlyingCollection.getCodecRegistry(), this.view);
         jacksonCodecRegistry.addCodecForClass(valueClass);
-        this.mongoCollection = mongoCollection.withDocumentClass(valueClass).withCodecRegistry(jacksonCodecRegistry);
+        this.mongoCollection = underlyingCollection.withCodecRegistry(jacksonCodecRegistry);
         this.valueClass = valueClass;
         this.type = this.objectMapper.constructType(valueClass);
     }

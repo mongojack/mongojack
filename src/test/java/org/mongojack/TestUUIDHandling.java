@@ -53,8 +53,8 @@ public class TestUUIDHandling extends MongoDBTestBase {
         ObjectId id = coll.findOne()._id;
         ObjectIdId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("uuid"), equalTo(object.uuid));
         assertThat(result.uuid, equalTo(object.uuid));
+        assertThat(getUnderlyingCollection(coll).find().first().get("uuid"), equalTo(object.uuid));
     }
 
     public static class ObjectIdId {

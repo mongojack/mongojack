@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -338,6 +339,7 @@ public class DocumentSerializationUtils {
             value instanceof Double ||
             value instanceof Byte ||
             value instanceof BigDecimal ||
+            value instanceof UUID ||
             value instanceof byte[] ||
             value instanceof Date ||
             value instanceof Pattern ||
@@ -376,6 +378,7 @@ public class DocumentSerializationUtils {
             value.equals(Double.class) ||
             value.equals(Byte.class) ||
             value.equals(BigDecimal.class) ||
+            value.equals(UUID.class) ||
             value.equals(byte[].class) ||
             value.equals(Date.class) ||
             value.equals(Pattern.class) ||
