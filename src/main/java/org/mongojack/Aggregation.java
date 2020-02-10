@@ -116,7 +116,7 @@ public class Aggregation<T> {
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
-            return DocumentSerializationUtils.serializePipelineStage(objectMapper, type, this).toBsonDocument(tDocumentClass, codecRegistry);
+            return DocumentSerializationUtils.serializePipelineStage(objectMapper, type, this, codecRegistry).toBsonDocument(tDocumentClass, codecRegistry);
         }
 
         @Override
@@ -322,7 +322,7 @@ public class Aggregation<T> {
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
-            return DocumentSerializationUtils.serializePipelineStage(objectMapper, type, this).toBsonDocument(tDocumentClass, codecRegistry);
+            return DocumentSerializationUtils.serializePipelineStage(objectMapper, type, this, codecRegistry).toBsonDocument(tDocumentClass, codecRegistry);
         }
 
         @Override

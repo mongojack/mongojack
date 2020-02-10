@@ -44,7 +44,7 @@ public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBas
     public void setUp() {
         coll = JacksonMongoCollection.<MockObject> builder()
             .withObjectMapper(createObjectMapper())
-            .build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class);
+            .build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class, uuidRepresentation);
     }
 
     @Test

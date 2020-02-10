@@ -50,6 +50,7 @@ public abstract class MongoDBTestBase {
     protected MongoClient mongo;
     protected MongoDatabase db;
     private Set<String> collections;
+    protected UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
     @Before
     public void connectToDb() {
@@ -57,14 +58,14 @@ public abstract class MongoDBTestBase {
             mongo = MongoClients.create(
                 MongoClientSettings.builder()
                     .applyConnectionString(new ConnectionString(String.format("mongodb://%s", environment.get(dbHostKey))))
-                    .uuidRepresentation(UuidRepresentation.JAVA_LEGACY)
+                    .uuidRepresentation(uuidRepresentation)
                     .build()
             );
         } else {
             mongo = MongoClients.create(
                 MongoClientSettings.builder()
                     .applyConnectionString(new ConnectionString(String.format("mongodb://localhost:%d", DbManager.PORT)))
-                    .uuidRepresentation(UuidRepresentation.JAVA_LEGACY)
+                    .uuidRepresentation(uuidRepresentation)
                     .build()
             );
         }
@@ -123,7 +124,7 @@ public abstract class MongoDBTestBase {
     protected <T> JacksonMongoCollection<T> getCollection(Class<T> type) {
         return configure(
             JacksonMongoCollection.builder()
-                .build(getMongoCollection(type), type)
+                .build(getMongoCollection(type), type, uuidRepresentation)
         );
     }
 
@@ -132,7 +133,7 @@ public abstract class MongoDBTestBase {
         return configure(
             JacksonMongoCollection.builder()
                 .withView(view)
-                .build(getMongoCollection(type), type)
+                .build(getMongoCollection(type), type, uuidRepresentation)
         );
     }
 
@@ -142,7 +143,7 @@ public abstract class MongoDBTestBase {
     ) {
         return configure(
             JacksonMongoCollection.builder()
-                .build(getMongoCollection(collectionName, type), type)
+                .build(getMongoCollection(collectionName, type), type, uuidRepresentation)
         );
     }
 
@@ -153,7 +154,7 @@ public abstract class MongoDBTestBase {
         return configure(
             JacksonMongoCollection.builder()
                 .withObjectMapper(mapper)
-                .build(getMongoCollection(type), type)
+                .build(getMongoCollection(type), type, uuidRepresentation)
         );
     }
 

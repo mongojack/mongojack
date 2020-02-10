@@ -14,6 +14,7 @@ import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonJavaScript;
 import org.bson.BsonType;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonJavaScriptWithScopeCodec;
 import org.bson.codecs.DecoderContext;
@@ -37,6 +38,8 @@ public class JsonParserAdapter extends ParserBase {
 
     protected Object currentValue;
 
+    private final UuidRepresentation uuidRepresentation;
+
     /**
      * Constructs a new parser
      *
@@ -45,9 +48,10 @@ public class JsonParserAdapter extends ParserBase {
      *                     {@link com.fasterxml.jackson.core.JsonParser.Feature}s are enabled.
      * @param reader       Bson reader to read from
      */
-    public JsonParserAdapter(IOContext ctxt, int jsonFeatures, AbstractBsonReader reader) {
+    public JsonParserAdapter(IOContext ctxt, int jsonFeatures, AbstractBsonReader reader, final UuidRepresentation uuidRepresentation) {
         super(ctxt, jsonFeatures);
         this.reader = reader;
+        this.uuidRepresentation = uuidRepresentation;
     }
 
     @Override
@@ -166,7 +170,7 @@ public class JsonParserAdapter extends ParserBase {
                 byte subtype = reader.peekBinarySubType();
                 final BsonBinary bsonBinary = reader.readBinaryData();
                 if (BsonBinarySubType.isUuid(subtype)) {
-                    currentValue = bsonBinary.asUuid();
+                    currentValue = bsonBinary.asUuid(uuidRepresentation);
                 } else {
                     currentValue = bsonBinary.getData();
                 }

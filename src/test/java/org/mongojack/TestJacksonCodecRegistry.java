@@ -41,7 +41,7 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
     @Before
     public void setup() {
         com.mongodb.client.MongoCollection<?> collection = getMongoCollection("testCollection", Document.class);
-        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(MongoJackModule.configure(new ObjectMapper()), collection.getCodecRegistry());
+        JacksonCodecRegistry jacksonCodecRegistry = new JacksonCodecRegistry(MongoJackModule.configure(new ObjectMapper()), collection.getCodecRegistry(), uuidRepresentation);
         jacksonCodecRegistry.addCodecForClass(MockObject.class);
         coll = collection.withDocumentClass(MockObject.class).withCodecRegistry(jacksonCodecRegistry);
     }

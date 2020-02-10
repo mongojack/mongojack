@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 import org.bson.BsonBinary;
 import org.bson.BsonWriter;
+import org.bson.UuidRepresentation;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
@@ -18,15 +19,21 @@ import java.util.Arrays;
 public class JsonGeneratorAdapter extends GeneratorBase {
 
     protected final BsonWriter writer;
+    protected final UuidRepresentation uuidRepresentation;
 
-    protected JsonGeneratorAdapter(final int features, final ObjectCodec codec, final BsonWriter writer) {
+    protected JsonGeneratorAdapter(final int features, final ObjectCodec codec, final BsonWriter writer,
+        final UuidRepresentation uuidRepresentation) {
         super(features, codec);
         this.writer = writer;
+        this.uuidRepresentation = uuidRepresentation;
     }
+    
 
-    protected JsonGeneratorAdapter(final int features, final ObjectCodec codec, final JsonWriteContext ctxt, final BsonWriter writer) {
+    protected JsonGeneratorAdapter(final int features, final ObjectCodec codec, final JsonWriteContext ctxt, final BsonWriter writer,
+        final UuidRepresentation uuidRepresentation) {
         super(features, codec, ctxt);
         this.writer = writer;
+        this.uuidRepresentation = uuidRepresentation;
     }
 
     @Override

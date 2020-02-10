@@ -44,6 +44,7 @@ import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.mongojack.internal.MongoJackModule;
@@ -112,12 +113,13 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         com.mongodb.client.MongoCollection<TResult> mongoCollection,
         ObjectMapper objectMapper,
         Class<TResult> valueClass,
-        Class<?> view
+        Class<?> view,
+        final UuidRepresentation uuidRepresentation
     ) {
         this.objectMapper = objectMapper != null ? objectMapper : getDefaultObjectMapper();
         this.view = view;
         final MongoCollection<TResult> underlyingCollection = mongoCollection.withDocumentClass(valueClass);
-        jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, underlyingCollection.getCodecRegistry(), this.view);
+        jacksonCodecRegistry = new JacksonCodecRegistry(this.objectMapper, underlyingCollection.getCodecRegistry(), this.view, uuidRepresentation);
         jacksonCodecRegistry.addCodecForClass(valueClass);
         this.mongoCollection = underlyingCollection.withCodecRegistry(jacksonCodecRegistry);
         this.valueClass = valueClass;
@@ -652,8 +654,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @param <CT>           The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
-        public <CT> JacksonMongoCollection<CT> build(MongoClient client, String databaseName, String collectionName, Class<CT> valueType) {
-            return build(client.getDatabase(databaseName), collectionName, valueType);
+        public <CT> JacksonMongoCollection<CT> build(MongoClient client, String databaseName, String collectionName, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
+            return build(client.getDatabase(databaseName), collectionName, valueType, uuidRepresentation);
         }
 
         /**
@@ -665,8 +667,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @param <CT>         The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
-        public <CT> JacksonMongoCollection<CT> build(MongoClient client, String databaseName, Class<CT> valueType) {
-            return build(client.getDatabase(databaseName), valueType);
+        public <CT> JacksonMongoCollection<CT> build(MongoClient client, String databaseName, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
+            return build(client.getDatabase(databaseName), valueType, uuidRepresentation);
         }
 
         /**
@@ -678,8 +680,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @param <CT>           The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
-        public <CT> JacksonMongoCollection<CT> build(MongoDatabase database, String collectionName, Class<CT> valueType) {
-            return build(database.getCollection(collectionName, valueType), valueType);
+        public <CT> JacksonMongoCollection<CT> build(MongoDatabase database, String collectionName, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
+            return build(database.getCollection(collectionName, valueType), valueType, uuidRepresentation);
         }
 
         /**
@@ -690,12 +692,12 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @param <CT>           The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
-        public <CT> JacksonMongoCollection<CT> build(MongoDatabase database, Class<CT> valueType) {
+        public <CT> JacksonMongoCollection<CT> build(MongoDatabase database, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
             final org.mongojack.MongoCollection annotation = valueType.getAnnotation(org.mongojack.MongoCollection.class);
             if (annotation == null) {
                 throw new IllegalArgumentException("You can only use the builder methods without explicit collection names if you have a class annotated with org.mongojack.MongoCollection");
             }
-            return build(database.getCollection(annotation.name(), valueType), valueType);
+            return build(database.getCollection(annotation.name(), valueType), valueType, uuidRepresentation);
         }
 
         /**
@@ -706,8 +708,8 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @param <CT>            The value type of the collection
          * @return                A constructed collection
          */
-        public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<CT> mongoCollection, Class<CT> valueType) {
-            return new JacksonMongoCollection<>(mongoCollection, this.objectMapper, valueType, view);
+        public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<CT> mongoCollection, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
+            return new JacksonMongoCollection<>(mongoCollection, this.objectMapper, valueType, view, uuidRepresentation);
         }
 
     }

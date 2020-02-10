@@ -168,7 +168,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
     @Test
     public void testAll() {
         MockObject o = new MockObject();
-        MockObject o1 = new MockObject();
+        MockEmbedded o1 = new MockEmbedded();
         o1.id = new org.bson.types.ObjectId().toString();
         o.items = Collections.singletonList(o1);
         coll.save(o);
@@ -183,20 +183,20 @@ public class TestQuerySerialization extends MongoDBTestBase {
     @Test
     public void testList() {
         MockObject o = new MockObject();
-        MockObject o1 = new MockObject();
+        MockEmbedded o1 = new MockEmbedded();
         o1.id = new org.bson.types.ObjectId().toString();
         o.items = Collections.singletonList(o1);
         coll.save(o);
 
-        assertNotNull(coll.find(DBQuery.is("items._id", o1.id)).first());
-        assertNotNull(coll.find(Filters.eq("items._id", o1.id)).first());
-        assertNotNull(coll.find().filter(Filters.eq("items._id", o1.id)).first());
+        assertNotNull(coll.find(DBQuery.is("items.id", o1.id)).first());
+        assertNotNull(coll.find(Filters.eq("items.id", o1.id)).first());
+        assertNotNull(coll.find().filter(Filters.eq("items.id", o1.id)).first());
     }
 
     @Test
     public void testArrayEquals() {
         MockObject o = new MockObject();
-        MockObject o1 = new MockObject();
+        MockEmbedded o1 = new MockEmbedded();
         o1.id = new org.bson.types.ObjectId().toString();
         o.items = Collections.singletonList(o1);
         coll.save(o);
@@ -277,11 +277,17 @@ public class TestQuerySerialization extends MongoDBTestBase {
         @JsonDeserialize(using = MinusTenDeserializer.class)
         public int i;
 
-        public List<MockObject> items;
+        public List<MockEmbedded> items;
 
         public WrappedString wrappedString;
 
         public List<WrappedString> wrappedStringList;
+    }
+
+    static class MockEmbedded {
+
+        public String id;
+
     }
 
     @SuppressWarnings("unused")

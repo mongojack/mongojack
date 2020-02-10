@@ -3,6 +3,7 @@ package org.mongojack;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
+import org.bson.UuidRepresentation;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
@@ -20,22 +21,26 @@ public class DbReferenceManager {
     private final MongoClient mongoClient;
     private final ObjectMapper objectMapper;
     private final String defaultDatabaseName;
+    private final UuidRepresentation uuidRepresentation;
 
     public DbReferenceManager(
         final MongoClient mongoClient,
         final ObjectMapper objectMapper,
-        final String defaultDatabaseName
+        final String defaultDatabaseName,
+        final UuidRepresentation uuidRepresentation
     ) {
         this.mongoClient = mongoClient;
         this.objectMapper = objectMapper;
         this.defaultDatabaseName = defaultDatabaseName;
+        this.uuidRepresentation = uuidRepresentation;
     }
 
     public DbReferenceManager(
         final MongoClient mongoClient,
-        final String defaultDatabaseName
+        final String defaultDatabaseName,
+        final UuidRepresentation uuidRepresentation
     ) {
-        this(mongoClient, null, defaultDatabaseName);
+        this(mongoClient, null, defaultDatabaseName, uuidRepresentation);
     }
 
     /**
@@ -73,7 +78,8 @@ public class DbReferenceManager {
                     .withObjectMapper(objectMapper)
                     .build(
                         (MongoCollection<CT>) mongoClient.getDatabase(databaseName).getCollection(k.getCollectionName()).withDocumentClass(k.getValueType()),
-                        (Class<CT>) k.getValueType()
+                        (Class<CT>) k.getValueType(),
+                        uuidRepresentation
                     );
             }
         );

@@ -33,7 +33,7 @@ public class TestDBRefHandling extends MongoDBTestBase {
 
     @Before
     public void setUp() {
-        manager = new DbReferenceManager(mongo, db.getName());
+        manager = new DbReferenceManager(mongo, db.getName(), uuidRepresentation);
     }
 
     @Test

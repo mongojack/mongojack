@@ -10,10 +10,12 @@ import org.bson.BsonReader;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
@@ -26,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @SuppressWarnings("WeakerAccess")
-public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
+public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, OverridableUuidRepresentationCodec<T> {
 
     private final JacksonEncoder<T> encoder;
     private final JacksonDecoder<T> decoder;
@@ -68,6 +70,14 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T> {
     @Override
     public BsonValue getDocumentId(final T t) {
         return getIdReader(t).get();
+    }
+
+    @Override
+    public Codec<T> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        return new JacksonCodec<>(
+            encoder.withUuidRepresentation(uuidRepresentation),
+            decoder.withUuidRepresentation(uuidRepresentation)
+        );
     }
 
     private Supplier<BsonValue> getIdReader(final T t) {

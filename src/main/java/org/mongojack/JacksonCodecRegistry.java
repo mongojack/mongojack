@@ -3,6 +3,7 @@ package org.mongojack;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBObject;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -26,15 +27,17 @@ public class JacksonCodecRegistry implements CodecRegistry, CodecProvider {
     private final Class<?> view;
     private final ConcurrentHashMap<Class<?>, Codec<?>> codecCache = new ConcurrentHashMap<>();
     private final CodecRegistry defaultCodecRegistry;
+    private final UuidRepresentation uuidRepresentation;
 
-    public JacksonCodecRegistry(ObjectMapper objectMapper, CodecRegistry defaultCodecRegistry) {
-        this(objectMapper, defaultCodecRegistry, null);
+    public JacksonCodecRegistry(ObjectMapper objectMapper, CodecRegistry defaultCodecRegistry, final UuidRepresentation uuidRepresentation) {
+        this(objectMapper, defaultCodecRegistry, null, uuidRepresentation);
     }
 
-    public JacksonCodecRegistry(ObjectMapper objectMapper, CodecRegistry defaultCodecRegistry, Class<?> view) {
+    public JacksonCodecRegistry(ObjectMapper objectMapper, CodecRegistry defaultCodecRegistry, Class<?> view, final UuidRepresentation uuidRepresentation) {
         this.objectMapper = objectMapper;
         this.view = view;
         this.defaultCodecRegistry = defaultCodecRegistry;
+        this.uuidRepresentation = uuidRepresentation;
     }
 
     @Override
@@ -63,10 +66,14 @@ public class JacksonCodecRegistry implements CodecRegistry, CodecProvider {
     @SuppressWarnings("unchecked")
     public <T> Codec<T> addCodecForClass(Class<T> clazz) {
         return (Codec<T>) codecCache.computeIfAbsent(clazz, (k) -> {
-            JacksonEncoder<T> encoder = new JacksonEncoder<>(clazz, view, objectMapper);
-            JacksonDecoder<T> decoder = new JacksonDecoder<>(clazz, view, objectMapper);
+            JacksonEncoder<T> encoder = new JacksonEncoder<>(clazz, view, objectMapper, uuidRepresentation);
+            JacksonDecoder<T> decoder = new JacksonDecoder<>(clazz, view, objectMapper, uuidRepresentation);
             return new JacksonCodec<>(encoder, decoder);
         });
+    }
+
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
     }
 
 }

@@ -18,13 +18,16 @@ package org.mongojack.internal.stream;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.mongodb.DBRef;
+import org.bson.BsonBinary;
 import org.bson.BsonWriter;
+import org.bson.UuidRepresentation;
 import org.bson.types.ObjectId;
 import org.mongojack.internal.util.DocumentSerializationUtils;
 
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * BsonGenerator that adds a bit of functionality specific to DBEncoding to the
@@ -32,12 +35,12 @@ import java.util.Date;
  */
 public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
 
-    public DBEncoderBsonGenerator(int jsonFeatures, BsonWriter out) {
-        super(jsonFeatures, null, out);
+    public DBEncoderBsonGenerator(int jsonFeatures, BsonWriter out, final UuidRepresentation uuidRepresentation) {
+        super(jsonFeatures, null, out, uuidRepresentation);
     }
 
-    public DBEncoderBsonGenerator(final BsonWriter writer) {
-        this(JsonGenerator.Feature.collectDefaults(), writer);
+    public DBEncoderBsonGenerator(final BsonWriter writer, final UuidRepresentation uuidRepresentation) {
+        this(JsonGenerator.Feature.collectDefaults(), writer, uuidRepresentation);
     }
 
     @Override
@@ -48,6 +51,8 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
             writer.writeDateTime(((Calendar) value).getTime().getTime());
         } else if (value instanceof ObjectId) {
             writeBsonObjectId((ObjectId) value);
+        } else if (value instanceof UUID) {
+            writer.writeBinaryData(new BsonBinary((UUID)value, uuidRepresentation));
         } else if (value instanceof DBRef) {
             DBRef dbRef = (DBRef) value;
             writeStartObject();

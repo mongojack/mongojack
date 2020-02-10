@@ -46,9 +46,11 @@ import org.bson.BsonUndefined;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.internal.OverridableUuidRepresentationCodecRegistry;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.mongojack.Aggregation;
@@ -57,6 +59,7 @@ import org.mongojack.Aggregation.Group.Accumulator;
 import org.mongojack.DBProjection.ProjectionBuilder;
 import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
+import org.mongojack.JacksonCodecRegistry;
 import org.mongojack.MongoJsonMappingException;
 import org.mongojack.QueryCondition;
 import org.mongojack.UpdateOperationValue;
@@ -136,14 +139,15 @@ public class DocumentSerializationUtils {
     public static Bson serializeQuery(
         ObjectMapper objectMapper,
         JavaType type,
-        @SuppressWarnings("deprecation") DBQuery.Query query
+        @SuppressWarnings("deprecation") DBQuery.Query query,
+        CodecRegistry registry
     ) {
         SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
         JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, type);
         final BsonDocument document = new BsonDocument();
         try (
             BsonDocumentWriter writer = new BsonDocumentWriter(document);
-            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
         ) {
             serializeQuery(serializerProvider, serializer, query, writer, generator);
             return document;
@@ -325,7 +329,7 @@ public class DocumentSerializationUtils {
         return true;
     }
 
-    @SuppressWarnings("RedundantIfStatement")
+    @SuppressWarnings({"RedundantIfStatement", "unused"})
     public static boolean isKnownType(
         Object value
     ) {
@@ -416,13 +420,23 @@ public class DocumentSerializationUtils {
         final BsonDocument document = new BsonDocument();
         try (
             BsonDocumentWriter writer = new BsonDocumentWriter(document);
-            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
         ) {
             serializeFilter(serializerProvider, serializer, query, registry, writer, generator);
             return document;
         } catch (Exception e) {
             return query;
         }
+    }
+
+    private static UuidRepresentation attemptToExtractUuidRepresentation(final CodecRegistry registry) {
+        UuidRepresentation uuidRepresentation = UuidRepresentation.STANDARD;
+        if (registry instanceof OverridableUuidRepresentationCodecRegistry) {
+            uuidRepresentation = ((OverridableUuidRepresentationCodecRegistry) registry).getUuidRepresentation();
+        } else if (registry instanceof JacksonCodecRegistry) {
+            uuidRepresentation = ((JacksonCodecRegistry) registry).getUuidRepresentation();
+        }
+        return uuidRepresentation;
     }
 
     @SuppressWarnings("unchecked")
@@ -556,7 +570,7 @@ public class DocumentSerializationUtils {
         final BsonDocument document = new BsonDocument();
         try (
             BsonDocumentWriter writer = new BsonDocumentWriter(document);
-            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
         ) {
             writer.writeStartDocument();
             for (Map.Entry<String, Map<String, UpdateOperationValue>> op : update.entrySet()) {
@@ -815,19 +829,20 @@ public class DocumentSerializationUtils {
         return fieldSerializer;
     }
 
-    public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage) {
+    public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage, CodecRegistry registry) {
         SerializerProvider serializerProvider = JacksonAccessor
             .getSerializerProvider(objectMapper);
         JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
             serializerProvider, type);
-        return serializePipelineStage(serializerProvider, serializer, stage);
+        return serializePipelineStage(serializerProvider, serializer, stage, registry);
     }
 
     @SuppressWarnings("deprecation")
     private static Bson serializePipelineStage(
         SerializerProvider serializerProvider,
         JsonSerializer<?> serializer,
-        Aggregation.Stage<?> stage
+        Aggregation.Stage<?> stage,
+        CodecRegistry registry
     ) {
         if (stage instanceof Aggregation.Limit) {
             return new Document("$limit", ((Aggregation.Limit) stage).limit());
@@ -845,7 +860,7 @@ public class DocumentSerializationUtils {
             final BsonDocument document = new BsonDocument();
             try (
                 BsonDocumentWriter writer = new BsonDocumentWriter(document);
-                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer)
+                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
             ) {
                 serializeQuery(serializerProvider, serializer, ((Aggregation.Match) stage).query(), writer, generator);
                 return new Document("$match", document);

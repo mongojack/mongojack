@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.io.IOContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.AbstractBsonReader;
+import org.bson.UuidRepresentation;
 
 import java.io.IOException;
 
@@ -36,10 +37,11 @@ public class DBDecoderBsonParser extends JsonParserAdapter {
         IOContext ctxt,
         int jsonFeatures,
         AbstractBsonReader reader,
-        ObjectMapper objectMapper
+        ObjectMapper objectMapper,
+        final UuidRepresentation uuidRepresentation
     ) {
         // Honor document length must be true
-        super(ctxt, jsonFeatures, reader);
+        super(ctxt, jsonFeatures, reader, uuidRepresentation);
         setCodec(objectMapper);
     }
 
