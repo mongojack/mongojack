@@ -115,6 +115,13 @@ public abstract class MongoDBTestBase {
         );
     }
 
+    protected <T> JacksonMongoCollection<T> getCollection(Class<T> type, JacksonMongoCollection.JacksonMongoCollectionBuilder builder) {
+        return configure(
+            builder
+                .build(getMongoCollection(type), type)
+        );
+    }
+
     @SuppressWarnings("SameParameterValue")
     protected <T> JacksonMongoCollection<T> getCollectionWithView(Class<T> type, Class<?> view) {
         return configure(
