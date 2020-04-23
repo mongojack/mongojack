@@ -143,6 +143,31 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertNotNull(coll.find().filter(Filters.lt("i", 12)).first());
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void testLessThanWithoutCustomFilters() {
+        JacksonMongoCollection<MockObject> localColl = getCollection(
+            MockObject.class,
+            JacksonMongoCollection.builder()
+                .withSerializationOptions(
+                    SerializationOptions.builder()
+                        .withSimpleFilterSerialization(true)
+                        .build()
+                )
+        );
+        MockObject o = new MockObject();
+        o.i = 5;
+        localColl.save(o);
+        // Ensure that the serializer actually worked
+        assertThat(getMongoCollection(localColl.getName(), Document.class).find().first().getInteger("i"), equalTo(15));
+        assertNull(localColl.find(Filters.lt("i", 12)).first());
+        assertNull(localColl.find().filter(Filters.lt("i", 12)).first());
+
+        assertNotNull(localColl.find(DBQuery.lessThan("i", 18)).first());
+        assertNotNull(localColl.find(Filters.lt("i", 18)).first());
+        assertNotNull(localColl.find().filter(Filters.lt("i", 18)).first());
+    }
+
     @Test
     public void testAnd() {
         MockObject o = new MockObject();
@@ -237,6 +262,46 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertEquals(o1.id, coll.find().filter(Filters.regex("wrappedString", "foo:.*")).first().id);
     }
 
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void testSearchForCustomSerializedFieldsWithSimpleSerialization() {
+        JacksonMongoCollection<MockObject> localColl = getCollection(
+            MockObject.class,
+            JacksonMongoCollection.builder()
+                .withSerializationOptions(
+                    SerializationOptions.builder()
+                        .withSimpleFilterSerialization(true)
+                        .build()
+                )
+        );
+        MockObject o1 = new MockObject();
+        o1.wrappedString = new WrappedString("foo:bar");
+        MockObject o2 = new MockObject();
+        o2.wrappedString = new WrappedString("baz:qux");
+        localColl.insertMany(Arrays.asList(o1, o2));
+
+        // some sanity checks
+        assertNotNull(o1.id);
+        assertNotNull(o2.id);
+        final MongoCollection<Document> underlyingCollection = getMongoCollection(localColl.getName(), Document.class);
+        final Document found = underlyingCollection.find(Filters.eq("wrappedString", "foo:bar")).first();
+        assertEquals("foo:bar", found.getString("wrappedString"));
+
+        assertEquals(o1.id, localColl.find(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, localColl.find().filter(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, localColl.find(DBQuery.is("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, localColl.find().filter(DBQuery.is("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, localColl.find(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o1.id, localColl.find().filter(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
+
+        assertEquals(o1.id, localColl.find(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, localColl.find().filter(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
+        assertEquals(o1.id, localColl.find(Filters.eq("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, localColl.find().filter(Filters.eq("wrappedString", "foo:bar")).first().id);
+        assertEquals(o1.id, localColl.find(Filters.regex("wrappedString", "foo:.*")).first().id);
+        assertEquals(o1.id, localColl.find().filter(Filters.regex("wrappedString", "foo:.*")).first().id);
+    }
+
     @SuppressWarnings({"ConstantConditions", "unchecked"})
     @Test
     public void testSearchForCustomSerializedFieldsInList() {
@@ -251,7 +316,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertNotNull(o2.id);
         final MongoCollection<Document> underlyingCollection = getMongoCollection(coll.getName(), Document.class);
         final Document found = underlyingCollection.find(Filters.eq("wrappedStringList", "foo:bar")).first();
-        assertEquals("foo:bar", ((List<String>)found.get("wrappedStringList")).get(0));
+        assertEquals("foo:bar", ((List<String>) found.get("wrappedStringList")).get(0));
 
         assertEquals(o1.id, coll.find(DBQuery.is("wrappedStringList", new WrappedString("foo:bar"))).first().id);
         assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedStringList", new WrappedString("foo:bar"))).first().id);

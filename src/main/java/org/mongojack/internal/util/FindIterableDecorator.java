@@ -12,6 +12,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 import org.mongojack.InitializationRequiredForTransformation;
 import org.mongojack.JacksonCodecRegistry;
+import org.mongojack.SerializationOptions;
 
 import java.util.Collection;
 import java.util.Spliterator;
@@ -29,17 +30,20 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     private final ObjectMapper objectMapper;
     private final JavaType type;
     private final JacksonCodecRegistry codecRegistry;
+    private final SerializationOptions serializationOptions;
 
     public FindIterableDecorator(
         final FindIterable<TResult> delegate,
         final ObjectMapper objectMapper,
         final JavaType type,
-        final JacksonCodecRegistry codecRegistry
+        final JacksonCodecRegistry codecRegistry,
+        final SerializationOptions serializationOptions
     ) {
         this.delegate = delegate;
         this.objectMapper = objectMapper;
         this.type = type;
         this.codecRegistry = codecRegistry;
+        this.serializationOptions = serializationOptions;
     }
 
     /**
@@ -49,6 +53,9 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     public FindIterable<TResult> filter(final Bson filter) {
         if (filter instanceof InitializationRequiredForTransformation) {
             ((InitializationRequiredForTransformation) filter).initialize(objectMapper, type, codecRegistry);
+            return delegate.filter(filter);
+        }
+        if (serializationOptions.isSimpleFilterSerialization()) {
             return delegate.filter(filter);
         }
         return delegate.filter(DocumentSerializationUtils.serializeFilter(objectMapper, type, filter, codecRegistry));
