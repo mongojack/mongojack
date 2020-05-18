@@ -76,9 +76,9 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
 
     private Type getTypeForAnnotated(Annotated a) {
         if (a instanceof AnnotatedMethod) {
-            return ((AnnotatedMethod) a).getGenericParameterType(0);
+            return ((AnnotatedMethod) a).getParameterType(0);
         } else {
-            return a.getGenericType();
+            return a.getType();
         }
     }
 
