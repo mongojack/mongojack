@@ -16,14 +16,14 @@
  */
 package org.mongojack.internal;
 
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Deserializes calendars. Can handle strings, ints or BSON dates
@@ -47,7 +47,7 @@ public class CalendarDeserializer extends StdDeserializer<Calendar> {
             if (object instanceof Date) {
                 date = (Date) object;
             } else {
-                throw ctxt.mappingException(Calendar.class);
+                return (Calendar) ctxt.handleUnexpectedToken(Calendar.class, jp);
             }
         } else {
             date = _parseDate(jp, ctxt);
