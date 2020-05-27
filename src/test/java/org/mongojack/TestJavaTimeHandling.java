@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongojack.internal.MongoJackModule;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,7 +38,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
     
     @Before
     public void setUp() {
-        timestampWritingObjectMapper = MongoJackModule.configure(new ObjectMapper());
+        timestampWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper());
         timestampWritingObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
     }
 
