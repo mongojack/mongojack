@@ -50,8 +50,7 @@ public class MongoJackDeserializers extends SimpleDeserializers {
             throws JsonMappingException {
         if (type.getRawClass() == DBRef.class) {
             if (type.containedTypeCount() != 2) {
-                throw new JsonMappingException(
-                        "Property doesn't declare object and key type");
+                throw new JsonMappingException(null, "Property doesn't declare object and key type");
             }
             JavaType objectType = type.containedType(0);
             JavaType keyType = type.containedType(1);

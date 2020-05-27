@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-import org.mongojack.internal.object.document.DocumentObjectGenerator;
 import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
 import java.io.IOException;
@@ -49,7 +48,7 @@ public abstract class EmbeddedObjectSerializer<T> extends JsonSerializer<T> {
 
     protected void writeEmbeddedObject(T value, JsonGenerator jgen)
         throws IOException {
-        if (jgen instanceof DBEncoderBsonGenerator || jgen instanceof DocumentObjectGenerator) {
+        if (jgen instanceof DBEncoderBsonGenerator) {
             jgen.writeObject(value);
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;

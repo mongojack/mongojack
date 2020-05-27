@@ -20,7 +20,7 @@ public class UUIDDeserializer extends JsonDeserializer<UUID> {
 
     @Override
     public UUID deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException {
+        throws IOException {
         JsonToken token = jp.getCurrentToken();
 
         if (token == JsonToken.VALUE_EMBEDDED_OBJECT) {
@@ -33,6 +33,6 @@ public class UUIDDeserializer extends JsonDeserializer<UUID> {
             }
         }
 
-        throw ctxt.mappingException(UUID.class);
+        return (UUID) ctxt.handleUnexpectedToken(UUID.class, jp);
     }
 }
