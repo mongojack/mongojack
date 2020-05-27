@@ -33,7 +33,6 @@ import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongojack.internal.MongoJackModule;
 
 import java.io.IOException;
 import java.net.URI;
@@ -175,7 +174,7 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(module);
-        MongoJackModule.configure(objectMapper);
+        ObjectMapperConfigurer.configureObjectMapper(objectMapper);
         return objectMapper;
     }
 

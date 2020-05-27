@@ -127,7 +127,15 @@ Of course, if you really want to control things and Jackson's annotations aren't
 configure the object mapper to use the mongo custom jackson configuration:
 
     ObjectMapper myObjectMapper = ...
-    MongoJackModule.configure(myObjectMapper);
+    ObjectMapperConfigurer.configureObjectMapper(myObjectMapper);
+    JacksonMongoCollection<BlogPost> coll = JacksonMongoCollection.builder()
+        .objectMapper(myObjectMapper)
+        .build(existingMongoClient, "databaseName", "collectionName", BlogPost.class);
+
+or
+
+    ObjectMapper myObjectMapper = ...
+    ObjectMapperConfigurer.addMongojackModuleOnly(myObjectMapper);
     JacksonMongoCollection<BlogPost> coll = JacksonMongoCollection.builder()
         .objectMapper(myObjectMapper)
         .build(existingMongoClient, "databaseName", "collectionName", BlogPost.class);

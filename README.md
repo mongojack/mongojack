@@ -78,7 +78,7 @@ of MongoCollection, it has all the features of the underlying driver, including 
 
     MongoClient mongo = new MongoClient();
     JacksonMongoCollection<MyObject> collection = JacksonMongoCollection.builder()
-        .withObjectMapper(customObujectMapper)
+        .withObjectMapper(customObjectMapper)
         .build(mongo, "testDatabase", "testCollection", MyObject.class);
     
 The builder allows you to specify the collection in a number of different ways; see the code and JavaDoc for specific options.
@@ -106,3 +106,32 @@ or `com.mongodb.client.model.Updates`.
 
 MongoJack's older DBQuery, DBUpdate, and Aggregation helpers should all still work with the new JacksonMongoCollection, but they have been deprecated as the Mongo driver provides a set of useful builders
 for all of these things in the `com.mongodb.client.model` package.  The implementation attempts to do mapping on any `Bson` inputs.
+
+### Using a custom ObjectMapper
+
+If you want to use a custom ObjectMapper, you need to install MongoJackModule on
+your ObjectMapper before using it.  This can be done with one of two mechanisms.  The first one installs
+the MongoJackModule, and also installs JavaTimeModule and changes some other settings on the object mapper.
+
+    ObjectMapper customObjectMapper = new ObjectMapper()
+    // ... configure your object mapper
+    ObjectMapperConfigurer.configureObjectMapper(customObjectMapper)
+    // ...
+    MongoClient mongo = new MongoClient();
+    JacksonMongoCollection<MyObject> collection = JacksonMongoCollection.builder()
+        .withObjectMapper(customObjectMapper)
+        .build(mongo, "testDatabase", "testCollection", MyObject.class);
+
+If you want to install _only_ the module itself, you can use the following, which installs the module
+but makes no other changes:
+
+
+    ObjectMapper customObjectMapper = new ObjectMapper()
+    // ... configure your object mapper
+    ObjectMapperConfigurer.addMongojackModuleOnly(customObjectMapper)
+    // ...
+    MongoClient mongo = new MongoClient();
+    JacksonMongoCollection<MyObject> collection = JacksonMongoCollection.builder()
+        .withObjectMapper(customObjectMapper)
+        .build(mongo, "testDatabase", "testCollection", MyObject.class);
+
