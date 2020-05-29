@@ -1,6 +1,29 @@
 Changelog
 =========
 
+4.0.1
+-----
+_Released 2020.05.29_
+
+* [Issue #201](https://github.com/mongojack/mongojack/issues/201)
+* [Issue #202](https://github.com/mongojack/mongojack/issues/202) 
+
+4.0.0
+-----
+
+_Released 2020.04.23_
+
+* Upgrade mongo library to 4.0.1 and make any changes necessary to support
+
+3.0.1
+-----
+
+_Released 2020.02.07_
+
+* [Issue #195](https://github.com/mongojack/mongojack/issues/195)
+* [Issue #197](https://github.com/mongojack/mongojack/issues/197) 
+* [Issue #198](https://github.com/mongojack/mongojack/issues/198) 
+
 3.0.0
 -----
 
