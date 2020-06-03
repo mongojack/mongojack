@@ -19,6 +19,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.Assert;
@@ -35,6 +36,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static org.hamcrest.Matchers.*;
 
 public class TestAggregate extends MongoDBTestBase {
 
@@ -170,4 +173,33 @@ public class TestAggregate extends MongoDBTestBase {
         Assert.assertTrue(resultMap.containsKey("string-4"));
         Assert.assertEquals(Integer.valueOf(4), resultMap.get("string-4").distance);
     }
+
+    @Test
+    public void testBsonValueSerialization() {
+        coll.insert(new MockObject("string4", 4));
+        coll.insert(new MockObject("string3", 3));
+        coll.insert(new MockObject("string2", 2));
+
+        List<Bson> pipeline = Collections.singletonList(
+            Aggregates.lookup(
+                coll.getName(),
+                Collections.singletonList(
+                    Aggregates.project(
+                        Projections.fields(
+                            Projections.excludeId(),
+                            Projections.computed("insert", Collections.singletonList("hello"))
+                        )
+                    )
+                ),
+                "inserts"
+            ));
+        coll.aggregate(pipeline, Document.class)
+            .forEach(o -> {
+                Assert.assertThat(o.get("inserts"), notNullValue());
+                Assert.assertThat(o.getList("inserts", Object.class), isA(List.class));
+                Assert.assertThat(o.getList("inserts", Document.class).get(0), isA(Document.class));
+                Assert.assertThat(o.getList("inserts", Document.class).get(0).getList("insert", String.class).get(0), equalTo("hello"));
+            });
+    }
+    
 }
