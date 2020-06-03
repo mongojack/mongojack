@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -194,7 +195,7 @@ public class TestAggregate extends MongoDBTestBase {
                 "inserts"
             ));
         coll.aggregate(pipeline, Document.class)
-            .forEach(o -> {
+            .forEach((Consumer<? super Document>) o -> {
                 Assert.assertThat(o.get("inserts"), notNullValue());
                 Assert.assertThat(o.getList("inserts", Object.class), isA(List.class));
                 Assert.assertThat(o.getList("inserts", Document.class).get(0), isA(Document.class));
