@@ -2,6 +2,7 @@ package org.mongojack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBObject;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
@@ -60,7 +61,8 @@ public class JacksonCodecRegistry implements CodecRegistry, CodecProvider {
         return DocumentSerializationUtils.isKnownClass(clazz) ||
             DBObject.class.isAssignableFrom(clazz) ||
             Document.class.isAssignableFrom(clazz) ||
-            Bson.class.isAssignableFrom(clazz);
+            Bson.class.isAssignableFrom(clazz) ||
+            BsonValue.class.isAssignableFrom(clazz);
     }
 
     @SuppressWarnings("unchecked")
