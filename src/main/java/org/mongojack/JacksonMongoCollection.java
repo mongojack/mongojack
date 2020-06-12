@@ -447,7 +447,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
 
     /**
      * Does a simple conversion (using toBsonDocument with this collection's CodecRegistry).
-     *
+     * <p>
      * {@inheritDoc}
      */
     @Override
@@ -477,7 +477,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     /**
      * Does no real conversion, but it does initialize the pipeline correctly if it is one of the deprecated
      * mongojack ones..
-     *
+     * <p>
      * {@inheritDoc}
      *
      * @param pipeline a list of Bson documents making up an aggregation pipeline
@@ -521,7 +521,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
                         }
                         return new UpdateManyModel<TResult>(manageFilterBson(updateRequest.getFilter()), manageUpdateBson(updateRequest.getUpdate()), updateRequest.getOptions());
                     }
-                    return (WriteModel<TResult>)request;
+                    return (WriteModel<TResult>) request;
                 }
             )
             .collect(Collectors.toList());
@@ -580,6 +580,17 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
 
     @Override
     public MongoCollection<TResult> withCodecRegistry(final CodecRegistry codecRegistry) {
+        if (codecRegistry instanceof JacksonCodecRegistry) {
+            return new JacksonMongoCollection<>(
+                objectMapper,
+                (JacksonCodecRegistry) codecRegistry,
+                view,
+                valueClass,
+                type,
+                mongoCollection.withCodecRegistry(codecRegistry),
+                serializationOptions
+            );
+        }
         return mongoCollection.withCodecRegistry(codecRegistry);
     }
 
@@ -652,6 +663,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
 
         /**
          * Set a view class for this collection.  Optional.
+         *
          * @param view The jackson view class
          * @return the builder
          */
@@ -696,7 +708,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
-         * @param database         A client
+         * @param database       A client
          * @param collectionName Name of the collection itself
          * @param valueType      The class of the value type
          * @param <CT>           The value type
@@ -709,9 +721,9 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         /**
          * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
          *
-         * @param database       A client
-         * @param valueType      The class of the value type.  Must be annotated with {@link org.mongojack.MongoCollection}.
-         * @param <CT>           The value type
+         * @param database  A client
+         * @param valueType The class of the value type.  Must be annotated with {@link org.mongojack.MongoCollection}.
+         * @param <CT>      The value type
          * @return A constructed collection meeting the MongoCollection interface.
          */
         public <CT> JacksonMongoCollection<CT> build(MongoDatabase database, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
@@ -728,7 +740,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @param mongoCollection The underlying collection
          * @param valueType       The value type of the collection
          * @param <CT>            The value type of the collection
-         * @return                A constructed collection
+         * @return A constructed collection
          */
         public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<CT> mongoCollection, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
             return new JacksonMongoCollection<>(mongoCollection, this.objectMapper, valueType, view, serializationOptions, uuidRepresentation);

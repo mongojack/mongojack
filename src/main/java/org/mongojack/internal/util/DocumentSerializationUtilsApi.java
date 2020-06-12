@@ -30,9 +30,7 @@ import java.util.Map;
 /**
  * Utilities for helping with serialisation
  */
-public class DocumentSerializationUtils {
-
-    private static volatile DocumentSerializationUtilsApi instance = new DocumentSerializationUtilsImpl();
+interface DocumentSerializationUtilsApi {
 
     /**
      * Serialize the fields of the given object using the given object mapper.
@@ -42,72 +40,45 @@ public class DocumentSerializationUtils {
      * @param registry Codec registry
      * @return The Document, safe for serialization to MongoDB
      */
-    public static Bson serializeFields(
+    Bson serializeFields(
         Bson object,
         CodecRegistry registry
-    ) {
-        return instance.serializeFields(object, registry);
-    }
+    );
 
-    public static Bson serializeQuery(
+    Bson serializeQuery(
         ObjectMapper objectMapper,
         JavaType type,
         @SuppressWarnings("deprecation") DBQuery.Query query,
         CodecRegistry registry
-    ) {
-        return instance.serializeQuery(objectMapper, type, query, registry);
-    }
+    );
 
-    public static boolean writeKnownType(
+    boolean writeKnownType(
         Object value,
         BsonWriter writer
-    ) {
-        return instance.writeKnownType(value, writer);
-    }
+    );
 
-    @SuppressWarnings({"unused"})
-    public static boolean isKnownType(
+    boolean isKnownType(
         Object value
-    ) {
-        return instance.isKnownType(value);
-    }
+    );
 
-    public static boolean isKnownClass(
+    boolean isKnownClass(
         Class<?> value
-    ) {
-        return instance.isKnownClass(value);
-    }
+    );
 
-    public static Bson serializeFilter(
+    Bson serializeFilter(
         ObjectMapper objectMapper,
         JavaType type,
         Bson query,
         CodecRegistry registry
-    ) {
-        return instance.serializeFilter(objectMapper, type, query, registry);
-    }
+    );
 
-    public static Bson serializeDBUpdate(
+    Bson serializeDBUpdate(
         Map<String, Map<String, UpdateOperationValue>> update,
         ObjectMapper objectMapper,
         JavaType javaType,
         CodecRegistry registry
-    ) {
-        return instance.serializeDBUpdate(update, objectMapper, javaType, registry);
-    }
+    );
 
-    public static Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage, CodecRegistry registry) {
-        return instance.serializePipelineStage(objectMapper, type, stage, registry);
-    }
-
-    @SuppressWarnings("unused")
-    public static DocumentSerializationUtilsApi getInstance() {
-        return instance;
-    }
-
-    @SuppressWarnings("unused")
-    public static void setInstance(final DocumentSerializationUtilsApi instance) {
-        DocumentSerializationUtils.instance = instance;
-    }
+    Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage, CodecRegistry registry);
 
 }

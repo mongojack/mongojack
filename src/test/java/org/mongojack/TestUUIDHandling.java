@@ -57,6 +57,21 @@ public class TestUUIDHandling extends MongoDBTestBase {
         assertThat(getUnderlyingCollection(coll).find().first().get("uuid"), equalTo(object.uuid));
     }
 
+    @Test
+    public void testQueryByUuid() {
+        ObjectIdId object = new ObjectIdId(UUID.randomUUID());
+
+        JacksonMongoCollection<ObjectIdId> coll = getCollection(ObjectIdId.class);
+
+        coll.insert(object);
+
+        ObjectId id = coll.findOne()._id;
+        ObjectIdId result = coll.findOne(Filters.eq("uuid", object.uuid));
+        assertThat(result._id, equalTo(id));
+        assertThat(result.uuid, equalTo(object.uuid));
+        assertThat(getUnderlyingCollection(coll).find().first().get("uuid"), equalTo(object.uuid));
+    }
+
     public static class ObjectIdId {
         public ObjectId _id;
         public UUID uuid;

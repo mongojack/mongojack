@@ -57,7 +57,7 @@ public class JacksonCodecRegistry implements CodecRegistry, CodecProvider {
         return addCodecForClass(clazz);
     }
 
-    private <T> boolean isDefault(final Class<T> clazz) {
+    protected <T> boolean isDefault(final Class<T> clazz) {
         return DocumentSerializationUtils.isKnownClass(clazz) ||
             DBObject.class.isAssignableFrom(clazz) ||
             Document.class.isAssignableFrom(clazz) ||
