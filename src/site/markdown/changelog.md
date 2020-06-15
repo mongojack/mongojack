@@ -1,6 +1,14 @@
 Changelog
 =========
 
+4.0.2
+-----
+_Released 2020.06.14_
+
+* [Issue #204](https://github.com/mongojack/mongojack/issues/201)
+* [Issue #205](https://github.com/mongojack/mongojack/issues/202)
+* Upgraded to mongo driver version 4.0.4 
+
 4.0.1
 -----
 _Released 2020.05.29_
