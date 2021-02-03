@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.AsArraySerializerBase;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
@@ -695,13 +694,11 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
                         return null;
                     }
                 } else if (fieldSerializer instanceof BeanSerializerBase) {
-                    BeanPropertyWriter writer = JacksonAccessor
-                        .findPropertyWriter(
-                            (BeanSerializerBase) fieldSerializer, field);
-                    if (writer != null) {
-                        fieldSerializer = getJsonSerializerForBean(serializerProvider, writer);
+                    JsonSerializer<?> temp = JacksonAccessor.findJsonSerializer(serializerProvider, (BeanSerializerBase) fieldSerializer, field);
+                    if (temp != null) {
+                        fieldSerializer = temp;
                     } else {
-                        // Give up
+                        // give up
                         return null;
                     }
                 } else if (fieldSerializer instanceof MapSerializer) {
@@ -786,13 +783,11 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
                         return null;
                     }
                 } else if (fieldSerializer instanceof BeanSerializerBase) {
-                    BeanPropertyWriter writer = JacksonAccessor
-                        .findPropertyWriter(
-                            (BeanSerializerBase) fieldSerializer, field);
-                    if (writer != null) {
-                        fieldSerializer = getJsonSerializerForBean(serializerProvider, writer);
+                    JsonSerializer<?> temp = JacksonAccessor.findJsonSerializer(serializerProvider, (BeanSerializerBase) fieldSerializer, field);
+                    if (temp != null) {
+                        fieldSerializer = temp;
                     } else {
-                        // Give up
+                        // give up
                         return null;
                     }
                 } else {
@@ -820,20 +815,6 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
         } else {
             return null;
         }
-    }
-
-    protected JsonSerializer<?> getJsonSerializerForBean(final SerializerProvider serializerProvider, final BeanPropertyWriter writer) {
-        JsonSerializer<?> fieldSerializer;
-        fieldSerializer = writer.getSerializer();
-        if (fieldSerializer == null) {
-            // Do a generic lookup
-            fieldSerializer = JacksonAccessor
-                .findValueSerializer(
-                    serializerProvider,
-                    writer.getType()
-                );
-        }
-        return fieldSerializer;
     }
 
     @Override

@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,47 +16,79 @@
  */
 package org.mongojack.internal.util;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationConfig;
-import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
-import com.fasterxml.jackson.databind.ser.SerializerFactory;
+import com.fasterxml.jackson.databind.ser.impl.ObjectIdWriter;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
+
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * Accesses things in Jackson that usually aren't accessible. Here be dragons.
  */
 public class JacksonAccessor {
 
-    public static JsonDeserializer findDeserializer(ObjectMapper objectMapper,
-            JavaType type) {
-        return invoke(objectMapper, objectMapperFindRootDeserializer,
-                JsonDeserializer.class,
-                createDeserializationContext(objectMapper), type);
+    private static class LocalBeanSerializer extends BeanSerializerBase {
+
+        protected LocalBeanSerializer(final BeanSerializerBase src) {
+            super(src);
+        }
+
+        @Override
+        public BeanSerializerBase withObjectIdWriter(final ObjectIdWriter objectIdWriter) {
+            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
+        }
+
+        @Override
+        protected BeanSerializerBase withIgnorals(final Set<String> toIgnore) {
+            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
+        }
+
+        @Override
+        protected BeanSerializerBase asArraySerializer() {
+            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
+        }
+
+        @Override
+        public BeanSerializerBase withFilterId(final Object filterId) {
+            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
+        }
+
+        @Override
+        public void serialize(final Object bean, final JsonGenerator gen, final SerializerProvider provider) throws IOException {
+            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
+        }
+
+        protected BeanPropertyWriter[] getProps() {
+            return _props;
+        }
+
     }
 
-    public static DeserializationContext createDeserializationContext(
-            ObjectMapper objectMapper) {
-        return invoke(objectMapper, objectMapperCreateDeserializationContext,
-                DeserializationContext.class, null,
-                objectMapper.getDeserializationConfig());
+    public static JsonSerializer<?> findJsonSerializer(
+        SerializerProvider serializerProvider,
+        BeanSerializerBase serializer,
+        String propertyName
+    ) {
+        BeanPropertyWriter writer = findPropertyWriterByName(propertyName, new LocalBeanSerializer(serializer).getProps());
+        JsonSerializer<?> foundSerializer = null;
+        if (writer != null) {
+            foundSerializer = writer.getSerializer();
+            if (foundSerializer == null) {
+                foundSerializer = findValueSerializer(serializerProvider, writer.getType());
+            }
+        }
+        return foundSerializer;
     }
 
-    public static BeanPropertyWriter findPropertyWriter(
-            BeanSerializerBase serializer, String propertyName) {
-        BeanPropertyWriter[] props = get(serializer, beanSerializerBaseProps,
-                BeanPropertyWriter[].class);
+    private static BeanPropertyWriter findPropertyWriterByName(final String propertyName, final BeanPropertyWriter[] props) {
         for (BeanPropertyWriter prop : props) {
             if (propertyName.equals(prop.getName())) {
                 return prop;
@@ -65,23 +97,20 @@ public class JacksonAccessor {
         return null;
     }
 
-    public static SerializerFactory getSerializerFactory(
-            ObjectMapper objectMapper) {
-        return get(objectMapper, objectMapperSerializerFactory,
-                SerializerFactory.class);
-    }
-
     public static SerializerProvider getSerializerProvider(
-            ObjectMapper objectMapper) {
+        ObjectMapper objectMapper
+    ) {
         DefaultSerializerProvider serializerProvider = (DefaultSerializerProvider) objectMapper
-                .getSerializerProvider();
+            .getSerializerProvider();
         return serializerProvider.createInstance(
-                objectMapper.getSerializationConfig(),
-                getSerializerFactory(objectMapper));
+            objectMapper.getSerializationConfig(),
+            objectMapper.getSerializerFactory()
+        );
     }
 
     public static JsonSerializer findValueSerializer(
-            SerializerProvider serializerProvider, JavaType javaType) {
+        SerializerProvider serializerProvider, JavaType javaType
+    ) {
         try {
             return serializerProvider.findValueSerializer(javaType, null);
         } catch (JsonMappingException e) {
@@ -90,7 +119,8 @@ public class JacksonAccessor {
     }
 
     public static JsonSerializer findValueSerializer(
-            SerializerProvider serializerProvider, Class clazz) {
+        SerializerProvider serializerProvider, Class clazz
+    ) {
         try {
             return serializerProvider.findValueSerializer(clazz, null);
         } catch (JsonMappingException e) {
@@ -98,59 +128,4 @@ public class JacksonAccessor {
         }
     }
 
-    private static final Method objectMapperCreateDeserializationContext;
-    private static final Method objectMapperFindRootDeserializer;
-    private static final Field beanSerializerBaseProps;
-    private static final Field objectMapperSerializerFactory;
-
-    static {
-        objectMapperCreateDeserializationContext = findMethod(
-                ObjectMapper.class, "createDeserializationContext",
-                new Class[] {JsonParser.class, DeserializationConfig.class});
-        objectMapperFindRootDeserializer = findMethod(ObjectMapper.class,
-                "_findRootDeserializer", new Class[] {
-                        DeserializationContext.class, JavaType.class});
-        beanSerializerBaseProps = findField(BeanSerializerBase.class, "_props");
-        objectMapperSerializerFactory = findField(ObjectMapper.class,
-                "_serializerFactory");
-    }
-
-    private static Method findMethod(Class clazz, String name, Class[] argTypes) {
-        try {
-            Method method = clazz.getDeclaredMethod(name, argTypes);
-            method.setAccessible(true);
-            return method;
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Field findField(Class clazz, String name) {
-        try {
-            Field field = clazz.getDeclaredField(name);
-            field.setAccessible(true);
-            return field;
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static <T> T get(Object object, Field field, Class<T> type) {
-        try {
-            return (T) field.get(object);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static <T> T invoke(Object object, Method method,
-            Class<T> returnType, Object... args) {
-        try {
-            return (T) method.invoke(object, args);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }
