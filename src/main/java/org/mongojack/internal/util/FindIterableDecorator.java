@@ -3,12 +3,14 @@ package org.mongojack.internal.util;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.CursorType;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.mongojack.InitializationRequiredForTransformation;
 import org.mongojack.JacksonCodecRegistry;
@@ -211,6 +213,46 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     @Override
     public FindIterable<TResult> showRecordId(final boolean showRecordId) {
         return delegate.showRecordId(showRecordId);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public FindIterable<TResult> allowDiskUse(final Boolean aBoolean) {
+        return delegate.allowDiskUse(aBoolean);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Document explain() {
+        return delegate.explain();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Document explain(final ExplainVerbosity explainVerbosity) {
+        return delegate.explain(explainVerbosity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <E> E explain(final Class<E> aClass) {
+        return delegate.explain(aClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <E> E explain(final Class<E> aClass, final ExplainVerbosity explainVerbosity) {
+        return delegate.explain(aClass, explainVerbosity);
     }
 
     /**
