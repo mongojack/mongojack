@@ -25,6 +25,7 @@ import org.bson.types.ObjectId;
 import org.mongojack.internal.util.DocumentSerializationUtils;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -49,6 +50,8 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
             writer.writeDateTime(((Date) value).getTime());
         } else if (value instanceof Calendar) {
             writer.writeDateTime(((Calendar) value).getTime().getTime());
+        } else if (value instanceof Instant) {
+            writer.writeDateTime(((Instant) value).toEpochMilli());
         } else if (value instanceof ObjectId) {
             writeBsonObjectId((ObjectId) value);
         } else if (value instanceof UUID) {

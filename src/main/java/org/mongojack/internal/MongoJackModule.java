@@ -44,10 +44,11 @@ public class MongoJackModule extends Module {
      * @return This object mapper (for chaining)
      */
     public static ObjectMapper configure(ObjectMapper objectMapper) {
-        objectMapper.registerModule(INSTANCE);
-
-        // register java time module
+        // register java.time module before MongoJack
+        // to override its serializers and deserializers
         objectMapper.registerModule(JAVATIME);
+
+        objectMapper.registerModule(INSTANCE);
 
         // disable serialize dates as timestamps because we have fewer runtime errors that way
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);

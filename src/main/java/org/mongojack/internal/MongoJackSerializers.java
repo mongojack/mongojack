@@ -19,6 +19,7 @@ package org.mongojack.internal;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import org.bson.types.ObjectId;
 
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
@@ -36,6 +37,7 @@ public class MongoJackSerializers extends SimpleSerializers {
         addSerializer(ObjectId.class, new ObjectIdSerializer());
         addSerializer(Date.class, new DateSerializer());
         addSerializer(Calendar.class, new CalendarSerializer());
+        addSerializer(Instant.class, new MongoJackInstantSerializer());
         addSerializer(UUID.class, new UUIDSerializer());
     }
 }
