@@ -2,6 +2,8 @@ package org.mongojack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.bson.BsonDateTime;
+import org.bson.BsonDocument;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,9 +20,11 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertTrue;
 
 /**
  * class TestJavaTimeHandling: Tests the java.time.* handling in MongoJack.
@@ -30,6 +34,7 @@ import static org.junit.Assert.*;
 public class TestJavaTimeHandling extends MongoDBTestBase {
 
     private ObjectMapper timestampWritingObjectMapper;
+    private ObjectMapper millisWritingObjectMapper;
 
     public static class LocalDateContainer {
         public org.bson.types.ObjectId _id;
@@ -40,6 +45,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
     public void setUp() {
         timestampWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper());
         timestampWritingObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
+        millisWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper(), new MongoJackModuleConfiguration().with(MongoJackModuleFeature.WRITE_INSTANT_AS_BSON_DATE));
+        millisWritingObjectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     }
 
     @Test
@@ -188,40 +195,6 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         public org.bson.types.ObjectId _id;
         public ZonedDateTime zonedDateTime;
     }
-
-    /*
-        NOTE: A ZonedDateTime as WRITE_DATES_AS_TIMESTAMPS wants to store as a BigDecimal, but MongoJack doesn't support
-        serialization of a BigDecimal.
-
-        So this test is disabled because it will fail.
-
-
-    @Test
-    public void testZonedDateTimeSavedAsTimestamps() {
-        // create the object
-        ZonedDateTimeContainer object = new ZonedDateTimeContainer();
-        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
-        object._id = id;
-        LocalDateTime time = LocalDateTime.now();
-        ZoneId paris = ZoneId.of("Europe/Paris");
-        ZonedDateTime zoned = time.atZone(paris);
-        object.zonedDateTime = zoned;
-
-        // get a container
-        JacksonMongoCollection<ZonedDateTimeContainer> coll = getCollection(ZonedDateTimeContainer.class, timestampWritingObjectMapper);
-
-        // save the object
-        coll.insert(object);
-
-        // retrieve it
-        ZonedDateTimeContainer result = coll.findOneById(id);
-
-        // verify it
-        assertThat(result._id, equalTo(id));
-        boolean equals = result.zonedDateTime.isEqual(zoned);
-        assertTrue("Zoned date times do not match.", equals);
-    }
-    */
 
     @Test
     public void testZonedDateTimeSavedAsISO8601() {
@@ -452,35 +425,6 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         public OffsetDateTime offsetDateTime;
     }
 
-    /*
-        Like ZonedDateTime, OffsetDateTime serializes to a BigDecimal when writing dates as timestamps.
-        Since MongoJack does not support BigDecimals, this type cannot be serialized.
-
-    @Test
-    public void testOffsetDateTimeSavedAsTimestamps() {
-        // create the object
-        OffsetDateTimeContainer object = new OffsetDateTimeContainer();
-        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
-        object._id = id;
-        OffsetDateTime offsetTime = OffsetDateTime.of(LocalDate.now(), LocalTime.now(), ZoneOffset.UTC);
-
-        object.offsetDateTime = offsetTime;
-
-        // get a container
-        JacksonMongoCollection<OffsetDateTimeContainer> coll = getCollection(OffsetDateTimeContainer.class, timestampWritingObjectMapper);
-
-        // save the object
-        coll.insert(object);
-
-        // retrieve it
-        OffsetDateTimeContainer result = coll.findOneById(id);
-
-        // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.offsetDateTime, equalTo(object.offsetDateTime));
-    }
-     */
-
     @Test
     public void testOffsetDateTimeSavedAsISO8601() {
         // create the object
@@ -509,33 +453,6 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         public Duration duration;
     }
 
-    /*
-        Like ZonedDateTime, Duration serializes to a BigDecimal when writing as a timestamp, since MongoJack does
-        not serialize BigDecimals, Duration serialization as a timestamp is not supported.
-
-    @Test
-    public void testDurationSavedAsTimestamps() {
-        // create the object
-        DurationContainer object = new DurationContainer();
-        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
-        object._id = id;
-        object.duration = Duration.ofMinutes(2047);
-
-        // get a container
-        JacksonMongoCollection<DurationContainer> coll = getCollection(DurationContainer.class, timestampWritingObjectMapper);
-
-        // save the object
-        coll.insert(object);
-
-        // retrieve it
-        DurationContainer result = coll.findOneById(id);
-
-        // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.duration, equalTo(object.duration));
-    }
-    */
-
     @Test
     public void testDurationSavedAsISO8601() {
         // create the object
@@ -563,33 +480,6 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         public Instant instant;
     }
 
-    /*
-        Like ZonedDateTime, an Instant serializes to a BigDecimal when writing dates as timestamps.  Since BigDecimals
-        are not supported by MongoJack, neither can we support serialization of Instants.
-
-    @Test
-    public void testInstantSavedAsTimestamps() {
-        // create the object
-        InstantContainer object = new InstantContainer();
-        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
-        object._id = id;
-        object.instant = Instant.now().plus(Duration.ofHours(3).plusMinutes(8));
-
-        // get a container
-        JacksonMongoCollection<InstantContainer> coll = getCollection(InstantContainer.class, timestampWritingObjectMapper);
-
-        // save the object
-        coll.insert(object);
-
-        // retrieve it
-        InstantContainer result = coll.findOneById(id);
-
-        // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.instant, equalTo(object.instant));
-    }
-    */
-
     @Test
     public void testInstantSavedAsISO8601() {
         // create the object
@@ -611,4 +501,34 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         assertThat(result._id, equalTo(id));
         assertThat(result.instant, equalTo(object.instant));
     }
+
+    @Test
+    public void testInstantSavedAsNativeTimestamps() {
+        // create the object
+        InstantContainer object = new InstantContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        object._id = id;
+        object.instant = Instant.now().plus(Duration.ofHours(3).plusMinutes(8));
+
+        // get a container
+        JacksonMongoCollection<InstantContainer> coll = getCollection(InstantContainer.class, millisWritingObjectMapper);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        InstantContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.instant, equalTo(object.instant.truncatedTo(ChronoUnit.MILLIS)));
+
+        // retrieve raw bson
+        BsonDocument bsonResult = coll.withDocumentClass(BsonDocument.class).findOneById(id);
+
+        // verify it
+        BsonDateTime expectedBsonDateTime = new BsonDateTime(result.instant.toEpochMilli());
+        assertThat(bsonResult.getDateTime("instant"), equalTo(expectedBsonDateTime));
+    }
+
 }

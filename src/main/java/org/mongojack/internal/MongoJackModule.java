@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.mongojack.MongoJackModuleConfiguration;
+import org.mongojack.MongoJackModuleFeature;
 
 /**
  * The ObjectID serialising module
@@ -30,8 +32,22 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * @since 1.0
  */
 public class MongoJackModule extends Module {
-    public static final Module INSTANCE = new MongoJackModule();
-    public static final Module JAVATIME = new JavaTimeModule();
+
+    public static final MongoJackModuleConfiguration DEFAULT_CONFIGURATION = new MongoJackModuleConfiguration();
+
+    public static final Module DEFAULT_MODULE_INSTANCE = new MongoJackModule();
+
+    public static final Module DEFAULT_JAVA_TIME_MODULE = new JavaTimeModule();
+
+    private final MongoJackModuleConfiguration moduleConfiguration;
+
+    public MongoJackModule() {
+        moduleConfiguration = DEFAULT_CONFIGURATION;
+    }
+
+    public MongoJackModule(final MongoJackModuleConfiguration moduleConfiguration) {
+        this.moduleConfiguration = moduleConfiguration;
+    }
 
     /**
      * Configure the given object mapper to be used with MongoJack. Please call
@@ -44,15 +60,40 @@ public class MongoJackModule extends Module {
      * @return This object mapper (for chaining)
      */
     public static ObjectMapper configure(ObjectMapper objectMapper) {
-        objectMapper.registerModule(INSTANCE);
+        return configure(objectMapper, DEFAULT_CONFIGURATION);
+    }
 
+    /**
+     * Configure the given object mapper to be used with MongoJack. Please call
+     * this method rather than calling
+     * objectMapper.with(MongoJacksonMapperModule.INSTANCE), because Jacksons
+     * module system doesn't allow MongoJack to do all the configuration it
+     * needs to do. This method will do that configuration though.
+     *
+     * @param objectMapper The object mapper to configure
+     * @param moduleConfiguration The configuration of the module
+     * @return This object mapper (for chaining)
+     */
+    public static ObjectMapper configure(ObjectMapper objectMapper, MongoJackModuleConfiguration moduleConfiguration) {
         // register java time module
-        objectMapper.registerModule(JAVATIME);
+        if (moduleConfiguration.isEnabled(MongoJackModuleFeature.REGISTER_JAVA_TIME)) {
+            objectMapper.registerModule(DEFAULT_JAVA_TIME_MODULE);
+        }
+
+        if (moduleConfiguration == DEFAULT_CONFIGURATION) {
+            objectMapper.registerModule(DEFAULT_MODULE_INSTANCE);
+        } else {
+            objectMapper.registerModule(new MongoJackModule(moduleConfiguration));
+        }
 
         // disable serialize dates as timestamps because we have fewer runtime errors that way
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        if (moduleConfiguration.isEnabled(MongoJackModuleFeature.DISABLE_DATES_AS_TIMESTAMPS)) {
+            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        }
 
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        if (moduleConfiguration.isEnabled(MongoJackModuleFeature.SET_SERIALIZATION_INCLUSION_NON_NULL)) {
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }
         return objectMapper;
     }
 
@@ -73,7 +114,8 @@ public class MongoJackModule extends Module {
         // Only include non null properties, this makes it possible to use
         // object templates for querying and
         // partial object retrieving
-        context.addSerializers(new MongoJackSerializers());
+        context.addSerializers(new MongoJackSerializers(moduleConfiguration));
         context.addDeserializers(new MongoJackDeserializers());
     }
+
 }
