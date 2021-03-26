@@ -410,6 +410,15 @@
         <role>developer</role>
       </roles>
     </contributor>
+    <contributor>
+      <name>Vladimir Petrakovich</name>
+      <url>https://github.com/frost13it</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+      <organization>SKB Kontur</organization>
+      <organizationUrl>https://kontur-inc.com/</organizationUrl>
+    </contributor>
   </contributors>
 
   <licenses>

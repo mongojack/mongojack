@@ -25,13 +25,34 @@ public class ObjectMapperConfigurer {
     }
 
     /**
+     * Install the MongoJackModule into the object mapper with recommended settings.  Also installs JavaTimeModule.
+     *
+     * @param mapper
+     * @return
+     */
+    public static ObjectMapper configureObjectMapper(ObjectMapper mapper, MongoJackModuleConfiguration moduleConfiguration) {
+        return MongoJackModule.configure(mapper, moduleConfiguration);
+    }
+
+    /**
      * Installs <em>only</em> the MongoJackModule, without JavaTimeModule or other settings.
      *
      * @param mapper
      * @return
      */
     public static ObjectMapper addMongojackModuleOnly(ObjectMapper mapper) {
-        mapper.registerModule(MongoJackModule.INSTANCE);
+        mapper.registerModule(MongoJackModule.DEFAULT_MODULE_INSTANCE);
+        return mapper;
+    }
+
+    /**
+     * Installs <em>only</em> the MongoJackModule, without JavaTimeModule or other settings.
+     *
+     * @param mapper
+     * @return
+     */
+    public static ObjectMapper addMongojackModuleOnly(ObjectMapper mapper, MongoJackModuleConfiguration moduleConfiguration) {
+        mapper.registerModule(new MongoJackModule(moduleConfiguration));
         return mapper;
     }
 

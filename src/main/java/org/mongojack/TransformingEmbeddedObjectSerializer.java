@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.mongojack.internal;
+package org.mongojack;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-import org.mongojack.TransformingEmbeddedObjectSerializer;
 import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
 import java.io.IOException;
@@ -37,37 +37,42 @@ import java.io.IOException;
  * (Failure to do so would blow up the stack, as the TokenBuffer would
  * pass the object right back to the ObjectMapper.)
  * <p>
- * When used with other JsonSerializers, throws {@link java.lang.IllegalArgumentException}
+ * When used with other JsonSerializers, throws {@link IllegalArgumentException}
  * with a message that it's designed for use only with BsonObjectGenerator or
  * DBEncoderBsonGenerator or TokenBuffer.
  *
  * @author Kevin D. Keck
  * @since 3.0.4
  */
-public abstract class EmbeddedObjectSerializer<T> extends TransformingEmbeddedObjectSerializer<T, T> {
+public abstract class TransformingEmbeddedObjectSerializer<InputType, TransformedType> extends JsonSerializer<InputType> {
 
-    protected EmbeddedObjectSerializer() {
-        super();
+    protected final boolean writeNullAsNull;
+
+    protected TransformingEmbeddedObjectSerializer() {
+        this(false);
     }
 
-    protected EmbeddedObjectSerializer(final boolean writeNullAsNull) {
-        super(writeNullAsNull);
+    protected TransformingEmbeddedObjectSerializer(final boolean writeNullAsNull) {
+        this.writeNullAsNull = writeNullAsNull;
     }
 
-    @Override
-    protected T transform(final T value) {
-        return value;
-    }
-
-    protected void writeEmbeddedObject(T value, JsonGenerator jgen)
+    protected void writeEmbeddedObject(TransformedType value, JsonGenerator jgen)
         throws IOException {
         if (jgen instanceof DBEncoderBsonGenerator) {
-            jgen.writeObject(value);
+            if (value == null && writeNullAsNull) {
+                jgen.writeNull();
+            } else {
+                jgen.writeObject(value);
+            }
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
             ObjectCodec codec = buffer.getCodec();
             buffer.setCodec(null);
-            buffer.writeObject(value);
+            if (value == null && writeNullAsNull) {
+                buffer.writeNull();
+            } else {
+                buffer.writeObject(value);
+            }
             buffer.setCodec(codec);
         } else {
             String message = "JsonGenerator of type "
@@ -81,11 +86,20 @@ public abstract class EmbeddedObjectSerializer<T> extends TransformingEmbeddedOb
         }
     }
 
+    /**
+     * Transform to the desired type.  Careful of nulls!
+     * 
+     * @param value
+     * @return
+     */
+    protected abstract TransformedType transform(InputType value);
+
     @Override
     public void serialize(
-        T value, JsonGenerator jgen,
+        InputType value, JsonGenerator jgen,
         SerializerProvider provider
     ) throws IOException {
-        writeEmbeddedObject(value, jgen);
+        writeEmbeddedObject(transform(value), jgen);
     }
+
 }
