@@ -69,7 +69,7 @@ The java mongo 3.0 and higher driver supports the usage of codecs to map to spec
     MongoCollection<?> coll = mongoDatabase.getCollection("testCollection");
     MongoCollection<MyObject> collection = coll.withDocumentClass(MyObject.class).withCodecRegistry(jacksonCodecRegistry);
 
-The first two lines above get the database using the mongo driver. The third line constructs a new JacksonCodecRegistry. The fourth line tells the JacksonCodecRegistry to create a codec that will use Jackson for serialifation/deserialization for the class MyObject. The fifth line gets a MongoCollection from the MongoDatabase, and the sixth tells the MongoCollection to use  the MyObject class and work with the JacksonCodecRegsitry setup on lines three and four. JacksonCodecRegistry includes the default Mongo codecs, so it will also be capable of serializing and deserializing the Document and other default classes.
+The first two lines above get the database using the mongo driver. The third line constructs a new JacksonCodecRegistry. The fourth line tells the JacksonCodecRegistry to create a codec that will use Jackson for serialization/deserialization for the class MyObject. The fifth line gets a MongoCollection from the MongoDatabase, and the sixth tells the MongoCollection to use  the MyObject class and work with the JacksonCodecRegsitry setup on lines three and four. JacksonCodecRegistry includes the default Mongo codecs, so it will also be capable of serializing and deserializing the Document and other default classes.
 
 ### Using JacksonMongoCollection
 
