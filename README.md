@@ -28,7 +28,8 @@ Quick start
 - Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver.
 - Version 2.5.0 to 2.10.0 are compatible with the 3.x series mongodb-driver using the legacy 3.x series APIs.
 - Version 3.0.0 and later are compatible with versions 3.12.x and later of the mongo driver using mongodb-driver-sync without the legacy APIs.
-- Version 4.x is built on the 4.x branch against MongoDB's 4.x driver
+- Version 4.0.x is built on the mongojack-4.0.x branch against MongoDB's 4.0.x driver
+- Version 4.2.x is built on the master branch against MongoDB's 4.2.x driver
 
 ### Installation
 
@@ -41,12 +42,12 @@ Maven:
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>4.0.2</version>
+      <version>4.2.0</version>
     </dependency>
 
 Gradle:
 
-    implementation 'org.mongojack:mongojack:4.0.2'
+    implementation 'org.mongojack:mongojack:4.2.0'
 
 ### Writing code
 
