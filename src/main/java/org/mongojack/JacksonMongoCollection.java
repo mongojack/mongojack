@@ -18,6 +18,7 @@ package org.mongojack;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoWriteConcernException;
@@ -45,6 +46,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.Codec;
+import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.mongojack.internal.MongoJackModule;
@@ -54,7 +57,6 @@ import org.mongojack.internal.util.DocumentSerializationUtils;
 import org.mongojack.internal.util.FindIterableDecorator;
 import org.mongojack.internal.util.MapReduceIterableDecorator;
 
-import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -228,7 +230,14 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
             if (id instanceof BsonValue) {
                 return Filters.eq("_id", id);
             }
-            return Filters.eq("_id", JacksonCodec.constructIdValue(id, JacksonCodec.getIdElement(valueClass)));
+            return getOptionalValueClassCodec()
+                .map(
+                    valueClassCodec -> {
+                        final Optional<BeanPropertyDefinition> idElementSerializationDescription = valueClassCodec.getIdElementSerializationDescription(getValueClass());
+                        return Filters.eq("_id", valueClassCodec.constructIdValue(id, idElementSerializationDescription));
+                    }
+                )
+                .orElseGet(() -> Filters.eq("_id", id));
         }
         List<Object> allIds = Arrays.asList(ids);
         allIds.add(id);
@@ -236,18 +245,24 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     }
 
     public Bson createIdInQuery(final List<?> allIds) {
-        final Optional<? extends AnnotatedElement> idElement = JacksonCodec.getIdElement(valueClass);
-        return Filters.in(
-            "_id",
-            allIds.stream()
-                .map((currentId) -> {
-                    if (currentId instanceof BsonValue) {
-                        return currentId;
-                    }
-                    return JacksonCodec.constructIdValue(currentId, idElement);
-                })
-                .collect(Collectors.toList())
-        );
+        return getOptionalValueClassCodec()
+            .map(
+                valueClassCodec -> {
+                    final Optional<BeanPropertyDefinition> idElementSerializationDescription = valueClassCodec.getIdElementSerializationDescription(getValueClass());
+                    return Filters.in(
+                        "_id",
+                        allIds.stream()
+                            .map((currentId) -> {
+                                if (currentId instanceof BsonValue) {
+                                    return currentId;
+                                }
+                                return valueClassCodec.constructIdValue(currentId, idElementSerializationDescription);
+                            })
+                            .collect(Collectors.toList())
+                    );
+                }
+            )
+            .orElseGet(() -> Filters.in("_id", allIds));
     }
 
     /**
@@ -397,7 +412,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
      * @throws MongoException             If an error occurred
      */
     public UpdateResult save(TResult object, WriteConcern concern) throws MongoWriteException, MongoWriteConcernException, MongoException {
-        final JacksonCodec<TResult> codec = getValueClassCodec();
+        final CollectibleCodec<TResult> codec = getValueClassCollectibleCodec();
         BsonValue _id = codec.getDocumentId(object);
         if (_id == null || _id.isNull()) {
             if (concern == null) {
@@ -416,8 +431,16 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         }
     }
 
-    private JacksonCodec<TResult> getValueClassCodec() {
-        return (JacksonCodec<TResult>) jacksonCodecRegistry.get(valueClass);
+    private CollectibleCodec<TResult> getValueClassCollectibleCodec() {
+        return (CollectibleCodec<TResult>) jacksonCodecRegistry.get(valueClass);
+    }
+
+    private Optional<JacksonCodec<TResult>> getOptionalValueClassCodec() {
+        final Codec<TResult> tResultCodec = jacksonCodecRegistry.get(valueClass);
+        if (tResultCodec instanceof JacksonCodec) {
+            return Optional.of((JacksonCodec<TResult>) tResultCodec);
+        }
+        return Optional.empty();
     }
 
     public SerializationOptions getSerializationOptions() {

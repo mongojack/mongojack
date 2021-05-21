@@ -1,5 +1,11 @@
 package org.mongojack.internal.stream;
 
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import org.bson.BsonDecimal128;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
@@ -18,12 +24,10 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.mongojack.Id;
 
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -32,10 +36,14 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
 
     private final JacksonEncoder<T> encoder;
     private final JacksonDecoder<T> decoder;
+    private final ObjectMapper objectMapper;
+    private final ConcurrentHashMap<Class<?>, Optional<BeanPropertyDefinition>> serializationBPDCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Class<?>, Optional<BeanPropertyDefinition>> deSerializationBPDCache = new ConcurrentHashMap<>();
 
-    public JacksonCodec(JacksonEncoder<T> encoder, JacksonDecoder<T> decoder) {
+    public JacksonCodec(JacksonEncoder<T> encoder, JacksonDecoder<T> decoder, final ObjectMapper objectMapper) {
         this.encoder = encoder;
         this.decoder = decoder;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -76,133 +84,38 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
     public Codec<T> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
         return new JacksonCodec<>(
             encoder.withUuidRepresentation(uuidRepresentation),
-            decoder.withUuidRepresentation(uuidRepresentation)
+            decoder.withUuidRepresentation(uuidRepresentation),
+            objectMapper
         );
     }
 
     private Supplier<BsonValue> getIdReader(final T t) {
-        final Class<?> documentClass = t.getClass();
-        final Optional<Method> maybeIdGetter = getIdGetter(documentClass);
-        if (maybeIdGetter.isPresent()) {
-            Method getter = maybeIdGetter.get();
-            getter.setAccessible(true);
-            return () -> {
-                try {
-                    return constructIdValue(getter.invoke(t), maybeIdGetter);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return BsonNull.VALUE;
-                }
-            };
-        } else {
-            final Optional<Field> maybeField = getIdField(documentClass);
-            if (maybeField.isPresent()) {
-                Field field = maybeField.get();
-                field.setAccessible(true);
-                return () -> {
-                    try {
-                        return constructIdValue(field.get(t), maybeField);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return BsonNull.VALUE;
-                    }
-                };
-            } else {
-                return () -> BsonNull.VALUE;
+        final Optional<BeanPropertyDefinition> maybeBpd = getIdElementDeserializationDescription(t.getClass());
+        return maybeBpd.<Supplier<BsonValue>>map(beanPropertyDefinition -> () -> {
+            try {
+                return constructIdValue(beanPropertyDefinition.getAccessor().getValue(t), maybeBpd);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return BsonNull.VALUE;
             }
-        }
+        }).orElseGet(() -> () -> BsonNull.VALUE);
     }
 
     private Consumer<BsonObjectId> getIdWriter(final T t) {
-        final Class<?> documentClass = t.getClass();
-        final Optional<Method> maybeSetter = getIdSetter(documentClass);
-        if (maybeSetter.isPresent()) {
-            Method setter = maybeSetter.get();
-            setter.setAccessible(true);
-            return (value) -> {
-                try {
-                    if (value != null) {
-                        setter.invoke(t, extractIdValue(value, setter.getParameterTypes()[0]));
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+        final Optional<BeanPropertyDefinition> maybeBpd = getIdElementSerializationDescription(t.getClass());
+        return maybeBpd.<Consumer<BsonObjectId>>map(beanPropertyDefinition -> (bsonObjectId) -> {
+            try {
+                if (bsonObjectId != null) {
+                    beanPropertyDefinition.getMutator().setValue(
+                        t,
+                        extractIdValue(bsonObjectId, beanPropertyDefinition.getRawPrimaryType())
+                    );
                 }
-            };
-        } else {
-            final Optional<Field> maybeField = getIdField(documentClass);
-            if (maybeField.isPresent()) {
-                Field field = maybeField.get();
-                field.setAccessible(true);
-                return (value) -> {
-                    try {
-                        field.set(t, extractIdValue(value, field.getType()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                };
-            } else {
-                return (value) -> {
-                };
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }
-    }
-
-    private static Optional<Field> getIdField(final Class<?> documentClass) {
-        Field[] fields = documentClass.getDeclaredFields();
-        Optional<Field> maybeField = Arrays.stream(fields)
-            .filter(field -> field.isAnnotationPresent(javax.persistence.Id.class) ||
-                field.isAnnotationPresent(org.mongojack.Id.class) ||
-                field.getName().equals("_id"))
-            .findFirst();
-        if (maybeField.isPresent()) {
-            return maybeField;
-        }
-
-        Class<?> superClass = documentClass.getSuperclass();
-        if (superClass != null && !Object.class.equals(superClass)) {
-            return getIdField(superClass);
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<Method> getIdGetter(final Class<?> documentClass) {
-        Method[] methods = documentClass.getDeclaredMethods();
-        Optional<Method> maybeGetter = Arrays.stream(methods)
-            .filter(method -> method.getName().startsWith("get") &&
-                method.getParameterCount() == 0 &&
-                (method.isAnnotationPresent(javax.persistence.Id.class) ||
-                    method.isAnnotationPresent(org.mongojack.Id.class) ||
-                    method.getName().equals("get_id")))
-            .findFirst();
-        if (maybeGetter.isPresent()) {
-            return maybeGetter;
-        }
-
-        Class<?> superClass = documentClass.getSuperclass();
-        if (superClass != null && !Object.class.equals(superClass)) {
-            return getIdGetter(superClass);
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<Method> getIdSetter(final Class<?> documentClass) {
-        Method[] methods = documentClass.getDeclaredMethods();
-        Optional<Method> maybeSetter = Arrays.stream(methods)
-            .filter(method -> method.getName().startsWith("set") &&
-                method.getParameterCount() == 1 &&
-                (method.isAnnotationPresent(javax.persistence.Id.class) ||
-                    method.isAnnotationPresent(org.mongojack.Id.class) ||
-                    method.getName().equals("set_id")))
-            .findFirst();
-        if (maybeSetter.isPresent()) {
-            return maybeSetter;
-        }
-
-        Class<?> superClass = documentClass.getSuperclass();
-        if (superClass != null && !Object.class.equals(superClass)) {
-            return getIdSetter(superClass);
-        }
-        return Optional.empty();
+        }).orElseGet(() -> (bsonObjectId) -> {
+        });
     }
 
     /**
@@ -213,7 +126,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
      * @param valueType
      * @return
      */
-    private static Object extractIdValue(BsonObjectId value, Class<?> valueType) {
+    private Object extractIdValue(BsonObjectId value, Class<?> valueType) {
         if (String.class.equals(valueType)) {
             return value.asObjectId().getValue().toHexString();
         } else if (ObjectId.class.equals(valueType)) {
@@ -232,8 +145,8 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static BsonValue constructIdValue(Object value, Optional<? extends AnnotatedElement> element) {
-        if (element.isPresent() && element.get().isAnnotationPresent(org.mongojack.ObjectId.class)) {
+    public BsonValue constructIdValue(Object value, Optional<BeanPropertyDefinition> element) {
+        if (element.isPresent() && element.get().getPrimaryMember().hasAnnotation(org.mongojack.ObjectId.class)) {
             if (value instanceof String) {
                 return new BsonObjectId(new ObjectId((String) value));
             }
@@ -267,12 +180,60 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
         throw new IllegalArgumentException(String.format("Unsupported ID type: %s", value.getClass()));
     }
 
-    public static Optional<? extends AnnotatedElement> getIdElement(final Class<?> documentClass) {
-        final Optional<Method> maybeIdGetter = getIdGetter(documentClass);
-        if (maybeIdGetter.isPresent()) {
-            return maybeIdGetter;
-        }
-        return getIdField(documentClass);
+    public Optional<BeanPropertyDefinition> getIdElementDeserializationDescription(final Class<?> documentClass) {
+        return deSerializationBPDCache.computeIfAbsent(
+            documentClass,
+            (documentClazz) -> {
+                final DeserializationConfig deserializationConfig = objectMapper.getDeserializationConfig();
+                final BeanDescription beanDescription = deserializationConfig.introspect(deserializationConfig.constructType(documentClass));
+
+                final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
+                    .filter(
+                        bpd -> (bpd.getPrimaryMember().hasAnnotation(Id.class) ||
+                            bpd.getPrimaryMember().hasAnnotation(javax.persistence.Id.class) ||
+                            "_id".equals(bpd.getName())) && bpd.getAccessor() != null
+                    )
+                    .findFirst();
+
+                found.ifPresent(
+                    bpd -> {
+                        if (deserializationConfig.isEnabled(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
+                            bpd.getAccessor().fixAccess(true);
+                        }
+                    }
+                );
+
+                return found;
+            }
+        );
+    }
+
+    public Optional<BeanPropertyDefinition> getIdElementSerializationDescription(final Class<?> documentClass) {
+        return serializationBPDCache.computeIfAbsent(
+            documentClass,
+            (documentClazz) -> {
+                final SerializationConfig serializationConfig = objectMapper.getSerializationConfig();
+                final BeanDescription beanDescription = serializationConfig.introspect(serializationConfig.constructType(documentClass));
+
+                final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
+                    .filter(
+                        bpd -> (bpd.getPrimaryMember().hasAnnotation(Id.class) ||
+                            bpd.getPrimaryMember().hasAnnotation(javax.persistence.Id.class) ||
+                            "_id".equals(bpd.getName())) && bpd.getMutator() != null
+                    )
+                    .findFirst();
+
+                found.ifPresent(
+                    bpd -> {
+                        if (serializationConfig.isEnabled(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
+                            bpd.getMutator().fixAccess(true);
+                        }
+                    }
+                );
+
+                return found;
+            }
+        );
     }
 
 }

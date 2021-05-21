@@ -70,7 +70,7 @@ public class JacksonCodecRegistry implements CodecRegistry, CodecProvider {
         return (Codec<T>) codecCache.computeIfAbsent(clazz, (k) -> {
             JacksonEncoder<T> encoder = new JacksonEncoder<>(clazz, view, objectMapper, uuidRepresentation);
             JacksonDecoder<T> decoder = new JacksonDecoder<>(clazz, view, objectMapper, uuidRepresentation);
-            return new JacksonCodec<>(encoder, decoder);
+            return new JacksonCodec<>(encoder, decoder, objectMapper);
         });
     }
 
