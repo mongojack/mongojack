@@ -89,7 +89,7 @@ public class MongoJackInstantDeserializerTest {
 
     @Test(expected = ClassCastException.class)
     public void testWithoutDateObject() throws IOException {
-        when(jsonParser.getCurrentTokenId()).thenReturn(JsonTokenId.ID_EMBEDDED_OBJECT);
+        when(jsonParser.currentTokenId()).thenReturn(JsonTokenId.ID_EMBEDDED_OBJECT);
         when(jsonParser.getEmbeddedObject()).thenReturn(new Object());
 
         deserializedDate = deserializer.deserialize(jsonParser, deserializationContext);
