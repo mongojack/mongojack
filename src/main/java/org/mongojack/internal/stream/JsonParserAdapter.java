@@ -272,7 +272,6 @@ public class JsonParserAdapter extends ParserBase {
         return (Number) currentValue;
     }
 
-    @Override
     public Number getNumberValueExact() {
         return getNumberValue();
     }

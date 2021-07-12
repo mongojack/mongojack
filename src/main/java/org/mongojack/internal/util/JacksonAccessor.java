@@ -51,7 +51,6 @@ public class JacksonAccessor {
             throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
         }
 
-        @Override
         protected BeanSerializerBase withByNameInclusion(Set<String> toIgnore, Set<String> toInclude) {
             throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
         }
@@ -66,7 +65,6 @@ public class JacksonAccessor {
             throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
         }
 
-        @Override
         protected BeanSerializerBase withProperties(BeanPropertyWriter[] properties, BeanPropertyWriter[] filteredProperties) {
             throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
         }

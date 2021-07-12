@@ -106,6 +106,7 @@ public class CalendarDeserializerTest {
     public void testDateIsNull() throws IOException {
         when(jsonParser.getCurrentToken()).thenReturn(JsonToken.VALUE_NULL);
         when(jsonParser.currentTokenId()).thenReturn(JsonTokenId.ID_NULL);
+        when(jsonParser.getCurrentTokenId()).thenReturn(JsonTokenId.ID_NULL);
 
         deserializedDate = deserializer.deserialize(jsonParser, deserializationContext);
         assertNull(deserializedDate);
