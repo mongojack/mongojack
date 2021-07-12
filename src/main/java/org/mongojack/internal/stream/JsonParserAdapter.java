@@ -272,6 +272,10 @@ public class JsonParserAdapter extends ParserBase {
         return (Number) currentValue;
     }
 
+    public Number getNumberValueExact() {
+        return getNumberValue();
+    }
+
     @Override
     public JsonParser.NumberType getNumberType() {
         if (currentValue == null) {
