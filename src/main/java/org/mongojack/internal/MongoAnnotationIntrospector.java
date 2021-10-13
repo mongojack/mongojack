@@ -17,7 +17,6 @@
 package org.mongojack.internal;
 
 import org.mongojack.DBRef;
-import org.mongojack.Id;
 import org.mongojack.ObjectId;
 
 import com.fasterxml.jackson.databind.JavaType;
@@ -67,11 +66,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
 
     private String findPropertyName(Annotated annotated) {
 
-        if (annotated.hasAnnotation(Id.class)
-                || annotated.hasAnnotation(javax.persistence.Id.class)) {
-            return "_id";
-        }
-        return null;
+        return AnnotationHelper.hasIdAnnotation(annotated) ? "_id" : null;
     }
 
     private Type getTypeForAnnotated(Annotated a) {

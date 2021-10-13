@@ -45,6 +45,7 @@
       <groupId>javax.persistence</groupId>
       <artifactId>javax.persistence-api</artifactId>
       <version>2.2</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -428,6 +429,13 @@
       </roles>
       <organization>SKB Kontur</organization>
       <organizationUrl>https://kontur-inc.com/</organizationUrl>
+    </contributor>
+    <contributor>
+      <name>Stéphane Démurget</name>
+      <url>https://github.com/zzrough</url>
+      <roles>
+        <role>developer</role>
+      </roles>
     </contributor>
   </contributors>
 

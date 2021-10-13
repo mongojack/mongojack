@@ -27,7 +27,7 @@ Features
 * Can be used purely as a codec for a MongoCollection, or provides a wrapper collection that implements all MongoCollection functionality.
 * Provides all MongoDB MongoCollection features.
 * Supports mapping ObjectIds to strings and byte arrays, using an `@ObjectID` annotation.
-* Supports `@javax.persistance.Id` annotation for marking which property is the id (or just call it `_id`).
+* Supports `@javax.persistance.Id` annotation for marking which property is the id (if JPA is available - optional dependency) or just call it `_id`.
 * Maps POJOs provided in query or update Bson documents
 * Supports database reference conventions, with convenience functionality for fetching references and collections of references in one query.
 
