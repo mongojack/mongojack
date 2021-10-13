@@ -499,6 +499,8 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
                 serializer = findQuerySerializer(targetIsCollection, key, serializerProvider, serializer);
             }
             serializeFilter(serializerProvider, serializer, (Map<String, Object>) condition, writer, generator);
+        } else if (condition instanceof Pattern) {
+            writer.writeRegularExpression(new BsonRegularExpression(((Pattern) condition).pattern()));
         } else {
             if (keyIsNotOperator(key)) {
                 serializer = findQuerySerializer(false, key, serializerProvider, serializer);
