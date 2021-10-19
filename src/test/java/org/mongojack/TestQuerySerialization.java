@@ -333,6 +333,26 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertEquals(o1.id, coll.find().filter(Filters.regex("wrappedStringList", "foo:.*")).first().id);
     }
 
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
+    @Test
+    public void testSearchWithPatternFilter() {
+        MockObject o1 = new MockObject();
+        o1.text = "foo:bar";
+        MockObject o2 = new MockObject();
+        o2.genericMap = Collections.singletonMap("ref", "baz:qux");
+        coll.insertMany(Arrays.asList(o1, o2));
+
+        assertEquals(o1.id, coll.find(DBQuery.regex("text", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o1.id, coll.find().filter(DBQuery.regex("text", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o2.id, coll.find(DBQuery.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
+        assertEquals(o2.id, coll.find().filter(DBQuery.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
+
+        assertEquals(o1.id, coll.find(Filters.regex("text", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o1.id, coll.find().filter(Filters.regex("text", Pattern.compile("foo:.*"))).first().id);
+        assertEquals(o2.id, coll.find(Filters.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
+        assertEquals(o2.id, coll.find().filter(Filters.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
+    }
+
     static class MockObject {
         @ObjectId
         @Id
@@ -347,6 +367,9 @@ public class TestQuerySerialization extends MongoDBTestBase {
         public WrappedString wrappedString;
 
         public List<WrappedString> wrappedStringList;
+
+        public String text;
+        public Map<String,Object> genericMap;
     }
 
     static class MockEmbedded {
