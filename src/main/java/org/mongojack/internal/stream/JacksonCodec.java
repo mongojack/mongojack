@@ -24,7 +24,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
-import org.mongojack.Id;
+import org.mongojack.internal.AnnotationHelper;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -189,9 +189,9 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
 
                 final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
                     .filter(
-                        bpd -> (bpd.getPrimaryMember().hasAnnotation(Id.class) ||
-                            bpd.getPrimaryMember().hasAnnotation(javax.persistence.Id.class) ||
-                            "_id".equals(bpd.getName())) && bpd.getAccessor() != null
+                        bpd -> ("_id".equals(bpd.getName()) ||
+                                AnnotationHelper.hasIdAnnotation(bpd.getPrimaryMember())) &&
+                                bpd.getAccessor() != null
                     )
                     .findFirst();
 
@@ -217,9 +217,9 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
 
                 final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
                     .filter(
-                        bpd -> (bpd.getPrimaryMember().hasAnnotation(Id.class) ||
-                            bpd.getPrimaryMember().hasAnnotation(javax.persistence.Id.class) ||
-                            "_id".equals(bpd.getName())) && bpd.getMutator() != null
+                        bpd -> ("_id".equals(bpd.getName()) ||
+                                AnnotationHelper.hasIdAnnotation(bpd.getPrimaryMember())) &&
+                                bpd.getMutator() != null
                     )
                     .findFirst();
 
