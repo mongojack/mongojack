@@ -30,6 +30,7 @@ Quick start
 - Version 3.0.0 and later are compatible with versions 3.12.x and later of the mongo driver using mongodb-driver-sync without the legacy APIs.
 - Version 4.0.x is built on the mongojack-4.0.x branch against MongoDB's 4.0.x driver
 - Version 4.2.x is built on the master branch against MongoDB's 4.2.x driver
+- Version 4.3.x is built on the master branch against MongoDB's 4.3.x driver
 
 ### Installation
 

@@ -1,6 +1,28 @@
 Changelog
 =========
 
+4.3.0
+-----
+_Released 2021.11.02_
+
+* [Issue #220](https://github.com/mongojack/mongojack/issues/220)
+* Make javax persistence optional
+* Upgrade to mongo driver version 4.3.3
+
+4.2.2
+-----
+_Released 2021.11.02_
+
+* [Issue #220](https://github.com/mongojack/mongojack/issues/220)
+* Make javax persistence optional
+
+4.2.1
+-----
+_Released 2021.10.02_
+
+* [Issue #213](https://github.com/mongojack/mongojack/issues/213)
+* Upgrade to Jackson 2.12.x (while hopefully retaining compatibility with 2.11.x)
+
 4.2.0
 -----
 _Released 2021.04.05_
