@@ -24,6 +24,7 @@ org.mongojack.internal.util
 org.mongojack.internal.util
 org.mongojack.internal.util
 org.mongojack.internal
+org.mongojack.internal
 org.mongojack.internal.stream
 org.mongojack.internal.stream
 org.mongojack.internal.stream
