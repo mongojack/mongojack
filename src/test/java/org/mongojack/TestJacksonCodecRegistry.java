@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,22 @@
  */
 package org.mongojack;
 
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
 import org.bson.Document;
@@ -24,15 +39,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongojack.mock.MockObject;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.TimeZone;
-
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.*;
+import org.mongojack.mock.MockObjectWithWriteReadOnlyFields;
 
 public class TestJacksonCodecRegistry extends MongoDBTestBase {
     private com.mongodb.client.MongoCollection<MockObject> coll;
@@ -72,6 +79,37 @@ public class TestJacksonCodecRegistry extends MongoDBTestBase {
         List<MockObject> results = coll.find(new Document("string", "ten")).into(new ArrayList<>());
         assertThat(results, hasSize(1));
         assertEquals(calendar, results.get(0).calendar);
+    }
+
+    @Test
+    public void testSerializationWithWriteOrReadOnlyFields() {
+        MongoCollection<MockObjectWithWriteReadOnlyFields> customColl = coll.withDocumentClass(MockObjectWithWriteReadOnlyFields.class);
+
+        MockObjectWithWriteReadOnlyFields tDocument = new MockObjectWithWriteReadOnlyFields("1", "2", "3");
+        customColl.insertOne(tDocument);
+
+        Document result = coll.withDocumentClass(Document.class).find(new Document("_id", "1")).first();
+        assertNotNull(result);
+        assertEquals("1", result.getString("_id"));
+        assertEquals("2", result.getString("someReadOnlyField"));
+        assertNull(result.getString("someWriteOnlyField"));
+    }
+
+    @Test
+    public void testDeserializationWithWriteOrReadOnlyFields() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("_id", "1");
+        map.put("someReadOnlyField", "2");
+        map.put("someWriteOnlyField", "3");
+        coll.withDocumentClass(Document.class)
+            .insertOne(new Document(map));
+
+        MongoCollection<MockObjectWithWriteReadOnlyFields> customColl = coll.withDocumentClass(MockObjectWithWriteReadOnlyFields.class);
+        MockObjectWithWriteReadOnlyFields result = customColl
+            .find(new Document("_id", "1")).first();
+        assertNotNull(result);
+        assertEquals("3", result.getSomeWriteOnlyField());
+        assertNull(result.getSomeReadOnlyField());
     }
 
     @Test
