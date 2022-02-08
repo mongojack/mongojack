@@ -216,6 +216,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
                 final BeanDescription beanDescription = serializationConfig.introspect(serializationConfig.constructType(documentClass));
 
                 final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
+                    .filter(bpd -> bpd.getPrimaryMember() != null)
                     .filter(
                         bpd -> ("_id".equals(bpd.getName()) ||
                                 AnnotationHelper.hasIdAnnotation(bpd.getPrimaryMember())) &&
