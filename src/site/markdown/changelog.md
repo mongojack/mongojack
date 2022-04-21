@@ -1,6 +1,12 @@
 Changelog
 =========
 
+4.3.1
+-----
+_Released 2022.04.21_
+
+* [PR #222](https://github.com/mongojack/mongojack/pull/222)
+
 4.3.0
 -----
 _Released 2021.11.02_
