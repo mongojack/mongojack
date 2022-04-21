@@ -1,6 +1,13 @@
 Changelog
 =========
 
+4.5.0
+-----
+_Released 2022.04.21_
+
+* Upgrade to mongo driver version 4.5.1
+
+
 4.3.1
 -----
 _Released 2022.04.21_

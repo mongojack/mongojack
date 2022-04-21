@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -195,10 +196,13 @@ public class TestAggregate extends MongoDBTestBase {
             ));
         coll.aggregate(pipeline, Document.class)
             .forEach(o -> {
+                // driver 4.3 -> 4.5 changed this from a list of Documents to a list of Maps.
                 Assert.assertThat(o.get("inserts"), notNullValue());
                 Assert.assertThat(o.getList("inserts", Object.class), isA(List.class));
-                Assert.assertThat(o.getList("inserts", Document.class).get(0), isA(Document.class));
-                Assert.assertThat(o.getList("inserts", Document.class).get(0).getList("insert", String.class).get(0), equalTo("hello"));
+                Assert.assertThat(o.getList("inserts", Map.class).get(0), isA(Map.class));
+                final List<String> insertList = (List<String>) o.getList("inserts", Map.class).get(0).get("insert");
+                Assert.assertThat(insertList, isA(List.class));
+                Assert.assertThat(insertList.get(0), equalTo("hello"));
             });
     }
     
