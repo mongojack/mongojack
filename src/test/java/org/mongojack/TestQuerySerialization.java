@@ -352,6 +352,11 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertEquals(o1.id, coll.find().filter(Filters.regex("text", Pattern.compile("foo:.*"))).first().id);
         assertEquals(o2.id, coll.find(Filters.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
         assertEquals(o2.id, coll.find().filter(Filters.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
+
+        assertEquals(o2.id, coll.find(Filters.regex("genericMap.ref", Pattern.compile("(?i)BAZ:.*"))).first().id);
+        assertEquals(o2.id, coll.find().filter(Filters.regex("genericMap.ref", Pattern.compile("(?i)BAZ:.*"))).first().id);
+        assertEquals(o2.id, coll.find(Filters.regex("genericMap.ref", "BAZ:.*", "i")).first().id);
+        assertEquals(o2.id, coll.find().filter(Filters.regex("genericMap.ref", "BAZ:.*", "i")).first().id);
     }
 
     static class MockObject {

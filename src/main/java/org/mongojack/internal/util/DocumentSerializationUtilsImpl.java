@@ -292,7 +292,7 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
         } else if (value instanceof Date) {
             writer.writeDateTime(((Date) value).getTime());
         } else if (value instanceof Pattern) {
-            writer.writeRegularExpression(new BsonRegularExpression(((Pattern) value).pattern()));
+            writer.writeRegularExpression(getRegularExpressionForPattern((Pattern) value));
         } else if (value instanceof ObjectId) {
             writer.writeObjectId((ObjectId) value);
         } else if (value instanceof BsonSymbol) {
@@ -329,6 +329,25 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
             return false;
         }
         return true;
+    }
+
+    private void appendFlag(Pattern pattern, int flagToCheck, char characterEquivalent, StringBuilder sb) {
+        if ((pattern.flags() & flagToCheck) == flagToCheck) {
+            sb.append(characterEquivalent);
+        }
+    }
+
+    private BsonRegularExpression getRegularExpressionForPattern(final Pattern pattern) {
+        String flags = "";
+        if (pattern.flags() != 0) {
+            StringBuilder sb = new StringBuilder();
+            appendFlag(pattern, Pattern.CASE_INSENSITIVE, 'i', sb);
+            appendFlag(pattern, Pattern.COMMENTS, 'x', sb);
+            appendFlag(pattern, Pattern.MULTILINE, 'm', sb);
+            appendFlag(pattern, Pattern.DOTALL, 's', sb);
+            flags = sb.toString();
+        }
+        return new BsonRegularExpression(pattern.pattern(), flags);
     }
 
     @SuppressWarnings({"RedundantIfStatement", "unused"})
@@ -500,7 +519,7 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
             }
             serializeFilter(serializerProvider, serializer, (Map<String, Object>) condition, writer, generator);
         } else if (condition instanceof Pattern) {
-            writer.writeRegularExpression(new BsonRegularExpression(((Pattern) condition).pattern()));
+            writer.writeRegularExpression(getRegularExpressionForPattern((Pattern) condition));
         } else {
             if (keyIsNotOperator(key)) {
                 serializer = findQuerySerializer(false, key, serializerProvider, serializer);
