@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,6 +16,9 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.hamcrest.Matchers;
 import org.junit.Test;
@@ -23,6 +26,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
@@ -34,7 +40,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
     @Test
     public void testObjectIdGenerated() {
-        
+
         ObjectIdId object = new ObjectIdId();
 
         JacksonMongoCollection<ObjectIdId> coll = getCollection(ObjectIdId.class);
@@ -197,7 +203,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         ByteArrayIdCollection object = new ByteArrayIdCollection();
         object._id = "id";
         object.list = Arrays.asList(org.bson.types.ObjectId.get().toByteArray(), org.bson.types.ObjectId.get()
-                .toByteArray());
+            .toByteArray());
 
         JacksonMongoCollection<ByteArrayIdCollection> coll = getCollection(ByteArrayIdCollection.class);
         coll.insert(object);
@@ -261,12 +267,14 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
     public static class ByteArrayIdMethods {
         private byte[] _id;
-         @org.mongojack.ObjectId
+
+        @org.mongojack.ObjectId
         @Id
         public byte[] getId() {
             return _id;
         }
-         @org.mongojack.ObjectId
+
+        @org.mongojack.ObjectId
         @Id
         public void setId(byte[] key) {
             _id = key;
@@ -276,13 +284,209 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     @Test
     public void testByteArrayObjectIdMethods() {
         ByteArrayIdMethods object = new ByteArrayIdMethods();
-         JacksonMongoCollection<ByteArrayIdMethods> coll = getCollection(ByteArrayIdMethods.class);
-         coll.insert(object);
+        JacksonMongoCollection<ByteArrayIdMethods> coll = getCollection(ByteArrayIdMethods.class);
+        coll.insert(object);
         byte[] id = coll.findOne().getId();
         // Check that it's a valid object id
         new ObjectId(id);
         ByteArrayIdMethods result = coll.findOneById(id);
         assertThat(result.getId(), equalTo(id));
-        assertThat(((ObjectId)getUnderlyingCollection(coll).find().first().get("_id")).toByteArray(), equalTo(id));
+        assertThat(((ObjectId) getUnderlyingCollection(coll).find().first().get("_id")).toByteArray(), equalTo(id));
     }
+
+    @Test
+    public void testObjectIdAnnotationOnConvertedSaved() {
+        ConvertedId object = new ConvertedId();
+        ConvertibleId id = new ConvertibleId(UUID.randomUUID().toString());
+        object._id = id;
+
+        JacksonMongoCollection<ConvertedId> coll = getCollection(ConvertedId.class);
+
+        coll.insert(object);
+        ConvertedId result = coll.findOneById(id);
+        assertThat(result._id, equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id.getValue()));
+    }
+
+    @Test
+    public void testRemoveByIdWithConvertedId() {
+        JacksonMongoCollection<ConvertedId> coll = getCollection(ConvertedId.class);
+        {
+            ConvertedId object = new ConvertedId();
+            object._id = new ConvertibleId(UUID.randomUUID().toString());
+
+            coll.insert(object);
+        }
+        ConvertibleId id = coll.findOne()._id;
+        {
+            ConvertedId object = new ConvertedId();
+            object._id = new ConvertibleId(UUID.randomUUID().toString());
+
+            coll.insert(object);
+        }
+        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        coll.removeById(id);
+        List<ConvertedId> results = coll.find().into(new ArrayList<>());
+        assertThat(results, hasSize(1));
+        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+    }
+
+    @Test
+    public void testFindOneByIdWithConvertedId() {
+        JacksonMongoCollection<ConvertedId> coll = getCollection(ConvertedId.class);
+        ConvertedId object = new ConvertedId();
+        object._id = new ConvertibleId(UUID.randomUUID().toString());
+
+        coll.insert(object);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(String.class));
+        ConvertibleId id = coll.findOne()._id;
+        assertThat(id, instanceOf(ConvertibleId.class));
+        ConvertedId result = coll.findOneById(id);
+        assertThat(result._id, Matchers.equalTo(id));
+    }
+
+    public static class ConvertibleId {
+
+        private final String value;
+
+        @JsonCreator
+        public ConvertibleId(final String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String getValue() {
+            return value;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final ConvertibleId that = (ConvertibleId) o;
+            return Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value);
+        }
+    }
+
+    public static class ConvertedId {
+        @Id
+        public ConvertibleId _id;
+    }
+    
+    @Test
+    public void testObjectIdAnnotationOnComplexSaved() {
+        ObjectWithComplexId object = new ObjectWithComplexId();
+        ComplexId id = new ComplexId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+        object._id = id;
+
+        JacksonMongoCollection<ObjectWithComplexId> coll = getCollection(ObjectWithComplexId.class);
+
+        coll.insert(object);
+        ObjectWithComplexId result = coll.findOneById(id);
+        assertThat(result._id, equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id", Document.class).get("value1", String.class), equalTo(id.getValue1()));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id", Document.class).get("value2", String.class), equalTo(id.getValue2()));
+    }
+
+    @Test
+    public void testRemoveByIdWithComplexId() {
+        JacksonMongoCollection<ObjectWithComplexId> coll = getCollection(ObjectWithComplexId.class);
+        {
+            ObjectWithComplexId object = new ObjectWithComplexId();
+            object._id = new ComplexId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+            coll.insert(object);
+        }
+        ComplexId id = coll.findOne()._id;
+        {
+            ObjectWithComplexId object = new ObjectWithComplexId();
+            object._id = new ComplexId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+            coll.insert(object);
+        }
+        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        coll.removeById(id);
+        List<ObjectWithComplexId> results = coll.find().into(new ArrayList<>());
+        assertThat(results, hasSize(1));
+        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+    }
+
+    @Test
+    public void testFindOneByIdWithComplexId() {
+        JacksonMongoCollection<ObjectWithComplexId> coll = getCollection(ObjectWithComplexId.class);
+        ObjectWithComplexId object = new ObjectWithComplexId();
+        object._id = new ComplexId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
+
+        coll.insert(object);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(Document.class));
+        ComplexId id = coll.findOne()._id;
+        assertThat(id, instanceOf(ComplexId.class));
+        ObjectWithComplexId result = coll.findOneById(id);
+        assertThat(result._id, Matchers.equalTo(id));
+    }
+
+    public static class ComplexId {
+
+        private String value1;
+
+        private String value2;
+
+        public ComplexId() {
+        }
+
+        public ComplexId(final String value1, final String value2) {
+            this.value1 = value1;
+            this.value2 = value2;
+        }
+
+        public String getValue1() {
+            return value1;
+        }
+
+        public void setValue1(final String value1) {
+            this.value1 = value1;
+        }
+
+        public String getValue2() {
+            return value2;
+        }
+
+        public void setValue2(final String value2) {
+            this.value2 = value2;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final ComplexId complexId = (ComplexId) o;
+            return Objects.equals(value1, complexId.value1) && Objects.equals(value2, complexId.value2);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(value1, value2);
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", ComplexId.class.getSimpleName() + "[", "]")
+                .add("value1='" + value1 + "'")
+                .add("value2='" + value2 + "'")
+                .toString();
+        }
+    }
+
+    public static class ObjectWithComplexId {
+        
+        @Id
+        public ComplexId _id;
+        
+    }
+
 }

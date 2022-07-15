@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import org.bson.BsonDecimal128;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -24,6 +26,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.mongojack.JacksonCodecRegistry;
 import org.mongojack.internal.AnnotationHelper;
 
 import java.util.Optional;
@@ -39,11 +42,18 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
     private final ObjectMapper objectMapper;
     private final ConcurrentHashMap<Class<?>, Optional<BeanPropertyDefinition>> serializationBPDCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Class<?>, Optional<BeanPropertyDefinition>> deSerializationBPDCache = new ConcurrentHashMap<>();
+    private final JacksonCodecRegistry jacksonCodecRegistry;
 
-    public JacksonCodec(JacksonEncoder<T> encoder, JacksonDecoder<T> decoder, final ObjectMapper objectMapper) {
+    public JacksonCodec(
+        JacksonEncoder<T> encoder,
+        JacksonDecoder<T> decoder,
+        final ObjectMapper objectMapper,
+        JacksonCodecRegistry jacksonCodecRegistry
+        ) {
         this.encoder = encoder;
         this.decoder = decoder;
         this.objectMapper = objectMapper;
+        this.jacksonCodecRegistry = jacksonCodecRegistry;
     }
 
     @Override
@@ -85,7 +95,8 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
         return new JacksonCodec<>(
             encoder.withUuidRepresentation(uuidRepresentation),
             decoder.withUuidRepresentation(uuidRepresentation),
-            objectMapper
+            objectMapper,
+            jacksonCodecRegistry
         );
     }
 
@@ -141,7 +152,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
             }
             return outputArray;
         }
-        throw new IllegalArgumentException("Unsupported ID type: " + value.getClass());
+        throw new IllegalArgumentException("Unsupported ID generation type: " + value.getClass());
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -176,8 +187,17 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
             return new BsonInt64((Long) value);
         } else if (value instanceof Decimal128) {
             return new BsonDecimal128((Decimal128) value);
+        } else {
+            final BsonDocument doc = new BsonDocument();
+            try (BsonDocumentWriter bdw = new BsonDocumentWriter(doc)) {
+                bdw.writeStartDocument();
+                bdw.writeName("_id");
+                final Codec codec = jacksonCodecRegistry.get(value.getClass());
+                codec.encode(bdw, value, EncoderContext.builder().build());
+                bdw.writeEndDocument();
+                return bdw.getDocument().get("_id");
+            }
         }
-        throw new IllegalArgumentException(String.format("Unsupported ID type: %s", value.getClass()));
     }
 
     public Optional<BeanPropertyDefinition> getIdElementDeserializationDescription(final Class<?> documentClass) {
