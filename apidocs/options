@@ -17,10 +17,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'MongoJack 4.7.0 API'
+'MongoJack 4.7.1-SNAPSHOT API'
 -linkoffline
 'https://docs.oracle.com/javase/8/docs/api' '/Users/rlodge/code/misc/mongojack/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'MongoJack 4.7.0 API'
+'MongoJack 4.7.1-SNAPSHOT API'
