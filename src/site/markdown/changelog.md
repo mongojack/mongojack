@@ -3,15 +3,6 @@ Changelog
 
 4.7.0
 -----
-_Unreleased_
-
-* [Issue #223](https://github.com/mongojack/mongojack/issues/223)
-* [Issue #224](https://github.com/mongojack/mongojack/issues/224)
-* [Issue #226](https://github.com/mongojack/mongojack/issues/226)
-* Upgrade to mongo driver version 4.7.0
-
-4.7.0
------
 _Released 2022.07.22_
 
 * Upgrade to mongo driver version 4.7.0
