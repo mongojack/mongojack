@@ -1,6 +1,14 @@
 Changelog
 =========
 
+4.5.1
+-----
+_Unreleased_
+
+* [Issue #223](https://github.com/mongojack/mongojack/issues/223)
+* [Issue #224](https://github.com/mongojack/mongojack/issues/224)
+* [Issue #226](https://github.com/mongojack/mongojack/issues/226)
+
 4.5.0
 -----
 _Released 2022.04.21_
