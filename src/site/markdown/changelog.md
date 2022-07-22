@@ -1,7 +1,6 @@
 Changelog
 =========
 
-<<<<<<< Updated upstream
 4.7.0
 -----
 _Unreleased_
@@ -11,17 +10,12 @@ _Unreleased_
 * [Issue #226](https://github.com/mongojack/mongojack/issues/226)
 * Upgrade to mongo driver version 4.7.0
 
-=======
-<<<<<<< Updated upstream
-=======
 4.7.0
 -----
 _Released 2022.07.22_
 
 * Upgrade to mongo driver version 4.7.0
 
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 4.5.1
 -----
 _Released 2022.07.22_
