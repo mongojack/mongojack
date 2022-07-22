@@ -30,10 +30,10 @@ import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.UUID;
 
+import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
 
 @SuppressWarnings("ConstantConditions")
 public class TestObjectIdHandling extends MongoDBTestBase {
@@ -79,7 +79,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         String id = coll.findOne()._id;
         // Check that it's a valid object id
-        assertTrue(org.bson.types.ObjectId.isValid(id));
+        assertThat(org.bson.types.ObjectId.isValid(id), is(true));
         StringId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
         assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
@@ -138,7 +138,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         byte[] id = coll.findOne()._id;
         // Check that it's a valid object id, should be 12 bytes
-        assertEquals(12, id.length);
+        assertThat(id.length, equalTo(12));
         ByteArrayId result = coll.findOneById(id);
         assertThat(result._id, equalTo(id));
     }
@@ -245,7 +245,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         String id = coll.findOne().getId();
         // Check that it's a valid object id
-        assertTrue(org.bson.types.ObjectId.isValid(id));
+        assertThat(org.bson.types.ObjectId.isValid(id), is(true));
         StringIdMethods result = coll.findOneById(id);
         assertThat(result.getId(), equalTo(id));
         assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
@@ -377,7 +377,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         @Id
         public ConvertibleId _id;
     }
-    
+
     @Test
     public void testObjectIdAnnotationOnComplexSaved() {
         ObjectWithComplexId object = new ObjectWithComplexId();
@@ -430,6 +430,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         assertThat(result._id, Matchers.equalTo(id));
     }
 
+    @SuppressWarnings("unused")
     public static class ComplexId {
 
         private String value1;
@@ -483,10 +484,68 @@ public class TestObjectIdHandling extends MongoDBTestBase {
     }
 
     public static class ObjectWithComplexId {
-        
+
         @Id
         public ComplexId _id;
-        
+
+    }
+
+    @Test
+    public void testObjectIdAnnotationOnUuidSaved() {
+        ObjectWithUuidId object = new ObjectWithUuidId();
+        UUID id = UUID.randomUUID();
+        object._id = id;
+
+        JacksonMongoCollection<ObjectWithUuidId> coll = getCollection(ObjectWithUuidId.class);
+
+        coll.insert(object);
+        ObjectWithUuidId result = coll.findOneById(id);
+        assertThat(result._id, equalTo(id));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id", UUID.class), equalTo(id));
+    }
+
+    @Test
+    public void testRemoveByIdWithUuidId() {
+        JacksonMongoCollection<ObjectWithUuidId> coll = getCollection(ObjectWithUuidId.class);
+        {
+            ObjectWithUuidId object = new ObjectWithUuidId();
+            object._id = UUID.randomUUID();
+
+            coll.insert(object);
+        }
+        UUID id = coll.findOne()._id;
+        {
+            ObjectWithUuidId object = new ObjectWithUuidId();
+            object._id = UUID.randomUUID();
+
+            coll.insert(object);
+        }
+        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        coll.removeById(id);
+        List<ObjectWithUuidId> results = coll.find().into(new ArrayList<>());
+        assertThat(results, hasSize(1));
+        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+    }
+
+    @Test
+    public void testFindOneByIdWithUuidId() {
+        JacksonMongoCollection<ObjectWithUuidId> coll = getCollection(ObjectWithUuidId.class);
+        ObjectWithUuidId object = new ObjectWithUuidId();
+        object._id = UUID.randomUUID();
+
+        coll.insert(object);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(UUID.class));
+        UUID id = coll.findOne()._id;
+        assertThat(id, instanceOf(UUID.class));
+        ObjectWithUuidId result = coll.findOneById(id);
+        assertThat(result._id, Matchers.equalTo(id));
+    }
+
+    public static class ObjectWithUuidId {
+
+        @Id
+        public UUID _id;
+
     }
 
 }
