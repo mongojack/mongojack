@@ -141,7 +141,7 @@ public class JsonParserAdapter extends ParserBase {
                 return JsonToken.VALUE_NULL;
             case UNDEFINED:
                 reader.readUndefined();
-                return nextToken();
+                return JsonToken.VALUE_NULL;
             case TIMESTAMP:
                 currentValue = reader.readTimestamp();
                 return JsonToken.VALUE_EMBEDDED_OBJECT;

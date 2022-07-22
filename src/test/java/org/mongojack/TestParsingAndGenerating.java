@@ -16,8 +16,11 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCursor;
+import org.bson.BsonNull;
+import org.bson.BsonUndefined;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.junit.Before;
@@ -34,6 +37,8 @@ import java.util.Date;
 
 import static org.hamcrest.core.IsEqual.*;
 import static org.hamcrest.core.IsInstanceOf.*;
+import static org.hamcrest.core.IsNot.*;
+import static org.hamcrest.core.IsNull.*;
 import static org.junit.Assert.*;
 
 /**
@@ -281,6 +286,41 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     public static class ObjectWithByteArray {
         public String _id;
         public byte[] bytes;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class IgnoreUnknownObject {
+        private String value;
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String name) {
+            this.value = name;
+        }
+    }
+
+    @Test
+    public void deserializingNull() {
+        final JacksonMongoCollection<IgnoreUnknownObject> col = getCollection(IgnoreUnknownObject.class);
+        final com.mongodb.client.MongoCollection<Document> collection = getMongoCollection(col.getName(), Document.class);
+        collection.drop();
+        collection.insertOne(new Document("value", new BsonNull()));
+        final IgnoreUnknownObject foo = col.find().first();
+        assertThat(foo, not(nullValue()));
+        assertThat(foo.getValue(), nullValue());
+    }
+
+    @Test
+    public void deserializingUndefined() {
+        final JacksonMongoCollection<IgnoreUnknownObject> col = getCollection(IgnoreUnknownObject.class);
+        final com.mongodb.client.MongoCollection<Document> collection = getMongoCollection(col.getName(), Document.class);
+        collection.drop();
+        collection.insertOne(new Document("value", new BsonUndefined()));
+        final IgnoreUnknownObject foo = col.find().first();
+        assertThat(foo, not(nullValue()));
+        assertThat(foo.getValue(), nullValue());
     }
 
 }
