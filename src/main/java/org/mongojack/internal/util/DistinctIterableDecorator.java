@@ -8,6 +8,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.mongojack.InitializationRequiredForTransformation;
 import org.mongojack.JacksonCodecRegistry;
@@ -82,6 +83,16 @@ public class DistinctIterableDecorator<TResult> implements DistinctIterable<TRes
     @Override
     public DistinctIterable<TResult> collation(final Collation collation) {
         return delegate.collation(collation);
+    }
+
+    @Override
+    public DistinctIterable<TResult> comment(final String s) {
+        return delegate.comment(s);
+    }
+
+    @Override
+    public DistinctIterable<TResult> comment(final BsonValue bsonValue) {
+        return delegate.comment(bsonValue);
     }
 
     /**

@@ -26,6 +26,7 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MapReduceIterable;
@@ -34,6 +35,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.DropCollectionOptions;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
@@ -654,6 +656,16 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
             mongoCollection.withReadConcern(readConcern),
             serializationOptions
         );
+    }
+
+    @Override
+    public void drop(final DropCollectionOptions dropCollectionOptions) {
+        mongoCollection.drop(dropCollectionOptions);
+    }
+
+    @Override
+    public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
+        mongoCollection.drop(clientSession, dropCollectionOptions);
     }
 
     private void initializeIfNecessary(Object maybeInitializable) {

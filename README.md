@@ -32,6 +32,7 @@ Quick start
 - Version 4.2.x is built on the master branch against MongoDB's 4.2.x driver
 - Version 4.3.x is built on the master branch against MongoDB's 4.3.x driver
 - Version 4.5.x is built on the master branch against MongoDB's 4.5.x driver
+- Version 4.7.x is built on the master branch against MongoDB's 4.7.x driver
 
 ### Installation
 
@@ -44,12 +45,12 @@ Maven:
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>4.5.0</version>
+      <version>4.7.0</version>
     </dependency>
 
 Gradle:
 
-    implementation 'org.mongojack:mongojack:4.5.0'
+    implementation 'org.mongojack:mongojack:4.7.0'
 
 ### Writing code
 

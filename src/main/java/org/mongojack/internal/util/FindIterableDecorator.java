@@ -10,6 +10,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.mongojack.InitializationRequiredForTransformation;
@@ -167,6 +168,11 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
         return delegate.comment(comment);
     }
 
+    @Override
+    public FindIterable<TResult> comment(final BsonValue bsonValue) {
+        return delegate.comment(bsonValue);
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -181,6 +187,11 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     @Override
     public FindIterable<TResult> hintString(final String hint) {
         return delegate.hintString(hint);
+    }
+
+    @Override
+    public FindIterable<TResult> let(final Bson bson) {
+        return delegate.let(bson);
     }
 
     /**
