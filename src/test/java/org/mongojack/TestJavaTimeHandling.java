@@ -21,10 +21,11 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.core.IsEqual.*;
+import static org.junit.Assert.*;
 
 /**
  * class TestJavaTimeHandling: Tests the java.time.* handling in MongoJack.
@@ -529,6 +530,69 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         // verify it
         BsonDateTime expectedBsonDateTime = new BsonDateTime(result.instant.toEpochMilli());
         assertThat(bsonResult.getDateTime("instant"), equalTo(expectedBsonDateTime));
+    }
+
+    // not java.time-related exactly, but I deleted all the calendar tests, so
+    public static class CalendarContainer {
+        public org.bson.types.ObjectId _id;
+        public java.util.Calendar calendar;
+    }
+
+    @Test
+    public void testCalendarSavedAsISO8601() {
+        // create the object
+        CalendarContainer object = new CalendarContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        final Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, 1);
+        calendar.add(Calendar.MINUTE, 3);
+        object._id = id;
+        object.calendar = calendar;
+
+        // get a container
+        JacksonMongoCollection<CalendarContainer> coll = getCollection(CalendarContainer.class);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        CalendarContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.calendar.getTimeInMillis(), equalTo(object.calendar.getTimeInMillis()));
+    }
+
+    @Test
+    public void testCalendarSavedAsNativeTimestamps() {
+        // create the object
+        CalendarContainer object = new CalendarContainer();
+        org.bson.types.ObjectId id = new org.bson.types.ObjectId();
+        final Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.HOUR_OF_DAY, 1);
+        calendar.add(Calendar.MINUTE, 3);
+        object._id = id;
+        object.calendar = calendar;
+
+        // get a container
+        JacksonMongoCollection<CalendarContainer> coll = getCollection(CalendarContainer.class, millisWritingObjectMapper);
+
+        // save the object
+        coll.insert(object);
+
+        // retrieve it
+        CalendarContainer result = coll.findOneById(id);
+
+        // verify it
+        assertThat(result._id, equalTo(id));
+        assertThat(result.calendar.getTimeInMillis(), equalTo(object.calendar.getTimeInMillis()));
+
+        // retrieve raw bson
+        BsonDocument bsonResult = coll.withDocumentClass(BsonDocument.class).findOneById(id);
+
+        // verify it
+        BsonDateTime expectedBsonDateTime = new BsonDateTime(result.calendar.getTimeInMillis());
+        assertThat(bsonResult.getDateTime("calendar"), equalTo(expectedBsonDateTime));
     }
 
 }
