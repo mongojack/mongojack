@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReplaceOptions;
@@ -33,7 +32,12 @@ import org.junit.Test;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.MockObject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -99,6 +103,50 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         public int hashCode() {
             return Objects.hash(_id, field);
         }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", ClassWithGenericField.class.getSimpleName() + "[", "]")
+                .add("_id=" + _id)
+                .add("field=" + field)
+                .toString();
+        }
+    }
+    
+    public static class AnEmbeddedObject {
+        
+        public String field1;
+        
+        public String field2;
+
+        public AnEmbeddedObject() {
+        }
+
+        public AnEmbeddedObject(final String field1, final String field2) {
+            this.field1 = field1;
+            this.field2 = field2;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final AnEmbeddedObject that = (AnEmbeddedObject) o;
+            return Objects.equals(field1, that.field1) && Objects.equals(field2, that.field2);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(field1, field2);
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", AnEmbeddedObject.class.getSimpleName() + "[", "]")
+                .add("field1='" + field1 + "'")
+                .add("field2='" + field2 + "'")
+                .toString();
+        }
     }
 
     @Test
@@ -136,6 +184,47 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll2.insert(o1, o2, new ClassWithGenericField<>("twenty"));
 
         List<ClassWithGenericField<String>> results = coll2
+            .find(Filters.in("_id", o1._id, o2._id))
+            .into(new ArrayList<>());
+        assertThat(results, hasSize(2));
+        assertThat(results, contains(o1, o2));
+    }
+
+    @Test
+    public void testInsertAndQueryWithJavaTypeEmbedded() {
+        ObjectMapper objectMapper = MongoJackModule.configure(new ObjectMapper());
+
+        JacksonMongoCollection<ClassWithGenericField<AnEmbeddedObject>> coll2 = JacksonMongoCollection.builder().build(
+            getMongoCollection(ClassWithGenericField.class),
+            objectMapper.constructType(new TypeReference<ClassWithGenericField<AnEmbeddedObject>>() {
+            }),
+            uuidRepresentation
+        );
+
+        ClassWithGenericField<AnEmbeddedObject> o1 = new ClassWithGenericField<>(new AnEmbeddedObject("a", "b"));
+        ClassWithGenericField<AnEmbeddedObject> o2 = new ClassWithGenericField<>(new AnEmbeddedObject("c", "d"));
+        coll2.insert(o1, o2, new ClassWithGenericField<>(new AnEmbeddedObject("e", "f")));
+
+        List<ClassWithGenericField<AnEmbeddedObject>> results = coll2
+            .find(Filters.in("_id", o1._id, o2._id))
+            .into(new ArrayList<>());
+        assertThat(results, hasSize(2));
+        assertThat(results, contains(o1, o2));
+    }
+
+    @Test
+    public void testInsertAndQueryWithTypeReferenceEmbedded() {
+        JacksonMongoCollection<ClassWithGenericField<AnEmbeddedObject>> coll2 = JacksonMongoCollection.builder().build(
+            getMongoCollection(ClassWithGenericField.class),
+            new TypeReference<ClassWithGenericField<AnEmbeddedObject>>() {},
+            uuidRepresentation
+        );
+
+        ClassWithGenericField<AnEmbeddedObject> o1 = new ClassWithGenericField<>(new AnEmbeddedObject("a", "b"));
+        ClassWithGenericField<AnEmbeddedObject> o2 = new ClassWithGenericField<>(new AnEmbeddedObject("c", "d"));
+        coll2.insert(o1, o2, new ClassWithGenericField<>(new AnEmbeddedObject("e", "f")));
+
+        List<ClassWithGenericField<AnEmbeddedObject>> results = coll2
             .find(Filters.in("_id", o1._id, o2._id))
             .into(new ArrayList<>());
         assertThat(results, hasSize(2));
