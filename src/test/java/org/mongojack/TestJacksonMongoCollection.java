@@ -16,8 +16,11 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReplaceOptions;
@@ -27,12 +30,10 @@ import org.bson.Document;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.MockObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -67,6 +68,74 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.insert(o1, o2, new MockObject("twenty", 20));
 
         List<MockObject> results = coll
+            .find(Filters.in("_id", o1._id, o2._id))
+            .into(new ArrayList<>());
+        assertThat(results, hasSize(2));
+        assertThat(results, contains(o1, o2));
+    }
+
+    public static class ClassWithGenericField<T> {
+
+        public org.bson.types.ObjectId _id;
+
+        public T field;
+
+        public ClassWithGenericField() {
+        }
+
+        public ClassWithGenericField(T field) {
+            this.field = field;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ClassWithGenericField<?> that = (ClassWithGenericField<?>) o;
+            return Objects.equals(_id, that._id) && Objects.equals(field, that.field);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(_id, field);
+        }
+    }
+
+    @Test
+    public void testInsertAndQueryWithJavaType() {
+        ObjectMapper objectMapper = MongoJackModule.configure(new ObjectMapper());
+
+        JacksonMongoCollection<ClassWithGenericField<String>> coll2 = JacksonMongoCollection.builder().build(
+            getMongoCollection(ClassWithGenericField.class),
+            objectMapper.constructType(new TypeReference<ClassWithGenericField<String>>() {
+            }),
+            uuidRepresentation
+        );
+
+        ClassWithGenericField<String> o1 = new ClassWithGenericField<>("ten");
+        ClassWithGenericField<String> o2 = new ClassWithGenericField<>("ten");
+        coll2.insert(o1, o2, new ClassWithGenericField<>("twenty"));
+
+        List<ClassWithGenericField<String>> results = coll2
+            .find(Filters.in("_id", o1._id, o2._id))
+            .into(new ArrayList<>());
+        assertThat(results, hasSize(2));
+        assertThat(results, contains(o1, o2));
+    }
+
+    @Test
+    public void testInsertAndQueryWithTypeReference() {
+        JacksonMongoCollection<ClassWithGenericField<String>> coll2 = JacksonMongoCollection.builder().build(
+            getMongoCollection(ClassWithGenericField.class),
+            new TypeReference<ClassWithGenericField<String>>() {},
+            uuidRepresentation
+        );
+
+        ClassWithGenericField<String> o1 = new ClassWithGenericField<>("ten");
+        ClassWithGenericField<String> o2 = new ClassWithGenericField<>("ten");
+        coll2.insert(o1, o2, new ClassWithGenericField<>("twenty"));
+
+        List<ClassWithGenericField<String>> results = coll2
             .find(Filters.in("_id", o1._id, o2._id))
             .into(new ArrayList<>());
         assertThat(results, hasSize(2));
