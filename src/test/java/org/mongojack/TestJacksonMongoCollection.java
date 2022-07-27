@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.mongodb.BasicDBObject;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Filters;
@@ -33,6 +34,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -67,6 +70,125 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.insert(o1, o2, new MockObject("twenty", 20));
 
         List<MockObject> results = coll
+            .find(Filters.in("_id", o1._id, o2._id))
+            .into(new ArrayList<>());
+        assertThat(results, hasSize(2));
+        assertThat(results, contains(o1, o2));
+    }
+
+    @JsonTypeInfo(include = JsonTypeInfo.As.PROPERTY, use = JsonTypeInfo.Id.CLASS)
+    interface GenericFieldValue {
+
+    }
+
+    public static class GenericFieldValue1 implements GenericFieldValue {
+
+        public String a;
+
+        public String b;
+
+        public GenericFieldValue1() {
+        }
+
+        public GenericFieldValue1(final String a, final String b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final GenericFieldValue1 that = (GenericFieldValue1) o;
+            return Objects.equals(a, that.a) && Objects.equals(b, that.b);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(a, b);
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", GenericFieldValue1.class.getSimpleName() + "[", "]")
+                .add("a='" + a + "'")
+                .add("b='" + b + "'")
+                .toString();
+        }
+    }
+
+    public static class GenericFieldValue2 implements GenericFieldValue {
+
+        public String c;
+
+        public String d;
+
+        public GenericFieldValue2() {
+        }
+
+        public GenericFieldValue2(final String c, final String d) {
+            this.c = c;
+            this.d = d;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final GenericFieldValue2 that = (GenericFieldValue2) o;
+            return Objects.equals(c, that.c) && Objects.equals(d, that.d);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(c, d);
+        }
+
+        @Override
+        public String toString() {
+            return new StringJoiner(", ", GenericFieldValue2.class.getSimpleName() + "[", "]")
+                .add("c='" + c + "'")
+                .add("d='" + d + "'")
+                .toString();
+        }
+    }
+
+    public static class ClassWithGenericField<T extends GenericFieldValue> {
+
+        public org.bson.types.ObjectId _id;
+
+        public T field;
+
+        public ClassWithGenericField() {
+        }
+
+        public ClassWithGenericField(T field) {
+            this.field = field;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ClassWithGenericField<?> that = (ClassWithGenericField<?>) o;
+            return Objects.equals(_id, that._id) && Objects.equals(field, that.field);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(_id, field);
+        }
+    }
+
+    @Test
+    public void testInsertAndQueryWithPolymorphicField() {
+        JacksonMongoCollection<ClassWithGenericField> coll2 = getCollection(ClassWithGenericField.class);
+
+        ClassWithGenericField<GenericFieldValue1> o1 = new ClassWithGenericField<>(new GenericFieldValue1("a", "b"));
+        ClassWithGenericField<GenericFieldValue2> o2 = new ClassWithGenericField<>(new GenericFieldValue2("c", "d"));
+        coll2.insert(o1, o2, new ClassWithGenericField<>(null));
+
+        List<ClassWithGenericField> results = coll2
             .find(Filters.in("_id", o1._id, o2._id))
             .into(new ArrayList<>());
         assertThat(results, hasSize(2));
