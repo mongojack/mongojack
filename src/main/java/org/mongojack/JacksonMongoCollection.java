@@ -16,7 +16,6 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
@@ -119,8 +118,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         Class<TResult> valueClass,
         Class<?> view,
         final SerializationOptions serializationOptions,
-        final UuidRepresentation uuidRepresentation,
-        final JavaType javaType
+        final UuidRepresentation uuidRepresentation
     ) {
         this.objectMapper = objectMapper != null ? objectMapper : getDefaultObjectMapper();
         this.view = view;
@@ -130,7 +128,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
         jacksonCodecRegistry.addCodecForClass(valueClass);
         this.mongoCollection = underlyingCollection.withCodecRegistry(jacksonCodecRegistry);
         this.valueClass = valueClass;
-        this.type = javaType;
+        this.type = this.objectMapper.constructType(valueClass);
     }
 
     /**
@@ -768,56 +766,7 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
          * @return A constructed collection
          */
         public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<CT> mongoCollection, Class<CT> valueType, final UuidRepresentation uuidRepresentation) {
-            return new JacksonMongoCollection<>(
-                mongoCollection,
-                this.objectMapper,
-                valueType,
-                view,
-                serializationOptions,
-                uuidRepresentation,
-                (this.objectMapper != null ? this.objectMapper : JacksonMongoCollection.getDefaultObjectMapper()).constructType(valueType)
-            );
-        }
-
-        /**
-         * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
-         *
-         * @param mongoCollection The underlying collection
-         * @param valueType       The value type of the collection
-         * @param <CT>            The value type of the collection
-         * @return A constructed collection
-         */
-        public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<?> mongoCollection, JavaType valueType, final UuidRepresentation uuidRepresentation) {
-            return new JacksonMongoCollection<>(
-                (MongoCollection<CT>)mongoCollection,
-                this.objectMapper,
-                (Class<CT>)valueType.getRawClass(),
-                view,
-                serializationOptions,
-                uuidRepresentation,
-                valueType
-            );
-        }
-
-        /**
-         * Builds a {@link JacksonMongoCollection}. Required parameters are set here.
-         *
-         * @param mongoCollection The underlying collection
-         * @param typeReference   The value type of the collection
-         * @param <CT>            The value type of the collection
-         * @return A constructed collection
-         */
-        public <CT> JacksonMongoCollection<CT> build(com.mongodb.client.MongoCollection<?> mongoCollection, TypeReference<CT> typeReference, final UuidRepresentation uuidRepresentation) {
-            JavaType jt = (this.objectMapper != null ? this.objectMapper : getDefaultObjectMapper()).constructType(typeReference);
-            return new JacksonMongoCollection<>(
-                (MongoCollection<CT>)mongoCollection,
-                this.objectMapper,
-                (Class<CT>)jt.getRawClass(),
-                view,
-                serializationOptions,
-                uuidRepresentation,
-                jt
-            );
+            return new JacksonMongoCollection<>(mongoCollection, this.objectMapper, valueType, view, serializationOptions, uuidRepresentation);
         }
 
     }
