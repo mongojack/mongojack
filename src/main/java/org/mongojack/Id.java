@@ -22,7 +22,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Basically the same as {@link javax.persistence.Id}, but allows placement on params as well, for use when using
+ * Basically the same as {@link javax.persistence.Id} or {@link jakarta.persistence.Id}, but allows placement on params as well, for use when using
  * JsonCreator
  * 
  * @author James Roper

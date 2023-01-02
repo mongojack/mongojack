@@ -42,7 +42,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         this.typeFactory = typeFactory;
     }
 
-    // Handling of javax.persistence.Id
+    // Handling of javax.persistence.Id and jakarta.persistence.Id
     @Override
     public PropertyName findNameForDeserialization(Annotated a) {
 

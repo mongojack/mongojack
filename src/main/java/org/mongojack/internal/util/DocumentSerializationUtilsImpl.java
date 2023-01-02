@@ -46,10 +46,11 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.UuidCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.bson.internal.OverridableUuidRepresentationCodecRegistry;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.mongojack.Aggregation;
@@ -455,8 +456,9 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
 
     protected UuidRepresentation attemptToExtractUuidRepresentation(final CodecRegistry registry) {
         UuidRepresentation uuidRepresentation = UuidRepresentation.STANDARD;
-        if (registry instanceof OverridableUuidRepresentationCodecRegistry) {
-            uuidRepresentation = ((OverridableUuidRepresentationCodecRegistry) registry).getUuidRepresentation();
+        Codec<UUID> uuidCodec = registry.get(UUID.class);
+        if (uuidCodec instanceof UuidCodec) {
+            uuidRepresentation = ((UuidCodec) uuidCodec).getUuidRepresentation();
         } else if (registry instanceof JacksonCodecRegistry) {
             uuidRepresentation = ((JacksonCodecRegistry) registry).getUuidRepresentation();
         }
