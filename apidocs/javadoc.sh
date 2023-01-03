@@ -1,1 +1,1 @@
-/Users/rlodge/.sdkman/candidates/java/11.0.15-tem/bin/javadoc @options @packages
+/home/rlodge/.sdkman/candidates/java/current/bin/javadoc @options @packages
