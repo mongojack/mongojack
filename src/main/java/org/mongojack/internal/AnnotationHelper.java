@@ -26,7 +26,8 @@ import com.fasterxml.jackson.databind.introspect.Annotated;
  */
 public class AnnotationHelper {
 
-    private static final Class<?> JAVAX_PERSIST_ID_CLASS = initJavaxPersistIdClass();
+    private static final Class<?> JAVAX_PERSIST_ID_CLASS = initPersistIdClass("javax.persistence.Id");
+    private static final Class<?> JAKARTA_PERSIST_ID_CLASS = initPersistIdClass("jakarta.persistence.Id");
 
     private AnnotationHelper() {
         super();
@@ -34,14 +35,15 @@ public class AnnotationHelper {
 
     public static boolean hasIdAnnotation(Annotated annotated) {
         return annotated.hasAnnotation(Id.class) ||
-                (JAVAX_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAVAX_PERSIST_ID_CLASS));
+            (JAVAX_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAVAX_PERSIST_ID_CLASS)) ||
+            (JAKARTA_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAKARTA_PERSIST_ID_CLASS));
     }
 
-    private static Class<?> initJavaxPersistIdClass() {
+    private static Class<?> initPersistIdClass(String className) {
         try {
-            return Class.forName("javax.persistence.Id");
+            return Class.forName(className);
         } catch (ClassNotFoundException e) {
-            return null; // javax persist @Id will not be supported
+            return null; // javax or jakarta persist @Id will not be supported
         }
     }
 }

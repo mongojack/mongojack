@@ -1,6 +1,13 @@
 Changelog
 =========
 
+4.8.0
+-----
+_Released 2023.xx.xx_
+
+* Upgrade to mongo driver version 4.8.0
+* Added support for javax.persistence.Id annotation
+
 4.7.0
 -----
 _Released 2022.07.22_

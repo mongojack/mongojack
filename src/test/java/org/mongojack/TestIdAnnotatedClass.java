@@ -53,18 +53,34 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     }
 
     @Test
-    public void testJpaIdFieldAnnotated() {
-        JpaIdFieldAnnotated o = new JpaIdFieldAnnotated();
+    public void testJavaxJpaIdFieldAnnotated() {
+        JavaxJpaIdFieldAnnotated o = new JavaxJpaIdFieldAnnotated();
         o.id = "blah";
-        JacksonMongoCollection<JpaIdFieldAnnotated> coll = createCollFor(o);
+        JacksonMongoCollection<JavaxJpaIdFieldAnnotated> coll = createCollFor(o);
         coll.insert(o);
-        JpaIdFieldAnnotated result = coll.findOneById("blah");
+        JavaxJpaIdFieldAnnotated result = coll.findOneById("blah");
         assertThat(result, notNullValue());
         assertThat(result.id, equalTo("blah"));
     }
 
-    public static class JpaIdFieldAnnotated {
+    public static class JavaxJpaIdFieldAnnotated {
         @javax.persistence.Id
+        public String id;
+    }
+
+    @Test
+    public void testJakartaJpaIdFieldAnnotated() {
+        JakartaJpaIdFieldAnnotated o = new JakartaJpaIdFieldAnnotated();
+        o.id = "blah";
+        JacksonMongoCollection<JakartaJpaIdFieldAnnotated> coll = createCollFor(o);
+        coll.insert(o);
+        JakartaJpaIdFieldAnnotated result = coll.findOneById("blah");
+        assertThat(result, notNullValue());
+        assertThat(result.id, equalTo("blah"));
+    }
+
+    public static class JakartaJpaIdFieldAnnotated {
+        @jakarta.persistence.Id
         public String id;
     }
 
