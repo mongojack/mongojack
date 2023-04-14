@@ -152,7 +152,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
             }
             return outputArray;
         }
-        throw new IllegalArgumentException("Unsupported ID generation type: " + value.getClass());
+        throw new IllegalArgumentException("Unsupported ID generation type: " + valueType);
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
