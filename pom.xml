@@ -450,6 +450,13 @@
         <role>developer</role>
       </roles>
     </contributor>
+    <contributor>
+      <name>Anton Löfgren</name>
+      <url>https://github.com/catharsis</url>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </contributor>
   </contributors>
 
   <licenses>

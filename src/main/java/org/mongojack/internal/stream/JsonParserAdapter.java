@@ -177,9 +177,11 @@ public class JsonParserAdapter extends ParserBase {
                 return JsonToken.VALUE_EMBEDDED_OBJECT;
             case MIN_KEY:
                 currentValue = "MinKey";
+                reader.readMinKey();
                 return JsonToken.VALUE_STRING;
             case MAX_KEY:
                 currentValue = "MaxKey";
+                reader.readMaxKey();
                 return JsonToken.VALUE_STRING;
             case BOOLEAN:
                 final boolean value = reader.readBoolean();
