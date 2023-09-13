@@ -277,6 +277,11 @@ public class JsonParserAdapter extends ParserBase {
     }
 
     @Override
+    public Object getNumberValueDeferred() throws IOException {
+        return getNumberValue();
+    }
+
+    @Override
     public JsonParser.NumberType getNumberType() {
         if (currentValue == null) {
             return null;
