@@ -28,6 +28,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.mongodb.DBRef;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import org.bson.BsonMaxKey;
+import org.bson.BsonMinKey;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
@@ -357,6 +359,42 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertEquals(o2.id, coll.find().filter(Filters.regex("genericMap.ref", Pattern.compile("(?i)BAZ:.*"))).first().id);
         assertEquals(o2.id, coll.find(Filters.regex("genericMap.ref", "BAZ:.*", "i")).first().id);
         assertEquals(o2.id, coll.find().filter(Filters.regex("genericMap.ref", "BAZ:.*", "i")).first().id);
+    }
+
+    @SuppressWarnings({"ConstantConditions"})
+    @Test
+    public void testMinKey() {
+        MockObject o1 = new MockObject();
+        coll.insert(o1);
+
+        assertEquals(o1.id, coll.find(Filters.gte("_id", new BsonMinKey())).first().id);
+    }
+
+    @SuppressWarnings({"ConstantConditions"})
+    @Test
+    public void testMinKeyInArray() {
+        MockObject o1 = new MockObject();
+        coll.insert(o1);
+
+        assertEquals(o1.id, coll.find(Filters.and(Filters.gte("_id", new BsonMinKey()))).first().id);
+    }
+
+    @SuppressWarnings({"ConstantConditions"})
+    @Test
+    public void testMaxKey() {
+        MockObject o1 = new MockObject();
+        coll.insert(o1);
+
+        assertEquals(o1.id, coll.find(Filters.lte("_id", new BsonMaxKey())).first().id);
+    }
+
+    @SuppressWarnings({"ConstantConditions"})
+    @Test
+    public void testMaxKeyInArray() {
+        MockObject o1 = new MockObject();
+        coll.insert(o1);
+
+        assertEquals(o1.id, coll.find(Filters.and(Filters.lte("_id", new BsonMaxKey()))).first().id);
     }
 
     static class MockObject {
