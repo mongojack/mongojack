@@ -1,12 +1,13 @@
 Changelog
 =========
 
-4.8.0
+4.8.1
 -----
-_Released 2023.xx.xx_
+_Released 2023.10.12_
 
-* Upgrade to mongo driver version 4.8.0
-* Added support for javax.persistence.Id annotation
+* [Issue #232](https://github.com/mongojack/mongojack/issues/232)
+* [Jackson 2.15](https://github.com/mongojack/mongojack/pull/241)
+* [Minkey/Maxkey Serialization](https://github.com/mongojack/mongojack/pull/237)
 
 4.7.0
 -----
