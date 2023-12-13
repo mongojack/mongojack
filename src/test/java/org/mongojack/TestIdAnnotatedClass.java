@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.junit.Test;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.IdProxy;
@@ -81,6 +82,22 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
     public static class JakartaJpaIdFieldAnnotated {
         @jakarta.persistence.Id
+        public String id;
+    }
+
+    @Test
+    public void testBsonIdFieldAnnotated() {
+        BsonIdFieldAnnotated o = new BsonIdFieldAnnotated();
+        o.id = "blah";
+        JacksonMongoCollection<BsonIdFieldAnnotated> coll = createCollFor(o);
+        coll.insert(o);
+        BsonIdFieldAnnotated result = coll.findOneById("blah");
+        assertThat(result, notNullValue());
+        assertThat(result.id, equalTo("blah"));
+    }
+
+    public static class BsonIdFieldAnnotated {
+        @BsonId
         public String id;
     }
 
