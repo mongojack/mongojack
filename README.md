@@ -7,6 +7,8 @@ a massive head start, making it powerful, performant, and robust.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack)
 
+Snapshots for 4.10.x and 5.x are available in Sonatype's snapshot repositories.
+
 Project documentation
 ---------------------
 
@@ -30,14 +32,7 @@ Quick start
 - Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver.
 - Version 2.5.0 to 2.10.0 are compatible with the 3.x series mongodb-driver using the legacy 3.x series APIs.
 - Version 3.0.0 and later are compatible with versions 3.12.x and later of the mongo driver using mongodb-driver-sync without the legacy APIs.
-- Version 4.0.x is built on the mongojack-4.0.x branch against MongoDB's 4.0.x driver
-- Version 4.2.x is built on the master branch against MongoDB's 4.2.x driver
-- Version 4.3.x is built on the master branch against MongoDB's 4.3.x driver
-- Version 4.5.x is built on the master branch against MongoDB's 4.5.x driver
-- Version 4.7.x is built on the master branch against MongoDB's 4.7.x driver
-- Version 4.8.x is built on the master branch against MongoDB's 4.8.x driver
-- Version 4.10.x is built on the master branch against MongoDB's 4.10.x driver (only snapshots available)
-- Version 5.x is built on the master branch against MongoDB's 5.x driver (only snapshots available)
+- Version 4.N.x+ are compatible with the _matching_ oracle driver, although patch versions are not kept in sync 
 
 ### Installation
 
