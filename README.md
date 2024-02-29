@@ -5,6 +5,8 @@ Since MongoDB uses BSON, a binary form of JSON, to store its documents, a JSON m
 Jackson's parsing/generating interface fits serialising to MongoDBs documents like a glove.  Its plugins, custom creators, serialisers, views, pluggable annotators and so on give this mapping library
 a massive head start, making it powerful, performant, and robust.
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack)
+
 Project documentation
 ---------------------
 
@@ -34,6 +36,8 @@ Quick start
 - Version 4.5.x is built on the master branch against MongoDB's 4.5.x driver
 - Version 4.7.x is built on the master branch against MongoDB's 4.7.x driver
 - Version 4.8.x is built on the master branch against MongoDB's 4.8.x driver
+- Version 4.10.x is built on the master branch against MongoDB's 4.10.x driver (only snapshots available)
+- Version 5.x is built on the master branch against MongoDB's 5.x driver (only snapshots available)
 
 ### Installation
 
