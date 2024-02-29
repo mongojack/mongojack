@@ -28,6 +28,8 @@ import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 import org.mongojack.JacksonCodecRegistry;
 import org.mongojack.internal.AnnotationHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,6 +38,8 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("WeakerAccess")
 public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, OverridableUuidRepresentationCodec<T> {
+
+    private final static Logger logger = LoggerFactory.getLogger(JacksonCodec.class);
 
     private final JacksonEncoder<T> encoder;
     private final JacksonDecoder<T> decoder;
@@ -106,7 +110,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
             try {
                 return constructIdValue(beanPropertyDefinition.getAccessor().getValue(t), maybeBpd);
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.warn("Suppressed error attempting to get reader for object id in " + t.getClass(), e);
                 return BsonNull.VALUE;
             }
         }).orElseGet(() -> () -> BsonNull.VALUE);
@@ -123,7 +127,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
                     );
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.warn("Suppressed error attempting to get writer for object id in " + t.getClass(), e);
             }
         }).orElseGet(() -> (bsonObjectId) -> {
         });

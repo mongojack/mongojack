@@ -26,22 +26,9 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.ClientSession;
-import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MapReduceIterable;
-import com.mongodb.client.MongoClient;
+import com.mongodb.client.*;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.DeleteManyModel;
-import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.DropCollectionOptions;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.UpdateManyModel;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.*;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonDocument;
@@ -666,6 +653,41 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     @Override
     public void drop(final ClientSession clientSession, final DropCollectionOptions dropCollectionOptions) {
         mongoCollection.drop(clientSession, dropCollectionOptions);
+    }
+
+    @Override
+    public String createSearchIndex(String indexName, Bson definition) {
+        return mongoCollection.createSearchIndex(indexName, definition);
+    }
+
+    @Override
+    public String createSearchIndex(Bson definition) {
+        return mongoCollection.createSearchIndex(definition);
+    }
+
+    @Override
+    public List<String> createSearchIndexes(List<SearchIndexModel> searchIndexModels) {
+        return mongoCollection.createSearchIndexes(searchIndexModels);
+    }
+
+    @Override
+    public void updateSearchIndex(String indexName, Bson definition) {
+        mongoCollection.updateSearchIndex(indexName, definition);
+    }
+
+    @Override
+    public void dropSearchIndex(String indexName) {
+        mongoCollection.dropSearchIndex(indexName);
+    }
+
+    @Override
+    public ListSearchIndexesIterable<Document> listSearchIndexes() {
+        return mongoCollection.listSearchIndexes();
+    }
+
+    @Override
+    public <TResult1> ListSearchIndexesIterable<TResult1> listSearchIndexes(Class<TResult1> tResult1Class) {
+        return mongoCollection.listSearchIndexes(tResult1Class);
     }
 
     private void initializeIfNecessary(Object maybeInitializable) {
