@@ -1,6 +1,13 @@
 Changelog
 =========
 
+4.11.0
+-----
+_Released 2024.03.10_
+
+* [Issue #243](https://github.com/mongojack/mongojack/issues/243): Add slf4j to remove `printStacktrace()`
+* Update to 4.11.1 mongo driver
+
 4.8.2
 -----
 _Released 2024.01.06_
