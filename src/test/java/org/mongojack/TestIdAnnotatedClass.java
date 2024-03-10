@@ -23,12 +23,11 @@ import com.fasterxml.jackson.databind.SerializationConfig;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.IdProxy;
 
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestIdAnnotatedClass extends MongoDBTestBase {
 
@@ -44,8 +43,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<IdFieldAnnotated> coll = createCollFor(o);
         coll.insert(o);
         IdFieldAnnotated result = coll.findOneById("blah");
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo("blah"));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo("blah");
     }
 
     public static class IdFieldAnnotated {
@@ -60,8 +59,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<JavaxJpaIdFieldAnnotated> coll = createCollFor(o);
         coll.insert(o);
         JavaxJpaIdFieldAnnotated result = coll.findOneById("blah");
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo("blah"));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo("blah");
     }
 
     public static class JavaxJpaIdFieldAnnotated {
@@ -76,8 +75,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<JakartaJpaIdFieldAnnotated> coll = createCollFor(o);
         coll.insert(o);
         JakartaJpaIdFieldAnnotated result = coll.findOneById("blah");
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo("blah"));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo("blah");
     }
 
     public static class JakartaJpaIdFieldAnnotated {
@@ -92,8 +91,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<BsonIdFieldAnnotated> coll = createCollFor(o);
         coll.insert(o);
         BsonIdFieldAnnotated result = coll.findOneById("blah");
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo("blah"));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo("blah");
     }
 
     public static class BsonIdFieldAnnotated {
@@ -108,8 +107,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<GetterSetterAnnotated> coll = createCollFor(o);
         coll.insert(o);
         GetterSetterAnnotated result = coll.findOneById("blah");
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo("blah"));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("blah");
     }
 
     public static class GetterSetterAnnotated {
@@ -132,8 +131,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<CreatorGetterAnnotated> coll = createCollFor(o);
         coll.insert(o);
         CreatorGetterAnnotated result = coll.findOneById("blah");
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo("blah"));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo("blah");
     }
 
     public static class CreatorGetterAnnotated {
@@ -157,8 +156,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<ObjectIdFieldAnnotated> coll = createCollFor(o);
         coll.insert(o);
         ObjectIdFieldAnnotated result = coll.findOneById(o.id);
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo(o.id));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo(o.id);
     }
 
     public static class ObjectIdFieldAnnotated {
@@ -174,8 +173,8 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<CreatorGetterObjectIdAnnotated> coll = createCollFor(o);
         coll.insert(o);
         CreatorGetterObjectIdAnnotated result = coll.findOneById(o.id);
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo(o.id));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(o.id);
     }
 
     public static class CreatorGetterObjectIdAnnotated {
@@ -206,13 +205,13 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         o.id = objectIdAsHexString;
         JacksonMongoCollection<IdFieldProxyAnnotated> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.id, notNullValue());
+        assertThat(o.id).isNotNull();
         IdFieldProxyAnnotated result = coll.findOneById(objectIdAsHexString);
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo(objectIdAsHexString));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo(objectIdAsHexString);
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -221,12 +220,12 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<IdFieldProxyAnnotated> coll = createCollFor(o);
         coll.insert(o);
         IdFieldProxyAnnotated result = coll.find().first();
-        assertThat(result, notNullValue());
-        assertThat(result.id, notNullValue());
+        assertThat(result).isNotNull();
+        assertThat(result.id).isNotNull();
         final org.bson.types.ObjectId objectId = new org.bson.types.ObjectId(result.id);
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -235,22 +234,18 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
         final SerializationConfig config = om.getSerializationConfig();
         final BeanDescription beanDescription = config.introspect(config.constructType(IdFieldProxyAnnotated.class));
-        beanDescription.findProperties()
-            .forEach(
-                bpd -> {
-                    if (bpd.getPrimaryMember().hasAnnotation(ObjectId.class)) {
-                        System.out.println("Property " + bpd.getName() + " has ObjectId annotation");
-                    }
-                }
-            );
+        assertThat(beanDescription.findProperties()
+            .stream().filter(
+                bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)
+            ).findFirst().get().getName()).isEqualTo("_id");
 
         IdFieldProxyAnnotated o = new IdFieldProxyAnnotated();
         JacksonMongoCollection<IdFieldProxyAnnotated> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.id, notNullValue());
+        assertThat(o.id).isNotNull();
         IdFieldProxyAnnotated result = coll.findOneById(o.id);
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo(o.id));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo(o.id);
     }
 
     public static class IdFieldProxyAnnotatedSubclass extends IdFieldProxyAnnotated {
@@ -264,13 +259,13 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         o.id = objectIdAsHexString;
         JacksonMongoCollection<IdFieldProxyAnnotatedSubclass> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.id, notNullValue());
+        assertThat(o.id).isNotNull();
         IdFieldProxyAnnotatedSubclass result = coll.findOneById(objectIdAsHexString);
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo(objectIdAsHexString));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo(objectIdAsHexString);
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -279,12 +274,12 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<IdFieldProxyAnnotatedSubclass> coll = createCollFor(o);
         coll.insert(o);
         IdFieldProxyAnnotatedSubclass result = coll.find().first();
-        assertThat(result, notNullValue());
-        assertThat(result.id, notNullValue());
+        assertThat(result).isNotNull();
+        assertThat(result.id).isNotNull();
         final org.bson.types.ObjectId objectId = new org.bson.types.ObjectId(result.id);
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -293,22 +288,18 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
         final SerializationConfig config = om.getSerializationConfig();
         final BeanDescription beanDescription = config.introspect(config.constructType(IdFieldProxyAnnotatedSubclass.class));
-        beanDescription.findProperties()
-            .forEach(
-                bpd -> {
-                    if (bpd.getPrimaryMember().hasAnnotation(ObjectId.class)) {
-                        System.out.println("Property " + bpd.getName() + " has ObjectId annotation");
-                    }
-                }
-            );
+        assertThat(beanDescription.findProperties()
+            .stream().filter(
+                bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)
+            ).findFirst().get().getName()).isEqualTo("_id");
 
         IdFieldProxyAnnotatedSubclass o = new IdFieldProxyAnnotatedSubclass();
         JacksonMongoCollection<IdFieldProxyAnnotatedSubclass> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.id, notNullValue());
+        assertThat(o.id).isNotNull();
         IdFieldProxyAnnotatedSubclass result = coll.findOneById(o.id);
-        assertThat(result, notNullValue());
-        assertThat(result.id, equalTo(o.id));
+        assertThat(result).isNotNull();
+        assertThat(result.id).isEqualTo(o.id);
     }
 
     public static class IdGetterSetterProxyAnnotated {
@@ -333,13 +324,13 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         o.setId(objectIdAsHexString);
         JacksonMongoCollection<IdGetterSetterProxyAnnotated> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.getId(), notNullValue());
+        assertThat(o.getId()).isNotNull();
         IdGetterSetterProxyAnnotated result = coll.findOneById(objectIdAsHexString);
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo(objectIdAsHexString));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(objectIdAsHexString);
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -348,12 +339,12 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<IdGetterSetterProxyAnnotated> coll = createCollFor(o);
         coll.insert(o);
         IdGetterSetterProxyAnnotated result = coll.find().first();
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), notNullValue());
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isNotNull();
         final org.bson.types.ObjectId objectId = new org.bson.types.ObjectId(result.getId());
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -361,10 +352,10 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         IdGetterSetterProxyAnnotated o = new IdGetterSetterProxyAnnotated();
         JacksonMongoCollection<IdGetterSetterProxyAnnotated> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.getId(), notNullValue());
+        assertThat(o.getId()).isNotNull();
         IdGetterSetterProxyAnnotated result = coll.findOneById(o.getId());
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo(o.getId()));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(o.getId());
     }
 
     public static class IdGetterSetterProxyAnnotatedSubclass extends IdGetterSetterProxyAnnotated {
@@ -378,13 +369,13 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         o.setId(objectIdAsHexString);
         JacksonMongoCollection<IdGetterSetterProxyAnnotatedSubclass> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.getId(), notNullValue());
+        assertThat(o.getId()).isNotNull();
         IdGetterSetterProxyAnnotatedSubclass result = coll.findOneById(objectIdAsHexString);
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo(objectIdAsHexString));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(objectIdAsHexString);
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -393,12 +384,12 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         JacksonMongoCollection<IdGetterSetterProxyAnnotatedSubclass> coll = createCollFor(o);
         coll.insert(o);
         IdGetterSetterProxyAnnotatedSubclass result = coll.find().first();
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), notNullValue());
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isNotNull();
         final org.bson.types.ObjectId objectId = new org.bson.types.ObjectId(result.getId());
         Document doc = coll.getMongoCollection().withDocumentClass(Document.class).find(Filters.eq(objectId)).first();
-        assertThat(doc, notNullValue());
-        assertThat(doc.get("_id"), equalTo(objectId));
+        assertThat(doc).isNotNull();
+        assertThat(doc.get("_id")).isEqualTo(objectId);
     }
 
     @Test
@@ -406,10 +397,10 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
         IdGetterSetterProxyAnnotatedSubclass o = new IdGetterSetterProxyAnnotatedSubclass();
         JacksonMongoCollection<IdGetterSetterProxyAnnotatedSubclass> coll = createCollFor(o);
         coll.insert(o);
-        assertThat(o.getId(), notNullValue());
+        assertThat(o.getId()).isNotNull();
         IdGetterSetterProxyAnnotatedSubclass result = coll.findOneById(o.getId());
-        assertThat(result, notNullValue());
-        assertThat(result.getId(), equalTo(o.getId()));
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(o.getId());
     }
 
 }

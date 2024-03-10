@@ -21,8 +21,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,9 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.hamcrest.core.IsNull.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mongojack.TestDBUpdateSerialization.NestedIdFieldWithDifferentType.*;
 
 public class TestDBUpdateSerialization extends MongoDBTestBase {
@@ -41,7 +39,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     private JacksonMongoCollection<MockObject> coll;
     private JacksonMongoCollection<NestedRepeatedAttributeName> coll2;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         coll = getCollection(MockObject.class);
     }
@@ -50,7 +48,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
     public void testSimpleCustomSerializer() {
         coll.save(new MockObject());
         coll.updateById("id", DBUpdate.set("simple", "foo"));
-        assertThat(coll.findOneById("id").simple, equalTo("bar"));
+        assertThat(coll.findOneById("id").simple).isEqualTo("bar");
     }
 
     @Test
@@ -59,7 +57,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         o.simple = "blah";
         coll.save(o);
         coll.updateById("id", DBUpdate.unset("simple"));
-        assertThat(coll.findOneById("id").simple, nullValue());
+        assertThat(coll.findOneById("id").simple).isNull();
     }
 
     @Test
@@ -67,7 +65,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         final MockObject object = new MockObject();
         object.list = Arrays.asList("some", "foo");
         coll.save(object);
-        assertThat(coll.findOneById("id").list, equalTo(Arrays.asList("some", "bar")));
+        assertThat(coll.findOneById("id").list).isEqualTo(Arrays.asList("some", "bar"));
     }
 
     @Test
@@ -76,7 +74,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         o.child = new MockObject();
         coll.save(o);
         coll.updateById("id", DBUpdate.set("child.simple", "foo"));
-        assertThat(coll.findOneById("id").child.simple, equalTo("bar"));
+        assertThat(coll.findOneById("id").child.simple).isEqualTo("bar");
     }
 
     @Test
@@ -92,10 +90,8 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
             DBQuery.is("childList.simple", "one"),
             DBUpdate.set("childList.$.simple", "foo")
         );
-        assertThat(coll.findOneById("id").childList.get(0).simple,
-                equalTo("bar"));
-        assertThat(coll.findOneById("id").childList.get(1).simple,
-                equalTo("two"));
+        assertThat(coll.findOneById("id").childList.get(0).simple).isEqualTo("bar");
+        assertThat(coll.findOneById("id").childList.get(1).simple).isEqualTo("two");
     }
 
     @Test
@@ -104,7 +100,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         o.customMap = new HashMap<>();
         o.customMap.put("blah", "foo");
         coll.save(o);
-        assertThat(coll.findOneById("id").customMap.get("blah"), equalTo("bar"));
+        assertThat(coll.findOneById("id").customMap.get("blah")).isEqualTo("bar");
     }
 
     @Test
@@ -113,7 +109,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         coll.save(o);
         String objectId = new org.bson.types.ObjectId().toString();
         coll.updateById("id", DBUpdate.set("objectId", objectId));
-        assertThat(coll.findOneById("id").objectId, equalTo(objectId));
+        assertThat(coll.findOneById("id").objectId).isEqualTo(objectId);
     }
 
     @Test
@@ -122,7 +118,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         coll.save(o);
         String objectId = new org.bson.types.ObjectId().toString();
         coll.updateById("id", DBUpdate.push("objectIds", objectId));
-        assertThat(coll.findOneById("id").objectIds.get(0), equalTo(objectId));
+        assertThat(coll.findOneById("id").objectIds.get(0)).isEqualTo(objectId);
     }
 
     @Test
@@ -132,7 +128,7 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         Map<String, String> map = new HashMap<String, String>();
         map.put("foo", "bar");
         coll.updateById("id", DBUpdate.set("map", map));
-        assertThat(coll.findOneById("id").map, equalTo(map));
+        assertThat(coll.findOneById("id").map).isEqualTo(map);
     }
 
     // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/98
@@ -151,9 +147,9 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         coll2.updateById(original._id, DBUpdate.set("inner.timestamp", d2));
 
         NestedRepeatedAttributeName updated = coll2.findOneById(original._id);
-        assertThat(updated, notNullValue());
-        assertThat(updated.inner.timestamp, equalTo(d2));
-        assertThat(updated.timestamp, equalTo(original.timestamp));
+        assertThat(updated).isNotNull();
+        assertThat(updated.inner.timestamp).isEqualTo(d2);
+        assertThat(updated.timestamp).isEqualTo(original.timestamp);
     }
     
     // Test to detect presence of issue https://github.com/mongojack/mongojack/issues/127
@@ -168,8 +164,8 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         collection.updateMany(DBQuery.is("nested._id", NESTED_ID_FIELD_VALUE), DBUpdate.set("value", newValue));
         
         NestedIdFieldWithDifferentType updated = collection.findOneById(original._id);
-        assertThat(updated, notNullValue());
-        assertThat(updated.value, equalTo(newValue));
+        assertThat(updated).isNotNull();
+        assertThat(updated.value).isEqualTo(newValue);
     }
 
     public static class MockObject {

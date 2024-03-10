@@ -17,17 +17,18 @@
 package org.mongojack;
 
 import com.mongodb.client.model.Projections;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.mock.MockObject;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 
 public class TestDBProjection extends MongoDBTestBase {
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         coll = getCollection(MockObject.class);
     }
@@ -41,8 +42,8 @@ public class TestDBProjection extends MongoDBTestBase {
             DBQuery.empty(),
             DBProjection.include("string", "integer")
         );
-        assertThat(result.string, equalTo("string"));
-        assertThat(result.integer, equalTo(10));
+        assertThat(result.string).isEqualTo("string");
+        assertThat(result.integer).isEqualTo(10);
         assertNull(result.longs);
     }
 
@@ -57,7 +58,7 @@ public class TestDBProjection extends MongoDBTestBase {
         );
         assertNull(result.string);
         assertNull(result.integer);
-        assertThat(result.longs, equalTo(20l));
+        assertThat(result.longs).isEqualTo(20l);
     }
 
     @Test
@@ -69,8 +70,8 @@ public class TestDBProjection extends MongoDBTestBase {
             DBQuery.empty(),
             Projections.include("string", "integer")
         );
-        assertThat(result.string, equalTo("string"));
-        assertThat(result.integer, equalTo(10));
+        assertThat(result.string).isEqualTo("string");
+        assertThat(result.integer).isEqualTo(10);
         assertNull(result.longs);
     }
 
@@ -85,7 +86,7 @@ public class TestDBProjection extends MongoDBTestBase {
         );
         assertNull(result.string);
         assertNull(result.integer);
-        assertThat(result.longs, equalTo(20l));
+        assertThat(result.longs).isEqualTo(20l);
     }
 
     @Test
@@ -94,8 +95,8 @@ public class TestDBProjection extends MongoDBTestBase {
         o.longs = 20l;
         coll.save(o);
         MockObject result = coll.find().projection(Projections.include("string", "integer")).first();
-        assertThat(result.string, equalTo("string"));
-        assertThat(result.integer, equalTo(10));
+        assertThat(result.string).isEqualTo("string");
+        assertThat(result.integer).isEqualTo(10);
         assertNull(result.longs);
     }
 
@@ -107,7 +108,7 @@ public class TestDBProjection extends MongoDBTestBase {
         MockObject result = coll.find().projection(Projections.exclude("string", "integer")).first();
         assertNull(result.string);
         assertNull(result.integer);
-        assertThat(result.longs, equalTo(20l));
+        assertThat(result.longs).isEqualTo(20l);
     }
 
 }

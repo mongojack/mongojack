@@ -31,8 +31,8 @@ import com.mongodb.client.model.Filters;
 import org.bson.BsonMaxKey;
 import org.bson.BsonMinKey;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,14 +43,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class TestQuerySerialization extends MongoDBTestBase {
 
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         coll = getCollection(MockObject.class);
     }
@@ -140,7 +141,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.i = 5;
         coll.save(o);
         // Ensure that the serializer actually worked
-        assertThat(getMongoCollection(coll.getName(), Document.class).find().first().getInteger("i"), equalTo(15));
+        assertThat(getMongoCollection(coll.getName(), Document.class).find().first().getInteger("i")).isEqualTo(15);
         assertNotNull(coll.find(DBQuery.lessThan("i", 12)).first());
         assertNotNull(coll.find(Filters.lt("i", 12)).first());
         assertNotNull(coll.find().filter(Filters.lt("i", 12)).first());
@@ -162,7 +163,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.i = 5;
         localColl.save(o);
         // Ensure that the serializer actually worked
-        assertThat(getMongoCollection(localColl.getName(), Document.class).find().first().getInteger("i"), equalTo(15));
+        assertThat(getMongoCollection(localColl.getName(), Document.class).find().first().getInteger("i")).isEqualTo(15);
         assertNull(localColl.find(Filters.lt("i", 12)).first());
         assertNull(localColl.find().filter(Filters.lt("i", 12)).first());
 

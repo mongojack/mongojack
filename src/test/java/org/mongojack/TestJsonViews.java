@@ -17,18 +17,17 @@
 package org.mongojack;
 
 import com.fasterxml.jackson.annotation.JsonView;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.hamcrest.core.IsNull.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class TestJsonViews extends MongoDBTestBase {
 
     private JacksonMongoCollection<ObjectWithView> coll;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         coll = getCollectionWithView(ObjectWithView.class, MockView1.class);
     }
@@ -36,19 +35,19 @@ public class TestJsonViews extends MongoDBTestBase {
     @Test
     public void testNormalPropertyWithView() {
         coll.save(new ObjectWithView("id", "normal", "view1", "view2"));
-        assertThat(coll.findOneById("id").normal, equalTo("normal"));
+        assertThat(coll.findOneById("id").normal).isEqualTo("normal");
     }
 
     @Test
     public void testEnabledPropertyWithView() {
         coll.save(new ObjectWithView("id", "normal", "view1", "view2"));
-        assertThat(coll.findOneById("id").view1, equalTo("view1"));
+        assertThat(coll.findOneById("id").view1).isEqualTo("view1");
     }
 
     @Test
     public void testDisabledPropertyWithView() {
         coll.save(new ObjectWithView("id", "normal", "view1", "view2"));
-        assertThat(coll.findOneById("id").view2, nullValue());
+        assertThat(coll.findOneById("id").view2).isNull();
     }
 
     @Test
@@ -56,7 +55,7 @@ public class TestJsonViews extends MongoDBTestBase {
         ObjectWithView obj = new ObjectWithView("id", "normal", "view1", "view2");
         coll.save(obj);
         coll.replaceOne(DBQuery.is("_id", "id"), obj);
-        assertThat(coll.findOneById("id").view2, nullValue());
+        assertThat(coll.findOneById("id").view2).isNull();
     }
 
     public static class ObjectWithView {

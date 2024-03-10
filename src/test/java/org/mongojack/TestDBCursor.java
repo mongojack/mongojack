@@ -18,16 +18,15 @@ package org.mongojack;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoCursor;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.mock.MockObject;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 /**
  * Test the Json DB Cursor
@@ -36,7 +35,7 @@ public class TestDBCursor extends MongoDBTestBase {
 
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         coll = getCollection(MockObject.class);
     }
@@ -49,13 +48,13 @@ public class TestDBCursor extends MongoDBTestBase {
         coll.insert(o1, o2, o3);
         final MongoCursor<MockObject> cursor = coll.find().sort(
             new BasicDBObject("integer", 1)).iterator();
-        assertThat(cursor.hasNext(), equalTo(true));
-        assertThat(cursor.next(), equalTo(o1));
-        assertThat(cursor.hasNext(), equalTo(true));
-        assertThat(cursor.next(), equalTo(o2));
-        assertThat(cursor.hasNext(), equalTo(true));
-        assertThat(cursor.next(), equalTo(o3));
-        assertThat(cursor.hasNext(), equalTo(false));
+        assertThat(cursor.hasNext()).isEqualTo(true);
+        assertThat(cursor.next()).isEqualTo(o1);
+        assertThat(cursor.hasNext()).isEqualTo(true);
+        assertThat(cursor.next()).isEqualTo(o2);
+        assertThat(cursor.hasNext()).isEqualTo(true);
+        assertThat(cursor.next()).isEqualTo(o3);
+        assertThat(cursor.hasNext()).isEqualTo(false);
     }
 
     @Test
@@ -65,8 +64,8 @@ public class TestDBCursor extends MongoDBTestBase {
         MockObject o3 = new MockObject("id3", "blah3", 30);
         coll.insert(o1, o2, o3);
         List<MockObject> results = coll.find().sort(new BasicDBObject("integer", 1)).into(new ArrayList<>());
-        assertThat(results, contains(o1, o2, o3));
-        assertThat(results, hasSize(3));
+        assertThat(results).contains(o1, o2, o3);
+        assertThat(results).hasSize(3);
     }
 
 }

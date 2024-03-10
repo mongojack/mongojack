@@ -20,20 +20,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.StringJoiner;
-import java.util.UUID;
+import java.util.*;
 
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.hamcrest.core.IsEqual.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ConstantConditions")
 public class TestObjectIdHandling extends MongoDBTestBase {
@@ -48,8 +39,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         org.bson.types.ObjectId id = coll.findOne()._id;
         ObjectIdId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), equalTo(id));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id")).isEqualTo(id);
     }
 
     @Test
@@ -62,8 +53,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         ObjectIdId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), equalTo(id));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id")).isEqualTo(id);
     }
 
     public static class ObjectIdId {
@@ -79,10 +70,10 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         String id = coll.findOne()._id;
         // Check that it's a valid object id
-        assertThat(org.bson.types.ObjectId.isValid(id), is(true));
+        assertThat(org.bson.types.ObjectId.isValid(id)).isTrue();
         StringId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString()).isEqualTo(id);
     }
 
     @Test
@@ -95,8 +86,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         StringId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString()).isEqualTo(id);
     }
 
     @Test
@@ -105,11 +96,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(new StringId());
         String id = coll.findOne()._id;
         coll.insert(new StringId());
-        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        assertThat(coll.find().into(new ArrayList<>())).hasSize(2);
         coll.removeById(id);
         List<StringId> results = coll.find().into(new ArrayList<>());
-        assertThat(results, hasSize(1));
-        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)._id).isNotEqualTo(id);
     }
 
     @Test
@@ -117,11 +108,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         JacksonMongoCollection<StringId> coll = getCollection(StringId.class);
         StringId object = new StringId();
         coll.insert(object);
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(org.bson.types.ObjectId.class));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id")).isInstanceOf(org.bson.types.ObjectId.class);
         String id = coll.findOne()._id;
-        assertThat(id, instanceOf(String.class));
+        assertThat(id).isInstanceOf(String.class);
         StringId result = coll.findOneById(id);
-        assertThat(result._id, Matchers.equalTo(id));
+        assertThat(result._id).isEqualTo(id);
     }
 
     public static class StringId {
@@ -138,9 +129,9 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         byte[] id = coll.findOne()._id;
         // Check that it's a valid object id, should be 12 bytes
-        assertThat(id.length, equalTo(12));
+        assertThat(id.length).isEqualTo(12);
         ByteArrayId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
+        assertThat(result._id).isEqualTo(id);
     }
 
     @Test
@@ -153,7 +144,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         ByteArrayId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
+        assertThat(result._id).isEqualTo(id);
     }
 
     public static class ByteArrayId {
@@ -171,7 +162,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
 
         ObjectIdCollection result = coll.findOneById("id");
-        assertThat(result.list, equalTo(object.list));
+        assertThat(result.list).isEqualTo(object.list);
     }
 
     public static class ObjectIdCollection {
@@ -189,7 +180,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
 
         StringIdCollection result = coll.findOneById("id");
-        assertThat(result.list, equalTo(object.list));
+        assertThat(result.list).isEqualTo(object.list);
     }
 
     public static class StringIdCollection {
@@ -209,9 +200,9 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
 
         ByteArrayIdCollection result = coll.findOneById("id");
-        assertThat(result.list, hasSize(2));
-        assertThat(result.list.get(0), equalTo(object.list.get(0)));
-        assertThat(result.list.get(1), equalTo(object.list.get(1)));
+        assertThat(result.list).hasSize(2);
+        assertThat(result.list.get(0)).isEqualTo(object.list.get(0));
+        assertThat(result.list.get(1)).isEqualTo(object.list.get(1));
     }
 
     public static class ByteArrayIdCollection {
@@ -245,10 +236,10 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         coll.insert(object);
         String id = coll.findOne().getId();
         // Check that it's a valid object id
-        assertThat(org.bson.types.ObjectId.isValid(id), is(true));
+        assertThat(org.bson.types.ObjectId.isValid(id)).isTrue();
         StringIdMethods result = coll.findOneById(id);
-        assertThat(result.getId(), equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
+        assertThat(result.getId()).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString()).isEqualTo(id);
     }
 
     @Test
@@ -261,8 +252,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         StringIdMethods result = coll.findOneById(id);
-        assertThat(result.getId(), equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id));
+        assertThat(result.getId()).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString()).isEqualTo(id);
     }
 
     public static class ByteArrayIdMethods {
@@ -290,8 +281,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         // Check that it's a valid object id
         new ObjectId(id);
         ByteArrayIdMethods result = coll.findOneById(id);
-        assertThat(result.getId(), equalTo(id));
-        assertThat(((ObjectId) getUnderlyingCollection(coll).find().first().get("_id")).toByteArray(), equalTo(id));
+        assertThat(result.getId()).isEqualTo(id);
+        assertThat(((ObjectId) getUnderlyingCollection(coll).find().first().get("_id")).toByteArray()).isEqualTo(id);
     }
 
     @Test
@@ -304,8 +295,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         ConvertedId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString(), equalTo(id.getValue()));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id").toString()).isEqualTo(id.getValue());
     }
 
     @Test
@@ -324,11 +315,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
             coll.insert(object);
         }
-        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        assertThat(coll.find().into(new ArrayList<>())).hasSize(2);
         coll.removeById(id);
         List<ConvertedId> results = coll.find().into(new ArrayList<>());
-        assertThat(results, hasSize(1));
-        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)._id).isNotEqualTo(id);
     }
 
     @Test
@@ -338,11 +329,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         object._id = new ConvertibleId(UUID.randomUUID().toString());
 
         coll.insert(object);
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(String.class));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id")).isInstanceOf(String.class);
         ConvertibleId id = coll.findOne()._id;
-        assertThat(id, instanceOf(ConvertibleId.class));
+        assertThat(id).isInstanceOf(ConvertibleId.class);
         ConvertedId result = coll.findOneById(id);
-        assertThat(result._id, Matchers.equalTo(id));
+        assertThat(result._id).isEqualTo(id);
     }
 
     public static class ConvertibleId {
@@ -388,9 +379,9 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         ObjectWithComplexId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id", Document.class).get("value1", String.class), equalTo(id.getValue1()));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id", Document.class).get("value2", String.class), equalTo(id.getValue2()));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id", Document.class).get("value1", String.class)).isEqualTo(id.getValue1());
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id", Document.class).get("value2", String.class)).isEqualTo(id.getValue2());
     }
 
     @Test
@@ -409,11 +400,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
             coll.insert(object);
         }
-        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        assertThat(coll.find().into(new ArrayList<>())).hasSize(2);
         coll.removeById(id);
         List<ObjectWithComplexId> results = coll.find().into(new ArrayList<>());
-        assertThat(results, hasSize(1));
-        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)._id).isNotEqualTo(id);
     }
 
     @Test
@@ -423,11 +414,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         object._id = new ComplexId(UUID.randomUUID().toString(), UUID.randomUUID().toString());
 
         coll.insert(object);
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(Document.class));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id")).isInstanceOf(Document.class);
         ComplexId id = coll.findOne()._id;
-        assertThat(id, instanceOf(ComplexId.class));
+        assertThat(id).isInstanceOf(ComplexId.class);
         ObjectWithComplexId result = coll.findOneById(id);
-        assertThat(result._id, Matchers.equalTo(id));
+        assertThat(result._id).isEqualTo(id);
     }
 
     @SuppressWarnings("unused")
@@ -500,8 +491,8 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         coll.insert(object);
         ObjectWithUuidId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id", UUID.class), equalTo(id));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id", UUID.class)).isEqualTo(id);
     }
 
     @Test
@@ -520,11 +511,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
             coll.insert(object);
         }
-        assertThat(coll.find().into(new ArrayList<>()), hasSize(2));
+        assertThat(coll.find().into(new ArrayList<>())).hasSize(2);
         coll.removeById(id);
         List<ObjectWithUuidId> results = coll.find().into(new ArrayList<>());
-        assertThat(results, hasSize(1));
-        assertThat(results.get(0)._id, not(Matchers.equalTo(id)));
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)._id).isNotEqualTo(id);
     }
 
     @Test
@@ -534,11 +525,11 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         object._id = UUID.randomUUID();
 
         coll.insert(object);
-        assertThat(getUnderlyingCollection(coll).find().first().get("_id"), instanceOf(UUID.class));
+        assertThat(getUnderlyingCollection(coll).find().first().get("_id")).isInstanceOf(UUID.class);
         UUID id = coll.findOne()._id;
-        assertThat(id, instanceOf(UUID.class));
+        assertThat(id).isInstanceOf(UUID.class);
         ObjectWithUuidId result = coll.findOneById(id);
-        assertThat(result._id, Matchers.equalTo(id));
+        assertThat(result._id).isEqualTo(id);
     }
 
     public static class ObjectWithUuidId {

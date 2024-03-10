@@ -31,22 +31,23 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 
 public class TestCustomObjectMapper extends MongoDBTestBase {
 
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         coll = getCollection(MockObject.class,
                 createObjectMapper());
@@ -63,10 +64,10 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
         final Document retrieved = getMongoCollection(coll.getName(), Document.class).find().first();
         Document custom = retrieved.get("custom", Document.class);
         assertNotNull(custom);
-        assertThat(custom.getString("v1"), equalTo("hello"));
-        assertThat(custom.getString("v2"), equalTo("world"));
-        assertThat(retrieved.get("uriStringMap", Document.class).getString("foo%2Ebar"), equalTo("001"));
-        assertThat(retrieved.get("uriStringMap", Document.class).getString("baz%24qux"), equalTo("002"));
+        assertThat(custom.getString("v1")).isEqualTo("hello");
+        assertThat(custom.getString("v2")).isEqualTo("world");
+        assertThat(retrieved.get("uriStringMap", Document.class).getString("foo%2Ebar")).isEqualTo("001");
+        assertThat(retrieved.get("uriStringMap", Document.class).getString("baz%24qux")).isEqualTo("002");
     }
 
     @Test
@@ -80,9 +81,9 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
         MockObject saved = coll.findOne();
         assertNotNull(saved);
         assertNotNull(saved.custom);
-        assertThat(saved.custom.value1, equalTo("hello"));
-        assertThat(saved.custom.value2, equalTo("world"));
-        assertThat(saved.uriStringMap, equalTo(obj.uriStringMap));
+        assertThat(saved.custom.value1).isEqualTo("hello");
+        assertThat(saved.custom.value2).isEqualTo("world");
+        assertThat(saved.uriStringMap).isEqualTo(obj.uriStringMap);
     }
 
     @Test
@@ -106,9 +107,9 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
         MockObject saved = coll.findOne();
         assertNotNull(saved);
         assertNotNull(saved.custom);
-        assertThat(saved.custom.value1, equalTo("hello"));
-        assertThat(saved.custom.value2, equalTo("world"));
-        assertThat(saved.uriStringMap, equalTo(obj.uriStringMap));
+        assertThat(saved.custom.value1).isEqualTo("hello");
+        assertThat(saved.custom.value2).isEqualTo("world");
+        assertThat(saved.uriStringMap).isEqualTo(obj.uriStringMap);
     }
 
     public static class MockObject {

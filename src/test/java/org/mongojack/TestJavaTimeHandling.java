@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -23,9 +23,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 /**
  * class TestJavaTimeHandling: Tests the java.time.* handling in MongoJack.
@@ -42,7 +42,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         public LocalDate localDate;
     }
     
-    @Before
+    @BeforeEach
     public void setUp() {
         timestampWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper());
         timestampWritingObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
@@ -68,8 +68,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalDateContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.localDate, equalTo(object.localDate));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.localDate).isEqualTo(object.localDate);
     }
 
     @Test
@@ -90,8 +90,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalDateContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.localDate, equalTo(object.localDate));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.localDate).isEqualTo(object.localDate);
     }
 
     public static class LocalTimeContainer {
@@ -117,8 +117,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.localTime, equalTo(object.localTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.localTime).isEqualTo(object.localTime);
     }
 
     @Test
@@ -139,8 +139,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.localTime, equalTo(object.localTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.localTime).isEqualTo(object.localTime);
     }
 
     public static class LocalDateTimeContainer {
@@ -166,8 +166,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalDateTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.localDateTime, equalTo(object.localDateTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.localDateTime).isEqualTo(object.localDateTime);
     }
 
     @Test
@@ -188,8 +188,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         LocalDateTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.localDateTime, equalTo(object.localDateTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.localDateTime).isEqualTo(object.localDateTime);
     }
 
     public static class ZonedDateTimeContainer {
@@ -217,7 +217,7 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         ZonedDateTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
+        assertThat(result._id).isEqualTo(id);
         assertTrue(result.zonedDateTime.isEqual(object.zonedDateTime));
     }
 
@@ -244,8 +244,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         YearContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.year, equalTo(object.year));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.year).isEqualTo(object.year);
     }
 
     @Test
@@ -266,8 +266,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         YearContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.year, equalTo(object.year));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.year).isEqualTo(object.year);
     }
 
     public static class YearMonthContainer {
@@ -293,8 +293,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         YearMonthContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.yearMonth, equalTo(object.yearMonth));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.yearMonth).isEqualTo(object.yearMonth);
     }
 
     @Test
@@ -315,8 +315,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         YearMonthContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.yearMonth, equalTo(object.yearMonth));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.yearMonth).isEqualTo(object.yearMonth);
     }
 
     public static class MonthDayContainer {
@@ -342,8 +342,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         MonthDayContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.monthDay, equalTo(object.monthDay));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.monthDay).isEqualTo(object.monthDay);
     }
 
     @Test
@@ -364,8 +364,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         MonthDayContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.monthDay, equalTo(object.monthDay));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.monthDay).isEqualTo(object.monthDay);
     }
 
     public static class OffsetTimeContainer {
@@ -393,8 +393,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         OffsetTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.offsetTime, equalTo(object.offsetTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.offsetTime).isEqualTo(object.offsetTime);
     }
 
     @Test
@@ -417,8 +417,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         OffsetTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.offsetTime, equalTo(object.offsetTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.offsetTime).isEqualTo(object.offsetTime);
     }
 
     public static class OffsetDateTimeContainer {
@@ -445,8 +445,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         OffsetDateTimeContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.offsetDateTime, equalTo(object.offsetDateTime));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.offsetDateTime).isEqualTo(object.offsetDateTime);
     }
 
     public static class DurationContainer {
@@ -472,8 +472,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         DurationContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.duration, equalTo(object.duration));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.duration).isEqualTo(object.duration);
     }
 
     public static class InstantContainer {
@@ -499,8 +499,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         InstantContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.instant, equalTo(object.instant));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.instant).isEqualTo(object.instant);
     }
 
     @Test
@@ -521,15 +521,15 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         InstantContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.instant, equalTo(object.instant.truncatedTo(ChronoUnit.MILLIS)));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.instant).isEqualTo(object.instant.truncatedTo(ChronoUnit.MILLIS));
 
         // retrieve raw bson
         BsonDocument bsonResult = coll.withDocumentClass(BsonDocument.class).findOneById(id);
 
         // verify it
         BsonDateTime expectedBsonDateTime = new BsonDateTime(result.instant.toEpochMilli());
-        assertThat(bsonResult.getDateTime("instant"), equalTo(expectedBsonDateTime));
+        assertThat(bsonResult.getDateTime("instant")).isEqualTo(expectedBsonDateTime);
     }
 
     // not java.time-related exactly, but I deleted all the calendar tests, so
@@ -559,8 +559,8 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         CalendarContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.calendar.getTimeInMillis(), equalTo(object.calendar.getTimeInMillis()));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.calendar.getTimeInMillis()).isEqualTo(object.calendar.getTimeInMillis());
     }
 
     @Test
@@ -584,15 +584,15 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         CalendarContainer result = coll.findOneById(id);
 
         // verify it
-        assertThat(result._id, equalTo(id));
-        assertThat(result.calendar.getTimeInMillis(), equalTo(object.calendar.getTimeInMillis()));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.calendar.getTimeInMillis()).isEqualTo(object.calendar.getTimeInMillis());
 
         // retrieve raw bson
         BsonDocument bsonResult = coll.withDocumentClass(BsonDocument.class).findOneById(id);
 
         // verify it
         BsonDateTime expectedBsonDateTime = new BsonDateTime(result.calendar.getTimeInMillis());
-        assertThat(bsonResult.getDateTime("calendar"), equalTo(expectedBsonDateTime));
+        assertThat(bsonResult.getDateTime("calendar")).isEqualTo(expectedBsonDateTime);
     }
 
 }

@@ -25,9 +25,9 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.bson.UuidRepresentation;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.mongojack.testing.DbManager;
 
 import java.util.HashSet;
@@ -40,11 +40,9 @@ import java.util.Set;
  * MongoDB instance listening on the default port on localhost, and that we can
  * do whatever we want to a database called "unittest".
  */
-@RunWith(MongoDBTestCaseRunner.class)
 public abstract class MongoDBTestBase {
 
     private static final Random rand = new Random();
-    private static final String dbHostKey = "MONGOJACK_TESTDB_HOST";
     private static final Map<String, String> environment = System.getenv();
 
     protected MongoClient mongo;
@@ -52,30 +50,26 @@ public abstract class MongoDBTestBase {
     private Set<String> collections;
     protected UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
-    @Before
+    @BeforeAll
+    public static void startDb() {
+        DbManager.startDb();
+    }
+
+    @BeforeEach
     public void connectToDb() {
-        if (environment.containsKey(dbHostKey)) {
-            mongo = MongoClients.create(
-                MongoClientSettings.builder()
-                    .applyConnectionString(new ConnectionString(String.format("mongodb://%s", environment.get(dbHostKey))))
-                    .uuidRepresentation(uuidRepresentation)
-                    .build()
-            );
-        } else {
-            mongo = MongoClients.create(
-                MongoClientSettings.builder()
-                    .applyConnectionString(new ConnectionString(String.format("mongodb://localhost:%d", DbManager.PORT)))
-                    .uuidRepresentation(uuidRepresentation)
-                    .build()
-            );
-        }
+        mongo = MongoClients.create(
+            MongoClientSettings.builder()
+                .applyConnectionString(new ConnectionString(DbManager.connectionString()))
+                .uuidRepresentation(uuidRepresentation)
+                .build()
+        );
 
         String testDatabaseName = "unittest";
         db = mongo.getDatabase(testDatabaseName);
         collections = new HashSet<>();
     }
 
-    @After
+    @AfterEach
     public void disconnectFromDb() {
         for (String collection : collections) {
             db.getCollection(collection).drop();

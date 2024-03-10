@@ -18,17 +18,18 @@ package org.mongojack;
 
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.MapReduceAction;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.mock.MockObject;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class TestMapReduce extends MongoDBTestBase {
 
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setup() {
         coll = getCollection(MockObject.class);
     }

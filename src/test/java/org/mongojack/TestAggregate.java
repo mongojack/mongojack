@@ -22,29 +22,26 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectAggregationResult;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class TestAggregate extends MongoDBTestBase {
 
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setup() {
         coll = getCollection(MockObject.class);
         coll.deleteMany(new BasicDBObject());
@@ -55,7 +52,7 @@ public class TestAggregate extends MongoDBTestBase {
         final List<MockObject> resultList =
             StreamSupport.stream(coll.aggregate(Collections.singletonList(Aggregates.match(new Document("booleans", true))), MockObject.class).spliterator(), false).collect(Collectors.toList());
 
-        Assert.assertEquals(0, resultList.size());
+        assertEquals(0, resultList.size());
     }
 
     @Test
@@ -63,17 +60,17 @@ public class TestAggregate extends MongoDBTestBase {
         coll.insert(new MockObject("string1", 1));
         coll.insert(new MockObject("string2", 2));
         final List<MockObject> resultList = StreamSupport.stream(
-            coll.aggregate(
-                Collections.singletonList(
-                    new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*")))
-                ),
-                MockObject.class
+                coll.aggregate(
+                        Collections.singletonList(
+                            new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*")))
+                        ),
+                        MockObject.class
+                    )
+                    .spliterator(),
+                false
             )
-                .spliterator(),
-            false
-        )
             .collect(Collectors.toList());
-        Assert.assertEquals(2, resultList.size());
+        assertEquals(2, resultList.size());
     }
 
     @Test
@@ -83,14 +80,14 @@ public class TestAggregate extends MongoDBTestBase {
         List<MockObject> resultList =
             StreamSupport.stream(coll.aggregate(Collections.singletonList(new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile("string1")))
             ), MockObject.class).spliterator(), false).collect(Collectors.toList());
-        Assert.assertEquals(1, resultList.size());
-        Assert.assertEquals(1, resultList.get(0).integer.intValue());
+        assertEquals(1, resultList.size());
+        assertEquals(1, resultList.get(0).integer.intValue());
         resultList =
             StreamSupport.stream(coll.aggregate(Arrays.asList(
                 new BasicDBObject("$match", new BasicDBObject("string", Pattern.compile(".*"))),
                 new BasicDBObject("$match", new BasicDBObject("integer", new BasicDBObject("$gt", 1)))
             ), MockObject.class).spliterator(), false).collect(Collectors.toList());
-        Assert.assertEquals(1, resultList.size());
+        assertEquals(1, resultList.size());
     }
 
     @Test
@@ -98,8 +95,8 @@ public class TestAggregate extends MongoDBTestBase {
         coll.insert(new MockObject("string1", 1));
         coll.insert(new MockObject("string2", 2));
         List<MockObject> resultList = coll.aggregate(Collections.singletonList(Aggregates.match(Filters.eq("string", Pattern.compile("string1")))), MockObject.class).into(new ArrayList<>());
-        Assert.assertEquals(1, resultList.size());
-        Assert.assertEquals(1, resultList.get(0).integer.intValue());
+        assertEquals(1, resultList.size());
+        assertEquals(1, resultList.get(0).integer.intValue());
         resultList = coll.aggregate(
             Arrays.asList(
                 Aggregates.match(Filters.eq("string", Pattern.compile(".*"))),
@@ -107,7 +104,7 @@ public class TestAggregate extends MongoDBTestBase {
             ),
             MockObject.class
         ).into(new ArrayList<>());
-        Assert.assertEquals(1, resultList.size());
+        assertEquals(1, resultList.size());
     }
 
     @Test
@@ -155,24 +152,24 @@ public class TestAggregate extends MongoDBTestBase {
 
         // verify that our pipeline returns the expected results
         List<MockObjectAggregationResult> results = StreamSupport.stream(coll.aggregate(aggregation, MockObjectAggregationResult.class).spliterator(), false).collect(Collectors.toList());
-        Assert.assertEquals(4, results.size());
+        assertEquals(4, results.size());
         HashMap<String, MockObjectAggregationResult> resultMap = new HashMap<>(results.size());
         for (MockObjectAggregationResult result : results) {
-            Assert.assertTrue(result.distance > 2);
+            assertTrue(result.distance > 2);
             resultMap.put(result.string, result);
         }
 
-        Assert.assertTrue(resultMap.containsKey("string3"));
-        Assert.assertEquals(Integer.valueOf(3), resultMap.get("string3").distance);
+        assertTrue(resultMap.containsKey("string3"));
+        assertEquals(Integer.valueOf(3), resultMap.get("string3").distance);
 
-        Assert.assertTrue(resultMap.containsKey("string4"));
-        Assert.assertEquals(Integer.valueOf(4), resultMap.get("string4").distance);
+        assertTrue(resultMap.containsKey("string4"));
+        assertEquals(Integer.valueOf(4), resultMap.get("string4").distance);
 
-        Assert.assertTrue(resultMap.containsKey("string-3"));
-        Assert.assertEquals(Integer.valueOf(3), resultMap.get("string-3").distance);
+        assertTrue(resultMap.containsKey("string-3"));
+        assertEquals(Integer.valueOf(3), resultMap.get("string-3").distance);
 
-        Assert.assertTrue(resultMap.containsKey("string-4"));
-        Assert.assertEquals(Integer.valueOf(4), resultMap.get("string-4").distance);
+        assertTrue(resultMap.containsKey("string-4"));
+        assertEquals(Integer.valueOf(4), resultMap.get("string-4").distance);
     }
 
     @Test
@@ -197,13 +194,13 @@ public class TestAggregate extends MongoDBTestBase {
         coll.aggregate(pipeline, Document.class)
             .forEach(o -> {
                 // driver 4.3 -> 4.5 changed this from a list of Documents to a list of Maps.
-                Assert.assertThat(o.get("inserts"), notNullValue());
-                Assert.assertThat(o.getList("inserts", Object.class), isA(List.class));
-                Assert.assertThat(o.getList("inserts", Map.class).get(0), isA(Map.class));
+                assertThat(o.get("inserts")).isNotNull();
+                assertThat(o.getList("inserts", Object.class)).isInstanceOf(List.class);
+                assertThat(o.getList("inserts", Map.class).get(0)).isInstanceOf(Map.class);
                 final List<String> insertList = (List<String>) o.getList("inserts", Map.class).get(0).get("insert");
-                Assert.assertThat(insertList, isA(List.class));
-                Assert.assertThat(insertList.get(0), equalTo("hello"));
+                assertThat(insertList).isInstanceOf(List.class);
+                assertThat(insertList.get(0)).isEqualTo("hello");
             });
     }
-    
+
 }

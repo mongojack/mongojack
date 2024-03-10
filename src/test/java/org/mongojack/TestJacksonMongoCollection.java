@@ -25,9 +25,8 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.mock.MockObject;
 
 import java.util.ArrayList;
@@ -39,14 +38,13 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class TestJacksonMongoCollection extends MongoDBTestBase {
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setup() {
         coll = JacksonMongoCollection.builder().build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class, uuidRepresentation);
     }
@@ -59,8 +57,8 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         List<MockObject> results = coll
             .find(new Document("string", "ten")).into(new ArrayList<>());
-        assertThat(results, hasSize(2));
-        assertThat(results, contains(o1, o2));
+        assertThat(results).hasSize(2);
+        assertThat(results).contains(o1, o2);
     }
 
     @Test
@@ -72,8 +70,8 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         List<MockObject> results = coll
             .find(Filters.in("_id", o1._id, o2._id))
             .into(new ArrayList<>());
-        assertThat(results, hasSize(2));
-        assertThat(results, contains(o1, o2));
+        assertThat(results).hasSize(2);
+        assertThat(results).contains(o1, o2);
     }
 
     @JsonTypeInfo(include = JsonTypeInfo.As.PROPERTY, use = JsonTypeInfo.Id.CLASS)
@@ -191,8 +189,8 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         List<ClassWithGenericField> results = coll2
             .find(Filters.in("_id", o1._id, o2._id))
             .into(new ArrayList<>());
-        assertThat(results, hasSize(2));
-        assertThat(results, contains(o1, o2));
+        assertThat(results).hasSize(2);
+        assertThat(results).contains(o1, o2);
     }
 
     @Test
@@ -205,18 +203,18 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         MockObject o3 = new MockObject("twenty", 20);
         o3.date = new Date();
         UpdateResult saveResult = coll.save(o3);
-        assertThat(saveResult.getUpsertedId(), notNullValue());
-        assertThat(o3._id, notNullValue());
+        assertThat(saveResult.getUpsertedId()).isNotNull();
+        assertThat(o3._id).isNotNull();
 
         o3.string = "ten";
         coll.save(o3);
 
         List<MockObject> results = coll
             .find(new Document("string", "ten")).into(new ArrayList<>());
-        assertThat(results, hasSize(3));
-        assertThat(results, contains(o1, o2, o3));
+        assertThat(results).hasSize(3);
+        assertThat(results).contains(o1, o2, o3);
 
-        assertThat(coll.findOne(DBQuery.is("_id", o3._id)), equalTo(o3));
+        assertThat(coll.findOne(DBQuery.is("_id", o3._id))).isEqualTo(o3);
     }
 
     @Test
@@ -229,8 +227,8 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.deleteMany(new Document("string", "ten"));
 
         List<MockObject> remaining = coll.find().into(new ArrayList<>());
-        assertThat(remaining, Matchers.hasSize(1));
-        assertThat(remaining, contains(object));
+        assertThat(remaining).hasSize(1);
+        assertThat(remaining).contains(object);
     }
 
     @Test
@@ -243,8 +241,8 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
         coll.removeById("id3");
 
         List<MockObject> remaining = coll.find().into(new ArrayList<>());
-        assertThat(remaining, Matchers.hasSize(2));
-        assertThat(remaining, not(contains(object)));
+        assertThat(remaining).hasSize(2);
+        assertThat(remaining).doesNotContain(object);
     }
 
     @Test
@@ -265,24 +263,24 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
             DBUpdate.set("integer", 20).set("string", "twenty"),
             new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false)
         );
-        assertThat(result1.integer, equalTo(20));
-        assertThat(result1.string, equalTo("twenty"));
+        assertThat(result1.integer).isEqualTo(20);
+        assertThat(result1.string).isEqualTo("twenty");
 
         MockObject result2 = coll.findOneAndUpdate(
             DBQuery.is("_id", "id2"),
             DBUpdate.set("integer", 30).set("string", "thirty"),
             new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false)
         );
-        assertThat(result2.integer, equalTo(30));
-        assertThat(result2.string, equalTo("thirty"));
+        assertThat(result2.integer).isEqualTo(30);
+        assertThat(result2.string).isEqualTo("thirty");
 
         MockObject result3 = coll.findOneAndUpdate(
             DBQuery.is("_id", "id3"),
             DBUpdate.pushAll("simpleList", Arrays.asList("1", "2", "3")),
             new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false)
         );
-        assertThat(result3.simpleList, hasSize(5));
-        assertThat(result3.simpleList, hasItems("1", "2", "3"));
+        assertThat(result3.simpleList).hasSize(5);
+        assertThat(result3.simpleList).contains("1", "2", "3");
 
         coll.removeById("id1");
         coll.removeById("id2");
@@ -300,7 +298,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
 
-        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+        assertThat(found).isEqualTo(new MockObject("id1", "twenty", 20));
     }
 
     @Test
@@ -314,7 +312,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
 
-        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+        assertThat(found).isEqualTo(new MockObject("id1", "twenty", 20));
     }
 
     @Test
@@ -327,7 +325,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
 
-        assertThat(found, equalTo(new MockObject(found._id, "twenty", 20)));
+        assertThat(found).isEqualTo(new MockObject(found._id, "twenty", 20));
     }
 
     @Test
@@ -339,7 +337,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         MockObject found = coll.findOne(DBQuery.is("string", "twenty"));
 
-        assertThat(found, nullValue());
+        assertThat(found).isNull();
     }
 
     @Test
@@ -350,7 +348,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         MockObject found = coll.findOne(DBQuery.is("_id", "id1"));
 
-        assertThat(found, equalTo(new MockObject("id1", "twenty", 20)));
+        assertThat(found).isEqualTo(new MockObject("id1", "twenty", 20));
     }
 
     @Test
@@ -361,12 +359,11 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         List<MockObject> results = StreamSupport.stream(coll.find(
             new BasicDBObject("string", "ten")
-        ).projection(new BasicDBObject("string", "something not null")).spliterator(), false).collect(Collectors.toList());
-        assertThat(results, hasSize(2));
-        assertThat(results.get(0).integer, nullValue());
-        assertThat(results.get(0).string, equalTo("ten"));
-        assertThat(results.get(1).integer, nullValue());
-        assertThat(results.get(1).string, equalTo("ten"));
+        ).projection(new BasicDBObject("string", true)).spliterator(), false).collect(Collectors.toList());
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).integer).isNull();
+        assertThat(results.get(0).string).isEqualTo("ten");
+        assertThat(results.get(1).integer).isNull();
+        assertThat(results.get(1).string).isEqualTo("ten");
     }
-
 }

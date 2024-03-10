@@ -1,13 +1,13 @@
 /*
  * Copyright 2011 VZ Netzwerke Ltd
  * Copyright 2014 devbliss GmbH
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,9 @@ import org.bson.BsonNull;
 import org.bson.BsonUndefined;
 import org.bson.Document;
 import org.bson.types.Binary;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.mock.MockEmbeddedObject;
 import org.mongojack.mock.MockObject;
 import org.mongojack.mock.MockObjectIntId;
@@ -35,11 +36,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.hamcrest.core.IsInstanceOf.*;
-import static org.hamcrest.core.IsNot.*;
-import static org.hamcrest.core.IsNull.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for parser and generator
@@ -48,7 +46,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
 
     private JacksonMongoCollection<MockObject> coll;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         coll = getCollection(MockObject.class);
     }
@@ -57,7 +55,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
     public void testInsertNoId() {
         MockObject object = new MockObject();
         coll.insert(object);
-        assertNotNull(coll.findOne()._id);
+        Assertions.assertNotNull(coll.findOne()._id);
     }
 
     @Test
@@ -66,7 +64,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object._id = "1";
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object, result);
+        Assertions.assertEquals(object, result);
     }
 
     @Test
@@ -75,7 +73,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.string = "a string";
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.string, result.string);
+        Assertions.assertEquals(object.string, result.string);
     }
 
     @Test
@@ -84,7 +82,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.integer = 10;
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.integer, result.integer);
+        Assertions.assertEquals(object.integer, result.integer);
     }
 
     @Test
@@ -93,7 +91,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.longs = 10L;
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.longs, result.longs);
+        Assertions.assertEquals(object.longs, result.longs);
     }
 
     @Test
@@ -103,7 +101,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.bigInteger = BigInteger.valueOf(100);
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.bigInteger, result.bigInteger);
+        Assertions.assertEquals(object.bigInteger, result.bigInteger);
     }
 
     @Test
@@ -113,7 +111,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.bigInteger = BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.TEN);
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.bigInteger, result.bigInteger);
+        Assertions.assertEquals(object.bigInteger, result.bigInteger);
     }
 
     @Test
@@ -122,7 +120,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.floats = 3.0f;
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.floats, result.floats);
+        Assertions.assertEquals(object.floats, result.floats);
     }
 
     @Test
@@ -131,7 +129,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.doubles = 4.65;
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.doubles, result.doubles);
+        Assertions.assertEquals(object.doubles, result.doubles);
     }
 
     @Test
@@ -140,7 +138,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.bigDecimal = BigDecimal.valueOf(4, 6);
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.bigDecimal, result.bigDecimal);
+        Assertions.assertEquals(object.bigDecimal, result.bigDecimal);
     }
 
     @Test
@@ -149,7 +147,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.booleans = true;
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.booleans, result.booleans);
+        Assertions.assertEquals(object.booleans, result.booleans);
     }
 
     @Test
@@ -158,7 +156,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.date = new Date(10000);
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.date, result.date);
+        Assertions.assertEquals(object.date, result.date);
     }
 
     @Test
@@ -167,7 +165,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.date = new Date(10000);
         coll.insert(object);
         Document result = getMongoCollection(coll.getName(), Document.class).find().first();
-        assertEquals(object.date, result.get("date"));
+        Assertions.assertEquals(object.date, result.get("date"));
     }
 
     @Test
@@ -176,7 +174,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.simpleList = Collections.emptyList();
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.simpleList, result.simpleList);
+        Assertions.assertEquals(object.simpleList, result.simpleList);
     }
 
     @Test
@@ -185,7 +183,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.simpleList = Arrays.asList("1", "2");
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.simpleList, result.simpleList);
+        Assertions.assertEquals(object.simpleList, result.simpleList);
     }
 
     @Test
@@ -198,7 +196,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.complexList = Arrays.asList(o1, o2);
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.complexList, result.complexList);
+        Assertions.assertEquals(object.complexList, result.complexList);
     }
 
     @Test
@@ -208,7 +206,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.object.value = "blah";
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.object, result.object);
+        Assertions.assertEquals(object.object, result.object);
     }
 
     @Test
@@ -218,7 +216,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.object.list = Arrays.asList("1", "2");
         coll.insert(object);
         MockObject result = coll.findOne();
-        assertEquals(object.object, result.object);
+        Assertions.assertEquals(object.object, result.object);
     }
 
     @Test
@@ -245,7 +243,7 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         object.object = o3;
 
         coll.insert(object);
-        assertEquals(object, coll.findOne());
+        Assertions.assertEquals(object, coll.findOne());
     }
 
     @Test
@@ -257,30 +255,34 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
 
         coll.insert(object);
         MockObjectIntId result = coll.findOne();
-        assertEquals(object._id, result._id);
+        Assertions.assertEquals(object._id, result._id);
     }
 
-    @Test(expected = MongoException.class)
+    @Test
     public void testParseErrors() {
-        final MongoCursor<MockObject> cursor = coll.find(new Document("integer", new Document("$thisisinvalid", "true"))).cursor();
-        cursor.hasNext();
+        assertThrows(
+            MongoException.class,
+            () -> {
+                coll.find(new Document("integer", new Document("$thisisinvalid", "true"))).cursor().hasNext();
+            }
+        );
     }
 
     @Test
     public void testByteArray() {
         ObjectWithByteArray object = new ObjectWithByteArray();
         object._id = "id";
-        object.bytes = new byte[] {1, 2, 3, 4, 5};
+        object.bytes = new byte[]{1, 2, 3, 4, 5};
 
         JacksonMongoCollection<ObjectWithByteArray> coll = getCollection(ObjectWithByteArray.class);
         coll.insert(object);
 
         ObjectWithByteArray result = coll.findOne();
-        assertThat(result.bytes, equalTo(object.bytes));
+        assertThat(result.bytes).isEqualTo(object.bytes);
 
         // Ensure that it is actually stored as binary
         Document dbObject = getMongoCollection(coll.getName(), Document.class).find().first();
-        assertThat(dbObject.get("bytes"), instanceOf(Binary.class));
+        assertThat(dbObject.get("bytes")).isInstanceOf(Binary.class);
     }
 
     public static class ObjectWithByteArray {
@@ -308,8 +310,8 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         collection.drop();
         collection.insertOne(new Document("value", new BsonNull()));
         final IgnoreUnknownObject foo = col.find().first();
-        assertThat(foo, not(nullValue()));
-        assertThat(foo.getValue(), nullValue());
+        assertThat(foo).isNotNull();
+        assertThat(foo.getValue()).isNull();
     }
 
     @Test
@@ -319,8 +321,8 @@ public class TestParsingAndGenerating extends MongoDBTestBase {
         collection.drop();
         collection.insertOne(new Document("value", new BsonUndefined()));
         final IgnoreUnknownObject foo = col.find().first();
-        assertThat(foo, not(nullValue()));
-        assertThat(foo.getValue(), nullValue());
+        assertThat(foo).isNotNull();
+        assertThat(foo.getValue()).isNull();
     }
 
 }

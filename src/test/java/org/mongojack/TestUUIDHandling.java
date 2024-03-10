@@ -20,12 +20,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 @SuppressWarnings("ConstantConditions")
 public class TestUUIDHandling extends MongoDBTestBase {
@@ -40,7 +40,7 @@ public class TestUUIDHandling extends MongoDBTestBase {
 
         final Document found = collection.find(Filters.eq("uuid", document.get("uuid"))).first();
 
-        assertThat(found.get("uuid"), equalTo(document.get("uuid")));
+        assertThat(found.get("uuid")).isEqualTo(document.get("uuid"));
     }
 
     @Test
@@ -52,9 +52,9 @@ public class TestUUIDHandling extends MongoDBTestBase {
         coll.insert(object);
         ObjectId id = coll.findOne()._id;
         ObjectIdId result = coll.findOneById(id);
-        assertThat(result._id, equalTo(id));
-        assertThat(result.uuid, equalTo(object.uuid));
-        assertThat(getUnderlyingCollection(coll).find().first().get("uuid"), equalTo(object.uuid));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.uuid).isEqualTo(object.uuid);
+        assertThat(getUnderlyingCollection(coll).find().first().get("uuid")).isEqualTo(object.uuid);
     }
 
     @Test
@@ -67,9 +67,9 @@ public class TestUUIDHandling extends MongoDBTestBase {
 
         ObjectId id = coll.findOne()._id;
         ObjectIdId result = coll.findOne(Filters.eq("uuid", object.uuid));
-        assertThat(result._id, equalTo(id));
-        assertThat(result.uuid, equalTo(object.uuid));
-        assertThat(getUnderlyingCollection(coll).find().first().get("uuid"), equalTo(object.uuid));
+        assertThat(result._id).isEqualTo(id);
+        assertThat(result.uuid).isEqualTo(object.uuid);
+        assertThat(getUnderlyingCollection(coll).find().first().get("uuid")).isEqualTo(object.uuid);
     }
 
     public static class ObjectIdId {

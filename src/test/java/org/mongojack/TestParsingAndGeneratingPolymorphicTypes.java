@@ -6,13 +6,12 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.Filters;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mongojack.internal.MongoJackModule;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.junit.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 /**
  * Test parsing and generating polymorphic types.
@@ -26,7 +25,7 @@ public class TestParsingAndGeneratingPolymorphicTypes extends MongoDBTestBase {
     private JacksonMongoCollection<Metric> coll;
     private ObjectMapper objectMapper;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         objectMapper = MongoJackModule.configure(new ObjectMapper());
         coll = getCollection(Metric.class, objectMapper);
@@ -38,8 +37,8 @@ public class TestParsingAndGeneratingPolymorphicTypes extends MongoDBTestBase {
         final Metric doubleMetric = new DoubleMetric(0.8);
 
         // Validate that the serialize/deserialize cycle works when using plain Jackson
-        assertThat(objectMapper.readValue(objectMapper.writeValueAsString(longMetric), Metric.class), instanceOf(LongMetric.class));
-        assertThat(objectMapper.readValue(objectMapper.writeValueAsString(doubleMetric), Metric.class), instanceOf(DoubleMetric.class));
+        assertThat(objectMapper.readValue(objectMapper.writeValueAsString(longMetric), Metric.class)).isInstanceOf(LongMetric.class);
+        assertThat(objectMapper.readValue(objectMapper.writeValueAsString(doubleMetric), Metric.class)).isInstanceOf(DoubleMetric.class);
 
         coll.insertOne(longMetric);
         coll.insertOne(doubleMetric);
@@ -47,10 +46,10 @@ public class TestParsingAndGeneratingPolymorphicTypes extends MongoDBTestBase {
         final Metric longMetricRecord = coll.findOne(Filters.eq("type", "long"));
         final Metric doubleMetricRecord = coll.findOne(Filters.eq("type", "double"));
 
-        assertThat(longMetricRecord, instanceOf(LongMetric.class));
-        assertThat(((LongMetric) longMetricRecord).getValue(), equalTo(236L));
-        assertThat(doubleMetricRecord, instanceOf(DoubleMetric.class));
-        assertThat(((DoubleMetric) doubleMetricRecord).getValue(), equalTo(0.8d));
+        assertThat(longMetricRecord).isInstanceOf(LongMetric.class);
+        assertThat(((LongMetric) longMetricRecord).getValue()).isEqualTo(236L);
+        assertThat(doubleMetricRecord).isInstanceOf(DoubleMetric.class);
+        assertThat(((DoubleMetric) doubleMetricRecord).getValue()).isEqualTo(0.8d);
     }
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type")
