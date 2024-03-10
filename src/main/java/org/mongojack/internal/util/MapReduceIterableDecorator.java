@@ -152,19 +152,6 @@ public class MapReduceIterableDecorator<TResult> implements MapReduceIterable<TR
     /**
      * {@inheritDoc}
      */
-    @Override
-    public MapReduceIterable<TResult> sharded(final boolean sharded) {
-        return delegate.sharded(sharded);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public MapReduceIterable<TResult> nonAtomic(final boolean nonAtomic) {
-        return delegate.nonAtomic(nonAtomic);
-    }
-
     /**
      * {@inheritDoc}
      */

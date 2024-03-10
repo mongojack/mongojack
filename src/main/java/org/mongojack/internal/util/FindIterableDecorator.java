@@ -124,14 +124,6 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
      * {@inheritDoc}
      */
     @Override
-    public FindIterable<TResult> oplogReplay(final boolean oplogReplay) {
-        return delegate.oplogReplay(oplogReplay);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public FindIterable<TResult> partial(final boolean partial) {
         return delegate.partial(partial);
     }
