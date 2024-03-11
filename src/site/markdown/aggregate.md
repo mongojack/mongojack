@@ -29,3 +29,36 @@ drawn from the mongo documentation might look like:
         RestaurantsByStar.class
     )
 
+5.x Usage
+---------
+
+This attempts to support MqlValues.  See some documentation (in the context of aggregation) [here](https://www.mongodb.com/docs/drivers/java/sync/current/fundamentals/aggregation-expression-operations/).
+
+Ex from that documentation:
+```java
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Accumulators.*;
+import static com.mongodb.client.model.Projections.*;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.mql.MqlValues.*;
+
+class Foo {
+    public void doSomething() {
+        coll.aggregate(
+            List.of(
+                match(expr(
+                    current()
+                        .getArray("visitDates")
+                        .size()
+                        .gt(of(0))
+                        .and(current()
+                            .getString("state")
+                            .eq(of("New Mexico")))
+                )),
+                group(current().getString("string"), min("integer", current().getInteger("integer")))
+            ),
+            MockObjectAggregationResult.class
+        );
+    }
+}
+```

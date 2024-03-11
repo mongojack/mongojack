@@ -21,7 +21,37 @@ Also note that this moves the minimum supported JVM to 11.  Though it _should_ w
 Some "gotchas" and issues:
 - Using `Updates` doesn't provide custom mapping, so if you have a custom serializer on a field in the object
   on which the collection is based, that won't take effect, and you will have to do the custom mapping yourself.
-- Support for MqlValue stuff (which is in beta) doesn't work.
+
+This attempts to support MqlValues.  See some documentation (in the context of aggregation) [here](https://www.mongodb.com/docs/drivers/java/sync/current/fundamentals/aggregation-expression-operations/).
+
+Ex from that documentation:
+```java
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Accumulators.*;
+import static com.mongodb.client.model.Projections.*;
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.mql.MqlValues.*;
+
+class Foo {
+    public void doSomething() {
+        coll.aggregate(
+            List.of(
+                match(expr(
+                    current()
+                        .getArray("visitDates")
+                        .size()
+                        .gt(of(0))
+                        .and(current()
+                            .getString("state")
+                            .eq(of("New Mexico")))
+                )),
+                group(current().getString("string"), min("integer", current().getInteger("integer")))
+            ),
+            MockObjectAggregationResult.class
+        );
+    }
+}
+```
 
 Project documentation
 ---------------------

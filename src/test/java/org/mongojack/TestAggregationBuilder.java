@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.MongoException;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.model.*;
+import com.mongodb.client.model.mql.MqlValues;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static com.mongodb.client.model.mql.MqlValues.current;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -84,10 +86,9 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         coll.insert(new MockObject("bar", 101));
         coll.insert(new MockObject("bar", 102));
 
-        // TODO: Can I get the expected MqlValue stuff to work?  current().getString("string")
         List<Bson> pipeline = List.of(
-            Aggregates.match(Filters.eq("string", "foo")),
-            Aggregates.group("$string", Accumulators.min("integer", "$integer"))
+            Aggregates.match(Filters.expr(current().getString("string").eq(MqlValues.of("foo")))),
+            Aggregates.group(current().getString("string"), Accumulators.min("integer", current().getInteger("integer")))
         );
 
         final AggregateIterable<MockObjectAggregationResult> aggregate = coll.aggregate(pipeline, MockObjectAggregationResult.class);
