@@ -21,8 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.mongojack.Aggregation;
-import org.mongojack.DBQuery;
 import org.mongojack.UpdateOperationValue;
 
 import java.util.Map;
@@ -42,13 +40,6 @@ interface DocumentSerializationUtilsApi {
      */
     Bson serializeFields(
         Bson object,
-        CodecRegistry registry
-    );
-
-    Bson serializeQuery(
-        ObjectMapper objectMapper,
-        JavaType type,
-        @SuppressWarnings("deprecation") DBQuery.Query query,
         CodecRegistry registry
     );
 
@@ -72,13 +63,10 @@ interface DocumentSerializationUtilsApi {
         CodecRegistry registry
     );
 
-    Bson serializeDBUpdate(
+    Bson serializeUpdates(
         Map<String, Map<String, UpdateOperationValue>> update,
         ObjectMapper objectMapper,
         JavaType javaType,
         CodecRegistry registry
     );
-
-    Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage, CodecRegistry registry);
-
 }

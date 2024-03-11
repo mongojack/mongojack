@@ -35,12 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +55,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
     public void testSimpleEquals() {
         coll.save(new MockObject());
         String id = coll.findOne().id;
-        assertNotNull(coll.findOne(DBQuery.is("_id", id)));
         assertNotNull(coll.findOne(Filters.eq("_id", id)));
         assertNotNull(coll.find().filter(Filters.eq("_id", id)).iterator().next());
     }
@@ -69,7 +63,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
     public void testIn() {
         coll.save(new MockObject());
         String id = coll.findOne().id;
-        assertNotNull(coll.find(DBQuery.in("_id", id, new org.bson.types.ObjectId().toString())).first());
         assertNotNull(coll.find(Filters.in("_id", id, new org.bson.types.ObjectId().toString())).first());
         assertNotNull(coll.find().filter(Filters.in("_id", id, new org.bson.types.ObjectId().toString())).first());
     }
@@ -85,7 +78,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         x.add("a");
         x.add("b");
 
-        assertEquals(o._id, c2.findOne(DBQuery.in("simpleList", x))._id);
         assertEquals(o._id, c2.findOne(Filters.in("simpleList", x))._id);
         assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.in("simpleList", x)).first())._id);
     }
@@ -98,7 +90,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         c2.save(o);
         assertNotNull(o._id);
 
-        assertEquals(o._id, c2.findOne(DBQuery.is("simpleList", "a"))._id);
         assertEquals(o._id, c2.findOne(Filters.eq("simpleList", "d"))._id);
         assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.eq("simpleList", "a")).first())._id);
     }
@@ -115,7 +106,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         x.add(new DBRef("db2", "c2", new org.bson.types.ObjectId()));
         x.add(new DBRef("db1", "c1", "id1"));
 
-        assertEquals(o._id, c2.findOne(DBQuery.in("refList", x))._id);
         assertEquals(o._id, c2.findOne(Filters.in("refList", x))._id);
         assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.in("refList", x)).first())._id);
     }
@@ -129,7 +119,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         c2.save(o);
         assertNotNull(o._id);
 
-        assertEquals(o._id, c2.findOne(DBQuery.is("refList", new DBRef("db1", "c1", "id1")))._id);
         assertEquals(o._id, c2.findOne(Filters.eq("refList", new DBRef("db1", "c1", oid)))._id);
         assertEquals(o._id, Objects.requireNonNull(c2.find().filter(Filters.eq("refList", new DBRef("db1", "c1", "id1"))).first())._id);
     }
@@ -142,7 +131,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         coll.save(o);
         // Ensure that the serializer actually worked
         assertThat(getMongoCollection(coll.getName(), Document.class).find().first().getInteger("i")).isEqualTo(15);
-        assertNotNull(coll.find(DBQuery.lessThan("i", 12)).first());
         assertNotNull(coll.find(Filters.lt("i", 12)).first());
         assertNotNull(coll.find().filter(Filters.lt("i", 12)).first());
     }
@@ -167,7 +155,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         assertNull(localColl.find(Filters.lt("i", 12)).first());
         assertNull(localColl.find().filter(Filters.lt("i", 12)).first());
 
-        assertNotNull(localColl.find(DBQuery.lessThan("i", 18)).first());
         assertNotNull(localColl.find(Filters.lt("i", 18)).first());
         assertNotNull(localColl.find().filter(Filters.lt("i", 18)).first());
     }
@@ -178,10 +165,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.i = 5;
         coll.save(o);
         // Ensure that the serializer actually worked
-        assertNotNull(
-            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 4))).first());
-        assertNull(
-            coll.find(DBQuery.and(DBQuery.lessThan("i", 12), DBQuery.greaterThan("i", 9))).first());
         assertNotNull(
             coll.find(Filters.and(Filters.lt("i", 12), Filters.gt("i", 4))).first());
         assertNull(
@@ -204,7 +187,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
 
         // Ensure that the serializer actually worked
         // with DBCursor
-        assertNotNull(coll.find(DBQuery.all("items", o1)).first());
         assertNotNull(coll.find(Filters.all("items", o1)).first());
         assertNotNull(coll.find().filter(Filters.all("items", o1)).first());
     }
@@ -217,7 +199,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.items = Collections.singletonList(o1);
         coll.save(o);
 
-        assertNotNull(coll.find(DBQuery.is("items.id", o1.id)).first());
         assertNotNull(coll.find(Filters.eq("items.id", o1.id)).first());
         assertNotNull(coll.find().filter(Filters.eq("items.id", o1.id)).first());
     }
@@ -230,7 +211,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o.items = Collections.singletonList(o1);
         coll.save(o);
 
-        assertNotNull(coll.find(DBQuery.is("items", Collections.singletonList(o1))).first());
         assertNotNull(coll.find(Filters.eq("items", Collections.singletonList(o1))).first());
         assertNotNull(coll.find().filter(Filters.eq("items", Collections.singletonList(o1))).first());
     }
@@ -251,12 +231,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         final Document found = underlyingCollection.find(Filters.eq("wrappedString", "foo:bar")).first();
         assertEquals("foo:bar", found.getString("wrappedString"));
 
-        assertEquals(o1.id, coll.find(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
-        assertEquals(o1.id, coll.find(DBQuery.is("wrappedString", "foo:bar")).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedString", "foo:bar")).first().id);
-        assertEquals(o1.id, coll.find(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
 
         assertEquals(o1.id, coll.find(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
         assertEquals(o1.id, coll.find().filter(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
@@ -291,12 +265,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         final Document found = underlyingCollection.find(Filters.eq("wrappedString", "foo:bar")).first();
         assertEquals("foo:bar", found.getString("wrappedString"));
 
-        assertEquals(o1.id, localColl.find(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
-        assertEquals(o1.id, localColl.find().filter(DBQuery.is("wrappedString", new WrappedString("foo:bar"))).first().id);
-        assertEquals(o1.id, localColl.find(DBQuery.is("wrappedString", "foo:bar")).first().id);
-        assertEquals(o1.id, localColl.find().filter(DBQuery.is("wrappedString", "foo:bar")).first().id);
-        assertEquals(o1.id, localColl.find(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
-        assertEquals(o1.id, localColl.find().filter(DBQuery.regex("wrappedString", Pattern.compile("foo:.*"))).first().id);
 
         assertEquals(o1.id, localColl.find(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
         assertEquals(o1.id, localColl.find().filter(Filters.eq("wrappedString", new WrappedString("foo:bar"))).first().id);
@@ -322,12 +290,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         final Document found = underlyingCollection.find(Filters.eq("wrappedStringList", "foo:bar")).first();
         assertEquals("foo:bar", ((List<String>) found.get("wrappedStringList")).get(0));
 
-        assertEquals(o1.id, coll.find(DBQuery.is("wrappedStringList", new WrappedString("foo:bar"))).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedStringList", new WrappedString("foo:bar"))).first().id);
-        assertEquals(o1.id, coll.find(DBQuery.is("wrappedStringList", "foo:bar")).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.is("wrappedStringList", "foo:bar")).first().id);
-        assertEquals(o1.id, coll.find(DBQuery.regex("wrappedStringList", Pattern.compile("foo:.*"))).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.regex("wrappedStringList", Pattern.compile("foo:.*"))).first().id);
 
         assertEquals(o1.id, coll.find(Filters.eq("wrappedStringList", new WrappedString("foo:bar"))).first().id);
         assertEquals(o1.id, coll.find().filter(Filters.eq("wrappedStringList", new WrappedString("foo:bar"))).first().id);
@@ -346,10 +308,6 @@ public class TestQuerySerialization extends MongoDBTestBase {
         o2.genericMap = Collections.singletonMap("ref", "baz:qux");
         coll.insertMany(Arrays.asList(o1, o2));
 
-        assertEquals(o1.id, coll.find(DBQuery.regex("text", Pattern.compile("foo:.*"))).first().id);
-        assertEquals(o1.id, coll.find().filter(DBQuery.regex("text", Pattern.compile("foo:.*"))).first().id);
-        assertEquals(o2.id, coll.find(DBQuery.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
-        assertEquals(o2.id, coll.find().filter(DBQuery.regex("genericMap.ref", Pattern.compile("baz:.*"))).first().id);
 
         assertEquals(o1.id, coll.find(Filters.regex("text", Pattern.compile("foo:.*"))).first().id);
         assertEquals(o1.id, coll.find().filter(Filters.regex("text", Pattern.compile("foo:.*"))).first().id);
@@ -414,7 +372,7 @@ public class TestQuerySerialization extends MongoDBTestBase {
         public List<WrappedString> wrappedStringList;
 
         public String text;
-        public Map<String,Object> genericMap;
+        public Map<String, Object> genericMap;
     }
 
     static class MockEmbedded {

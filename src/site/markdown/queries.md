@@ -43,7 +43,7 @@ Projections
 
 If you don't want to load the entire object, you can use projections to either include or exclude fields.  Use them just as you would with FindIterable:
 
-    List<BlogPost> posts = coll.find(DBQuery.is("published", true))
+    List<BlogPost> posts = coll.find(Filters.eq("published", true))
         .projection(Projections.include("title", "author"))
         .into(new ArrayList<>());
 

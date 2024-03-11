@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import com.mongodb.client.model.Updates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -102,12 +103,12 @@ public class TestDBRefHandling extends MongoDBTestBase {
     }
 
     @Test
-    public void testDBUpdateWithDbRef() {
+    public void testUpdatesWithDbRef() {
         JacksonMongoCollection<Owner> coll = getCollection(Owner.class);
         coll.insert(new Owner());
         String id = coll.findOne()._id;
 
-        coll.updateById(id, DBUpdate.set("ref", new DBRef<>(
+        coll.updateById(id, Updates.set("ref", new DBRef<>(
             "hello", Referenced.class)));
         assertThat(coll.findOneById(id).ref).isNotNull();
         assertThat(coll.findOneById(id).ref.getId()).isEqualTo("hello");

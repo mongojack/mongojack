@@ -16,7 +16,6 @@
 package org.mongojack;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
@@ -123,21 +122,25 @@ public class TestAggregate extends MongoDBTestBase {
 
         // get the difference between 0 and the document's integer value
         // {$project : { string :1, integer : 1, distance : {$subtract : [0, "$integer"]}}}
-        DBObject projection = DBProjection.include("string", "integer");
-        projection.put("distance", new BasicDBObject("$subtract", Arrays.asList(0, "$integer")));
+        Bson projection = Projections.fields(
+            Projections.include("string", "integer"),
+            Projections.computed("distance", new BasicDBObject("$subtract", Arrays.asList(0, "$integer")))
+        );
 
         // get the absolute value of the distance
         // {$project : { string :1, integer : 1, distance : {$cond : [ {$lt : ["$distance", 0]}, {$multiply :
         // ["$distance", -1]}, "$distance"]}}},
-        DBObject projection2 = DBProjection.include("string", "integer");
-        projection2.put("distance", new BasicDBObject(
-            "$cond",
-            Arrays.asList(
-                new BasicDBObject("$lt", Arrays.asList("$distance", 0)),
-                new BasicDBObject("$multiply", Arrays.asList("$distance", -1)),
-                "$distance"
-            )
-        ));
+        Bson projection2 = Projections.fields(
+            Projections.include("string", "integer"),
+            Projections.computed("distance", new BasicDBObject(
+                "$cond",
+                Arrays.asList(
+                    new BasicDBObject("$lt", Arrays.asList("$distance", 0)),
+                    new BasicDBObject("$multiply", Arrays.asList("$distance", -1)),
+                    "$distance"
+                )
+            ))
+        );
 
         // only get values where the distance is greater than 2
         // {$match : {distance : {$gt : 2}}})

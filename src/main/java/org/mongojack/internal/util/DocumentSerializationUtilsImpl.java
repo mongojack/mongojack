@@ -24,28 +24,7 @@ import com.fasterxml.jackson.databind.ser.ContainerSerializer;
 import com.fasterxml.jackson.databind.ser.std.AsArraySerializerBase;
 import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
 import com.fasterxml.jackson.databind.ser.std.MapSerializer;
-import org.bson.BsonBinary;
-import org.bson.BsonBoolean;
-import org.bson.BsonDateTime;
-import org.bson.BsonDecimal128;
-import org.bson.BsonDocument;
-import org.bson.BsonDocumentReader;
-import org.bson.BsonDocumentWriter;
-import org.bson.BsonDouble;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
-import org.bson.BsonMaxKey;
-import org.bson.BsonMinKey;
-import org.bson.BsonObjectId;
-import org.bson.BsonRegularExpression;
-import org.bson.BsonString;
-import org.bson.BsonSymbol;
-import org.bson.BsonTimestamp;
-import org.bson.BsonUndefined;
-import org.bson.BsonValue;
-import org.bson.BsonWriter;
-import org.bson.Document;
-import org.bson.UuidRepresentation;
+import org.bson.*;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.UuidCodec;
@@ -53,35 +32,19 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
-import org.mongojack.Aggregation;
-import org.mongojack.Aggregation.Expression;
-import org.mongojack.Aggregation.Group.Accumulator;
-import org.mongojack.DBProjection.ProjectionBuilder;
-import org.mongojack.DBQuery;
 import org.mongojack.DBRef;
 import org.mongojack.JacksonCodecRegistry;
 import org.mongojack.MongoJsonMappingException;
-import org.mongojack.QueryCondition;
 import org.mongojack.UpdateOperationValue;
 import org.mongojack.internal.ObjectIdSerializer;
-import org.mongojack.internal.query.CollectionQueryCondition;
-import org.mongojack.internal.query.CompoundQueryCondition;
-import org.mongojack.internal.query.SimpleQueryCondition;
 import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 import org.mongojack.internal.update.MultiUpdateOperationValue;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -135,79 +98,6 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
         CodecRegistry registry
     ) {
         return object.toBsonDocument(Document.class, registry);
-    }
-
-    @Override
-    public Bson serializeQuery(
-        ObjectMapper objectMapper,
-        JavaType type,
-        @SuppressWarnings("deprecation") DBQuery.Query query,
-        CodecRegistry registry
-    ) {
-        SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
-        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, type);
-        final BsonDocument document = new BsonDocument();
-        try (
-            BsonDocumentWriter writer = new BsonDocumentWriter(document);
-            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
-        ) {
-            serializeQuery(serializerProvider, serializer, query, writer, generator);
-            return document;
-        } catch (IOException e) {
-            throw new MongoJsonMappingException(e.getMessage(), e);
-        }
-    }
-
-    protected void serializeQuery(
-        SerializerProvider serializerProvider,
-        JsonSerializer<?> serializer,
-        @SuppressWarnings("deprecation") DBQuery.Query query,
-        BsonDocumentWriter writer,
-        DBEncoderBsonGenerator generator
-    ) throws IOException {
-        writer.writeStartDocument();
-        for (Entry<String, QueryCondition> field : query.conditions()) {
-            String key = field.getKey();
-            QueryCondition condition = field.getValue();
-            writer.writeName(key);
-            serializeQueryCondition(serializerProvider, serializer, key, condition, writer, generator);
-        }
-        writer.writeEndDocument();
-    }
-
-    protected void serializeQueryCondition(
-        SerializerProvider serializerProvider,
-        JsonSerializer<?> serializer,
-        String key,
-        QueryCondition condition,
-        BsonDocumentWriter writer,
-        DBEncoderBsonGenerator generator
-    ) throws IOException {
-        if (condition instanceof SimpleQueryCondition) {
-            SimpleQueryCondition simple = (SimpleQueryCondition) condition;
-            if (simple.requiresSerialization() && simple.getValue() != null) {
-                if (keyIsNotOperator(key)) {
-                    serializer = findQuerySerializer(false, key, serializerProvider, serializer);
-                }
-            }
-            serializeQueryField(simple.getValue(), serializer, serializerProvider, writer, generator);
-        } else if (condition instanceof CollectionQueryCondition) {
-            CollectionQueryCondition coll = (CollectionQueryCondition) condition;
-            if (keyIsNotOperator(key)) {
-                serializer = findQuerySerializer(coll.targetIsCollection(), key, serializerProvider, serializer);
-            }
-            writer.writeStartArray();
-            for (QueryCondition item : coll.getValues()) {
-                serializeQueryCondition(serializerProvider, serializer, "$", item, writer, generator);
-            }
-            writer.writeEndArray();
-        } else {
-            CompoundQueryCondition compound = (CompoundQueryCondition) condition;
-            if (keyIsNotOperator(key)) {
-                serializer = findQuerySerializer(compound.targetIsCollection(), key, serializerProvider, serializer);
-            }
-            serializeQuery(serializerProvider, serializer, compound.getQuery(), writer, generator);
-        }
     }
 
     protected boolean keyIsNotOperator(String key) {
@@ -586,7 +476,7 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
     }
 
     @Override
-    public Bson serializeDBUpdate(
+    public Bson serializeUpdates(
         Map<String, Map<String, UpdateOperationValue>> update,
         ObjectMapper objectMapper,
         JavaType javaType,
@@ -838,110 +728,5 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
         } else {
             return null;
         }
-    }
-
-    @Override
-    public Bson serializePipelineStage(ObjectMapper objectMapper, JavaType type, @SuppressWarnings("deprecation") Aggregation.Stage<?> stage, CodecRegistry registry) {
-        SerializerProvider serializerProvider = JacksonAccessor
-            .getSerializerProvider(objectMapper);
-        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(
-            serializerProvider, type);
-        return serializePipelineStage(serializerProvider, serializer, stage, registry);
-    }
-
-    @SuppressWarnings("deprecation")
-    protected Bson serializePipelineStage(
-        SerializerProvider serializerProvider,
-        JsonSerializer<?> serializer,
-        Aggregation.Stage<?> stage,
-        CodecRegistry registry
-    ) {
-        if (stage instanceof Aggregation.Limit) {
-            return new Document("$limit", ((Aggregation.Limit) stage).limit());
-        }
-        if (stage instanceof Aggregation.Skip) {
-            return new Document("$skip", ((Aggregation.Skip) stage).skip());
-        }
-        if (stage instanceof Aggregation.Sort) {
-            return new Document("$sort", ((Aggregation.Sort) stage).builder());
-        }
-        if (stage instanceof Aggregation.Unwind) {
-            return new Document("$unwind", ((Object) ((Aggregation.Unwind) stage).path()).toString());
-        }
-        if (stage instanceof Aggregation.Match) {
-            final BsonDocument document = new BsonDocument();
-            try (
-                BsonDocumentWriter writer = new BsonDocumentWriter(document);
-                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
-            ) {
-                serializeQuery(serializerProvider, serializer, ((Aggregation.Match) stage).query(), writer, generator);
-                return new Document("$match", document);
-            } catch (IOException e) {
-                throw new MongoJsonMappingException(e.getMessage(), e);
-            }
-        }
-        if (stage instanceof Aggregation.Project) {
-            ProjectionBuilder builder = ((Aggregation.Project) stage).builder();
-            Document object = new Document();
-            for (Entry<String, Object> entry : builder.entrySet()) {
-                if (entry.getValue() instanceof Expression<?>) {
-                    object.append(
-                        entry.getKey(),
-                        serializeExpression((Expression<?>) entry.getValue())
-                    );
-                } else {
-                    object.append(entry.getKey(), entry.getValue());
-                }
-            }
-            return new Document("$project", object);
-        }
-        if (stage instanceof Aggregation.Group) {
-            Aggregation.Group group = (Aggregation.Group) stage;
-            Document object = new Document("_id", serializeExpression(group.key()));
-            for (Entry<String, Accumulator> field : group.calculatedFields()) {
-                object.append(field.getKey(), serializeAccumulator(field.getValue()));
-            }
-            return new Document("$group", object);
-        }
-        if (stage instanceof Aggregation.Out) {
-            return new Document("$out", ((Aggregation.Out) stage).collectionName());
-        }
-        throw new IllegalArgumentException(stage.getClass().getName());
-    }
-
-    protected Bson serializeAccumulator(Accumulator accumulator) {
-        return new Document(
-            accumulator.operator.name(),
-            serializeExpression(accumulator.expression)
-        );
-    }
-
-    @SuppressWarnings({"deprecation", "rawtypes"})
-    protected Object serializeExpression(Expression<?> expression) {
-        if (expression instanceof Aggregation.FieldPath) {
-            return ((Aggregation.FieldPath) expression).toString();
-        }
-        if (expression instanceof Aggregation.Literal<?>) {
-            return new Document("$literal", ((Aggregation.Literal<?>) expression).value());
-        }
-        if (expression instanceof Aggregation.ExpressionObject) {
-            Document object = new Document();
-            for (Entry<String, Expression<?>> property : ((Aggregation.ExpressionObject) expression).properties()) {
-                object.append(
-                    property.getKey(),
-                    serializeExpression(property.getValue())
-                );
-            }
-            return object;
-        }
-        if (expression instanceof Aggregation.OperatorExpression) {
-            Aggregation.OperatorExpression<?> oe = (Aggregation.OperatorExpression<?>) expression;
-            List<Object> operands = new ArrayList<>();
-            for (Expression<?> e : oe.operands()) {
-                operands.add(serializeExpression(e));
-            }
-            return new Document(oe.operator(), operands);
-        }
-        throw new IllegalArgumentException(expression.getClass().getName());
     }
 }

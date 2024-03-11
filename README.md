@@ -7,7 +7,21 @@ a massive head start, making it powerful, performant, and robust.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack)
 
-Snapshots for 4.10.x and 5.x are available in Sonatype's snapshot repositories.
+Snapshots for 5.x are available in Sonatype's snapshot repositories.
+
+5.x Updates
+-----------
+
+In the 5.x update, deprecated objects (Aggregation, DBProjection, DBQuery, DBSort, DBUpdate) have been removed
+in favor of native mongo java driver constructs.  This is a work in progress.  For examples of how to replace
+the deprecated constructs, check out the tests as they differ between 4.x and 5.x versions.
+
+Also note that this moves the minimum supported JVM to 11.  Though it _should_ work up to 21.
+
+Some "gotchas" and issues:
+- Using `Updates` doesn't provide custom mapping, so if you have a custom serializer on a field in the object
+  on which the collection is based, that won't take effect, and you will have to do the custom mapping yourself.
+- Support for MqlValue stuff (which is in beta) doesn't work.
 
 Project documentation
 ---------------------
@@ -108,7 +122,7 @@ The biggest difference between the usage of `JacksonDBCollection` and `JacksonMo
 allows you to pass instances of `org.bson.Document`, or `com.mongodb.BasicDBObject`, or any of Mongo's helper/builder objects like `com.mongodb.client.model.Filters`, `com.mongodb.client.model.Aggregates`,
 or `com.mongodb.client.model.Updates`.
 
-MongoJack's older DBQuery, DBUpdate, and Aggregation helpers should all still work with the new JacksonMongoCollection, but they have been deprecated as the Mongo driver provides a set of useful builders
+MongoJack's older DBQuery, Updates, and Aggregation helpers should all still work with the new JacksonMongoCollection, but they have been deprecated as the Mongo driver provides a set of useful builders
 for all of these things in the `com.mongodb.client.model` package.  The implementation attempts to do mapping on any `Bson` inputs.
 
 ### Using a custom ObjectMapper

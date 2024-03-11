@@ -17,6 +17,7 @@
 package org.mongojack;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.mongodb.client.model.Filters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +55,7 @@ public class TestJsonViews extends MongoDBTestBase {
     public void testDisabledPropertyWithViewAfterUpdate() {
         ObjectWithView obj = new ObjectWithView("id", "normal", "view1", "view2");
         coll.save(obj);
-        coll.replaceOne(DBQuery.is("_id", "id"), obj);
+        coll.replaceOne(Filters.eq("_id", "id"), obj);
         assertThat(coll.findOneById("id").view2).isNull();
     }
 

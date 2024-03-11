@@ -16,6 +16,7 @@
  */
 package org.mongojack;
 
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,8 +40,8 @@ public class TestDBProjection extends MongoDBTestBase {
         o.longs = 20l;
         coll.save(o);
         MockObject result = coll.findOne(
-            DBQuery.empty(),
-            DBProjection.include("string", "integer")
+            Filters.empty(),
+            Projections.include("string", "integer")
         );
         assertThat(result.string).isEqualTo("string");
         assertThat(result.integer).isEqualTo(10);
@@ -53,8 +54,8 @@ public class TestDBProjection extends MongoDBTestBase {
         o.longs = 20l;
         coll.save(o);
         MockObject result = coll.findOne(
-            DBQuery.empty(),
-            DBProjection.exclude("string", "integer")
+            Filters.empty(),
+            Projections.exclude("string", "integer")
         );
         assertNull(result.string);
         assertNull(result.integer);
@@ -67,7 +68,7 @@ public class TestDBProjection extends MongoDBTestBase {
         o.longs = 20l;
         coll.save(o);
         MockObject result = coll.findOne(
-            DBQuery.empty(),
+            Filters.empty(),
             Projections.include("string", "integer")
         );
         assertThat(result.string).isEqualTo("string");
@@ -81,7 +82,7 @@ public class TestDBProjection extends MongoDBTestBase {
         o.longs = 20l;
         coll.save(o);
         MockObject result = coll.findOne(
-            DBQuery.empty(),
+            Filters.empty(),
             Projections.exclude("string", "integer")
         );
         assertNull(result.string);

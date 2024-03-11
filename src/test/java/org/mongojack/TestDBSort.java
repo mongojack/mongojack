@@ -45,30 +45,6 @@ public class TestDBSort extends MongoDBTestBase {
     }
 
     @Test
-    public void testAsc() {
-        assertOrder(coll.find().sort(DBSort.asc("string").asc("integer")), "3",
-            "2", "1");
-    }
-
-    @Test
-    public void testDesc() {
-        assertOrder(coll.find().sort(DBSort.desc("string").desc("integer")),
-            "1", "2", "3");
-    }
-
-    @Test
-    public void testAscDesc() {
-        assertOrder(coll.find().sort(DBSort.asc("string").desc("integer")),
-            "2", "3", "1");
-    }
-
-    @Test
-    public void testDescAsc() {
-        assertOrder(coll.find().sort(DBSort.desc("string").asc("integer")),
-            "1", "3", "2");
-    }
-
-    @Test
     public void testSortsAsc() {
         assertOrder(coll.find().sort(Sorts.ascending("string", "integer")), "3",
             "2", "1");

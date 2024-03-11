@@ -36,7 +36,7 @@ JacksonDBCollection<PojoClass, IdentifierClass> jacksonCollection = JacksonDBCol
 PojoClass pojo = new PojoClass();
 pojo.setIntegerProp(3);
 jacksonCollection.insert(pojo);
-jacksonCollection.updateById(pojo.getId(), DBUpdate.inc("integerProp"));
+jacksonCollection.updateById(pojo.getId(), Updates.inc("integerProp"));
 PojoClass foundPojo = jacksonCollectioncoll.findOneById(pojo.getId());
 ```
 
@@ -49,7 +49,7 @@ JacksonMongoCollection<PojoClass> jacksonCollection = JacksonMongoCollection.bui
 PojoClass pojo = new PojoClass();
 pojo.setIntegerProp(3);
 jacksonCollection.insert(pojo);
-jacksonCollection.updateById(pojo.getId(), DBUpdate.inc("integerProp"));
+jacksonCollection.updateById(pojo.getId(), Updates.inc("integerProp"));
 PojoClass foundPojo = jacksonCollectioncoll.findOneById(pojo.getId());
 ```
 
@@ -63,7 +63,7 @@ MongoCollection<PojoClass> jacksonCollection = JacksonMongoCollection.builder().
 PojoClass pojo = new PojoClass();
 pojo.setIntegerProp(3);
 jacksonCollection.insertOne(pojo);
-jacksonCollection.updateOne(Filters.eq(pojo.getId()), DBUpdate.inc("integerProp"));
+jacksonCollection.updateOne(Filters.eq(pojo.getId()), Updates.inc("integerProp"));
 PojoClass foundPojo = jacksonCollectioncoll.find(Filters.eq(pojo.getId())).first();
 ```
 
@@ -73,9 +73,9 @@ secure that the methods you rely on won't disappear.
 Note that the new class doesn't include a generic key type; this also makes it more interoperable with the underlying Mongo implementations, at the cost
 of some type-safety.
 
-A major change you will note is that many methods on the older class accepted and returned custom classes (DBUpdate, DBCursor), the methods in `JacksonMongoCollection` 
+A major change you will note is that many methods on the older class accepted and returned custom classes (Updates, DBCursor), the methods in `JacksonMongoCollection` 
 accept standard Mongo objects (e.g. Bson), and return standard mongo objects (e.g. FindIterable).  You will find that the functionality of these things are roughly
-the same, and Mongo includes builders that can be used to replace all the (now deprecated) builder classes (e.g. Filters, Updates, Aggregates vs DBQuery, DBUpdate, Aggregation).
+the same, and Mongo includes builders that can be used to replace all the (now deprecated) builder classes (e.g. Filters, Updates, Aggregates vs DBQuery, Updates, Aggregation).
 Again this should improve current and future interoperability with the base Mongo driver.
 
 ### Method / Feature Comparison
@@ -144,21 +144,21 @@ TODO: Write documentation
     public WriteResult<T, K> update(DBObject query, DBObject object,
             boolean upsert, boolean multi, WriteConcern concern)
     public WriteResult<T, K> update(DBQuery.Query query,
-            DBUpdate.Builder update, boolean upsert, boolean multi,
+            Updates.Builder update, boolean upsert, boolean multi,
             WriteConcern concern) throws MongoException {
     public WriteResult<T, K> update(DBQuery.Query query, T object,
             boolean upsert, boolean multi, WriteConcern concern)
     public WriteResult<T, K> update(DBObject query, DBObject object,
             boolean upsert, boolean multi) throws MongoException {
     public WriteResult<T, K> update(DBQuery.Query query,
-            DBUpdate.Builder update, boolean upsert, boolean multi)
+            Updates.Builder update, boolean upsert, boolean multi)
     public WriteResult<T, K> update(DBQuery.Query query, T object,
             boolean upsert, boolean multi) throws MongoException {
     public WriteResult<T, K> update(DBObject query, DBObject object)
-    public WriteResult<T, K> update(DBQuery.Query query, DBUpdate.Builder update)
+    public WriteResult<T, K> update(DBQuery.Query query, Updates.Builder update)
     public WriteResult<T, K> update(DBQuery.Query query, T object)
     public WriteResult<T, K> updateById(K id, T object) throws MongoException {
-    public WriteResult<T, K> updateById(K id, DBUpdate.Builder update)
+    public WriteResult<T, K> updateById(K id, Updates.Builder update)
 ```
 ##### JacksonMongoCollection:
 TODO: Write documentation
@@ -197,19 +197,19 @@ TODO: Write documentation
     public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort,
             boolean remove, T update, boolean returnNew, boolean upsert) {
     public T findAndModify(DBQuery.Query query, DBObject fields, DBObject sort,
-            boolean remove, DBUpdate.Builder update, boolean returnNew,
+            boolean remove, Updates.Builder update, boolean returnNew,
             boolean upsert) {
     public T findAndModify(DBObject query, DBObject fields, DBObject sort,
-            boolean remove, DBUpdate.Builder update, boolean returnNew,
+            boolean remove, Updates.Builder update, boolean returnNew,
             boolean upsert) {
     public T findAndModify(DBObject query, DBObject sort, DBObject update) {
     public T findAndModify(DBObject query, DBObject sort,
-            DBUpdate.Builder update) {
+            Updates.Builder update) {
     public T findAndModify(DBQuery.Query query, DBObject sort,
-            DBUpdate.Builder update) {
+            Updates.Builder update) {
     public T findAndModify(DBObject query, DBObject update) {
-    public T findAndModify(DBObject query, DBUpdate.Builder update) {
-    public T findAndModify(DBQuery.Query query, DBUpdate.Builder update) {
+    public T findAndModify(DBObject query, Updates.Builder update) {
+    public T findAndModify(DBQuery.Query query, Updates.Builder update) {
 ```
 ##### JacksonMongoCollection:
 TODO: Write documentation
