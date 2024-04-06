@@ -115,7 +115,7 @@ public class MongoJackModule extends Module {
         // object templates for querying and
         // partial object retrieving
         context.addSerializers(new MongoJackSerializers(moduleConfiguration));
-        context.addDeserializers(new MongoJackDeserializers());
+        context.addDeserializers(new MongoJackDeserializers(moduleConfiguration));
     }
 
 }
