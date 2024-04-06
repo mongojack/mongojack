@@ -17,6 +17,8 @@
 package org.mongojack.internal;
 
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import org.bson.BsonValue;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 import org.mongojack.MongoJackModuleConfiguration;
 import org.mongojack.MongoJackModuleFeature;
@@ -48,6 +50,9 @@ public class MongoJackSerializers extends SimpleSerializers {
             addSerializer(Instant.class, new MongoJackInstantSerializer());
         }
         addSerializer(UUID.class, new UUIDSerializer());
+        if (moduleConfiguration.isEnabled(MongoJackModuleFeature.ENABLE_BSON_VALUE_SERIALIZATION)) {
+            addSerializer(Bson.class, new BsonSerializer());
+            addSerializer(BsonValue.class, new BsonValueSerializer());
+        }
     }
-
 }

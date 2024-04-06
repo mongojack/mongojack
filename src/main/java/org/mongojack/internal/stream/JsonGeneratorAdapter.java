@@ -5,10 +5,12 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.base.GeneratorBase;
 import com.fasterxml.jackson.core.json.JsonWriteContext;
 import org.bson.BsonBinary;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.UuidRepresentation;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
+import org.mongojack.internal.util.DocumentSerializationUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -160,6 +162,12 @@ public class JsonGeneratorAdapter extends GeneratorBase {
 
     public void writeBsonObjectId(final ObjectId objectId) {
         writer.writeObjectId(objectId);
+    }
+
+    public void writeBsonValue(final BsonValue value) {
+        if (!DocumentSerializationUtils.writeKnownType(value, writer)) {
+            throw new IllegalStateException("Asked to write unknown type " + value.getClass());
+        }
     }
 
     @Override
