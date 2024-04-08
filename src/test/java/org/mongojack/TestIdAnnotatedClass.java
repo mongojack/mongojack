@@ -27,8 +27,9 @@ import org.junit.Test;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.IdProxy;
 
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 
 public class TestIdAnnotatedClass extends MongoDBTestBase {
 
@@ -235,14 +236,6 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
         final SerializationConfig config = om.getSerializationConfig();
         final BeanDescription beanDescription = config.introspect(config.constructType(IdFieldProxyAnnotated.class));
-        beanDescription.findProperties()
-            .forEach(
-                bpd -> {
-                    if (bpd.getPrimaryMember().hasAnnotation(ObjectId.class)) {
-                        System.out.println("Property " + bpd.getName() + " has ObjectId annotation");
-                    }
-                }
-            );
 
         IdFieldProxyAnnotated o = new IdFieldProxyAnnotated();
         JacksonMongoCollection<IdFieldProxyAnnotated> coll = createCollFor(o);
@@ -293,14 +286,6 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
 
         final SerializationConfig config = om.getSerializationConfig();
         final BeanDescription beanDescription = config.introspect(config.constructType(IdFieldProxyAnnotatedSubclass.class));
-        beanDescription.findProperties()
-            .forEach(
-                bpd -> {
-                    if (bpd.getPrimaryMember().hasAnnotation(ObjectId.class)) {
-                        System.out.println("Property " + bpd.getName() + " has ObjectId annotation");
-                    }
-                }
-            );
 
         IdFieldProxyAnnotatedSubclass o = new IdFieldProxyAnnotatedSubclass();
         JacksonMongoCollection<IdFieldProxyAnnotatedSubclass> coll = createCollFor(o);

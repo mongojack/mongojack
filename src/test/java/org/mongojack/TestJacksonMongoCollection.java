@@ -361,7 +361,7 @@ public class TestJacksonMongoCollection extends MongoDBTestBase {
 
         List<MockObject> results = StreamSupport.stream(coll.find(
             new BasicDBObject("string", "ten")
-        ).projection(new BasicDBObject("string", "something not null")).spliterator(), false).collect(Collectors.toList());
+        ).projection(new BasicDBObject("string", true)).spliterator(), false).collect(Collectors.toList());
         assertThat(results, hasSize(2));
         assertThat(results.get(0).integer, nullValue());
         assertThat(results.get(0).string, equalTo("ten"));

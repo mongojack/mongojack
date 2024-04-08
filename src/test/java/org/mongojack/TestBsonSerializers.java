@@ -117,31 +117,26 @@ public class TestBsonSerializers extends MongoDBTestBase {
     public void testAggregationWithFailingList() {
         JacksonMongoCollection<Document> c = getCollection(Document.class, bsonSerializingObjectMapper);
 
-        // still throws an exception, but only because mongo 3.6 doesn't know what a $unionWith is
-        MongoCommandException ex = assertThrows(
-            MongoCommandException.class,
-            () -> c
-                .aggregate(
-                    Arrays.asList(
-                        new Document(
-                            "$unionWith",
-                            new Document("coll", "otherCollection")
-                                .append("pipeline",
-                                    Arrays.asList(
-                                        Aggregates.match(
-                                            Filters.and(
-                                                Filters.eq("a", "a"),
-                                                Filters.eq("a", "c")
-                                            )
+        c
+            .aggregate(
+                Arrays.asList(
+                    new Document(
+                        "$unionWith",
+                        new Document("coll", "otherCollection")
+                            .append("pipeline",
+                                Arrays.asList(
+                                    Aggregates.match(
+                                        Filters.and(
+                                            Filters.eq("a", "a"),
+                                            Filters.eq("a", "c")
                                         )
                                     )
                                 )
-                        )
+                            )
                     )
                 )
-                .into(new ArrayList<>())
-        );
-        assertEquals(40324, ex.getErrorCode());
+            )
+            .into(new ArrayList<>());
     }
 
     @Test

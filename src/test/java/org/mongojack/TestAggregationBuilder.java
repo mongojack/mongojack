@@ -21,7 +21,6 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Sorts;
-import de.flapdoodle.embed.process.collections.Collections;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.Assert;
@@ -37,11 +36,7 @@ import org.mongojack.mock.MockObjectAggregationResult;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -276,7 +271,7 @@ public class TestAggregationBuilder extends MongoDBTestBase {
             "integer",
             Expression.size(Expression.ifNull(
                 Expression.list("simpleList"),
-                Expression.literal(Collections.newArrayList())
+                Expression.literal(Collections.emptyList())
             ))
         );
         final AggregateIterable<MockObjectAggregationResult> aggregate2 = coll.aggregate(pipeline, MockObjectAggregationResult.class);
@@ -291,8 +286,8 @@ public class TestAggregationBuilder extends MongoDBTestBase {
     public void testOperatorExpressions() throws MongoException, ParseException {
         // based on http://docs.mongodb.org/manual/tutorial/aggregation-with-user-preference-data/
         JacksonMongoCollection<User> users = getCollection(User.class);
-        users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Collections.newArrayList("golf", "racquetball")));
-        users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Collections.newArrayList("tennis", "golf", "swimming")));
+        users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Arrays.asList("golf", "racquetball")));
+        users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Arrays.asList("tennis", "golf", "swimming")));
 
         Pipeline<?> pipeline = new Pipeline<>(Project
             .field("month_joined", Expression.month(Expression.date("joined")))
@@ -315,8 +310,8 @@ public class TestAggregationBuilder extends MongoDBTestBase {
     public void testOperatorExpressions2() throws MongoException, ParseException {
         // based on http://docs.mongodb.org/manual/tutorial/aggregation-with-user-preference-data/
         JacksonMongoCollection<User> users = getCollection(User.class);
-        users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Collections.newArrayList("golf", "racquetball")));
-        users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Collections.newArrayList("tennis", "golf", "swimming")));
+        users.insert(new User("jane", ISO_DATE_FORMAT.parse("2011-03-02"), Arrays.asList("golf", "racquetball")));
+        users.insert(new User("joe", ISO_DATE_FORMAT.parse("2012-07-02"), Arrays.asList("tennis", "golf", "swimming")));
 
         final BsonDocument bsonDocument = Aggregates.project(
             Projections.fields(
@@ -330,21 +325,21 @@ public class TestAggregationBuilder extends MongoDBTestBase {
         ).toBsonDocument(User.class, users.getCodecRegistry());
 
         List<Object> results = users.aggregate(
-            Arrays.asList(
-                Aggregates.project(
-                    Projections.fields(
-                        Projections.computed(
-                            "month_joined",
-                            new Document("$month", "$joined")
-                        ),
-                        new Document("name", "$_id"),
-                        Projections.excludeId()
-                    )
+                Arrays.asList(
+                    Aggregates.project(
+                        Projections.fields(
+                            Projections.computed(
+                                "month_joined",
+                                new Document("$month", "$joined")
+                            ),
+                            new Document("name", "$_id"),
+                            Projections.excludeId()
+                        )
+                    ),
+                    Aggregates.sort(Sorts.ascending("month_joined"))
                 ),
-                Aggregates.sort(Sorts.ascending("month_joined"))
-            ),
-            Object.class
-        )
+                Object.class
+            )
             .into(new ArrayList<>());
         Assert.assertEquals(2, results.size());
         Map<String, Object> firstResult = (Map<String, Object>) results.get(0);
