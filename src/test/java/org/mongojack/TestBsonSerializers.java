@@ -1,13 +1,9 @@
 package org.mongojack;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.MongoCommandException;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
-import org.bson.Document;
+import org.bson.*;
 import org.bson.conversions.Bson;
 import org.junit.Test;
 
@@ -140,6 +136,29 @@ public class TestBsonSerializers extends MongoDBTestBase {
     }
 
     @Test
+    public void testAggregationWithNull() {
+        JacksonMongoCollection<Document> c = getCollection(Document.class, bsonSerializingObjectMapper);
+
+        c
+            .aggregate(
+                Arrays.asList(
+                    new Document("$match",
+                        new Document(
+                            "$and",
+                            Arrays.asList(
+                                new Document("receiver",
+                                    new Document("$exists", true)
+                                        .append("$ne", new BsonNull())
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            .into(new ArrayList<>());
+    }
+
+    @Test
     public void testAggregationWithFailingListWithoutCustomObjectMapper() {
         JacksonMongoCollection<Document> c = getCollection(Document.class);
 
@@ -167,7 +186,7 @@ public class TestBsonSerializers extends MongoDBTestBase {
                 .into(new ArrayList<>())
         );
     }
-    
+
     private Map<String, Object> mapOf(String k, Object v) {
         Map<String, Object> map = new HashMap<>();
         map.put(k, v);
