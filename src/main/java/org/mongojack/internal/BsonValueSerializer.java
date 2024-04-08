@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonNull;
 import org.bson.BsonValue;
 import org.mongojack.internal.stream.JsonGeneratorAdapter;
 
@@ -16,7 +17,7 @@ public class BsonValueSerializer extends JsonSerializer<BsonValue> {
 
     @Override
     public void serialize(BsonValue value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        if (value == null) {
+        if (value == null || value instanceof BsonNull) {
             gen.writeNull();
         } else if (value instanceof BsonDocument) {
             bsonMapSerializer.serializeSimpleBsonMap((BsonDocument) value, gen, serializers);

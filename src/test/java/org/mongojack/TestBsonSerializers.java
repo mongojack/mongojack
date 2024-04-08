@@ -3,10 +3,7 @@ package org.mongojack;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
-import org.bson.BsonArray;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
-import org.bson.Document;
+import org.bson.*;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 
@@ -136,6 +133,29 @@ public class TestBsonSerializers extends MongoDBTestBase {
                                     )
                                 )
                             )
+                    )
+                )
+            )
+            .into(new ArrayList<>());
+    }
+
+    @Test
+    public void testAggregationWithNull() {
+        JacksonMongoCollection<Document> c = getCollection(Document.class, bsonSerializingObjectMapper);
+
+        c
+            .aggregate(
+                Arrays.asList(
+                    new Document("$match",
+                        new Document(
+                            "$and",
+                            Arrays.asList(
+                                new Document("receiver",
+                                    new Document("$exists", true)
+                                        .append("$ne", new BsonNull())
+                                )
+                            )
+                        )
                     )
                 )
             )
