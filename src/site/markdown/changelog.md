@@ -1,12 +1,33 @@
 Changelog
 =========
 
+5.0.0
+-----
+_Released 2024.04.09_
+
+* Upgrade to 5.x mongo driver
+* Remove deprecated constructs
+* [Issue #245](https://github.com/mongojack/mongojack/issues/245)
+
+
+4.11.1
+-----
+_Released 2024.04.09_
+
+* [Issue #245](https://github.com/mongojack/mongojack/issues/245)
+
 4.11.0
 -----
 _Released 2024.03.10_
 
 * [Issue #243](https://github.com/mongojack/mongojack/issues/243): Add slf4j to remove `printStacktrace()`
 * Update to 4.11.1 mongo driver
+
+4.8.3
+-----
+_Released 2024.04.09_
+
+* [Issue #245](https://github.com/mongojack/mongojack/issues/245)
 
 4.8.2
 -----

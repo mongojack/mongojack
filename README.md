@@ -7,7 +7,7 @@ a massive head start, making it powerful, performant, and robust.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.mongojack/mongojack)
 
-Snapshots for 5.x are available in Sonatype's snapshot repositories.
+Snapshots, when appropriate, are available in Sonatype's snapshot repositories.
 
 5.x Updates
 -----------
@@ -76,7 +76,7 @@ Quick start
 - Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver.
 - Version 2.5.0 to 2.10.0 are compatible with the 3.x series mongodb-driver using the legacy 3.x series APIs.
 - Version 3.0.0 and later are compatible with versions 3.12.x and later of the mongo driver using mongodb-driver-sync without the legacy APIs.
-- Version 4.N.x+ are compatible with the _matching_ oracle driver, although patch versions are not kept in sync 
+- Version 4.N.x+, 5.N.x are compatible with the _matching_ oracle driver, although patch versions are not kept in sync 
 
 ### Installation
 
@@ -85,16 +85,22 @@ Quick start
 The quickest and easiest way to start using MongoJack is to use one of the standard Java build tools, such as Maven or Gradle.  For example:
 
 Maven:
-
+```xml
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>4.8.0</version>
+      <version>5.0.0</version>
     </dependency>
+```
 
 Gradle:
-
-    implementation 'org.mongojack:mongojack:4.8.0'
+```groovy
+    implementation 'org.mongojack:mongojack:5.0.0'
+```
+or
+```kotlin
+    implementation("org.mongojack:mongojack:5.0.0")
+```
 
 ### Writing code
 
