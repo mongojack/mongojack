@@ -3,11 +3,21 @@ Installation
 
 If you're using maven, simply add the following dependency to your project:
 
+
     <dependency>
         <groupId>org.mongojack</groupId>
         <artifactId>mongojack</artifactId>
         <version>${siteProjectVersion}</version>
     </dependency>
+
+Gradle Groovy DSL:
+
+    implementation 'org.mongojack:mongojack:${siteProjectVersion}'
+
+Gradle Kotlin DSL:
+
+    implementation("org.mongojack:mongojack:${siteProjectVersion}")
+
 
 You can download the dependency directly from here:
 
