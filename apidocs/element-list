@@ -2,7 +2,6 @@ org.mongojack
 org.mongojack.internal
 org.mongojack.internal.object
 org.mongojack.internal.object.document
-org.mongojack.internal.query
 org.mongojack.internal.stream
 org.mongojack.internal.update
 org.mongojack.internal.util

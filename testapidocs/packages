@@ -1,3 +1,6 @@
+org.junit.runner
+org.junit.rules
+org.junit.runners.model
 org.mongojack
 org.mongojack
 org.mongojack
@@ -7,6 +10,13 @@ org.mongojack
 org.mongojack
 org.mongojack
 org.mongojack
+org.mongojack
+org.mongojack.mock
+org.mongojack.mock
+org.mongojack.mock
+org.mongojack.mock
+org.mongojack.mock
+org.mongojack.mock
 org.mongojack
 org.mongojack
 org.mongojack
@@ -14,14 +24,6 @@ org.mongojack
 org.mongojack
 org.mongojack
 org.mongojack.testing
-org.mongojack.testing
-org.mongojack.mock
-org.mongojack.mock
-org.mongojack.mock
-org.mongojack.mock
-org.mongojack.mock
-org.mongojack.mock
-org.mongojack
 org.mongojack
 org.mongojack
 org.mongojack

@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"org.mongojack"},{"l":"org.mongojack.mock"},{"l":"org.mongojack.testing"}]
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"org.junit.rules"},{"l":"org.junit.runner"},{"l":"org.junit.runners.model"},{"l":"org.mongojack"},{"l":"org.mongojack.mock"},{"l":"org.mongojack.testing"}]
