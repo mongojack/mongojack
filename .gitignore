@@ -9,3 +9,4 @@ bin
 .project
 .classpath
 .settings
+.tool-versions
