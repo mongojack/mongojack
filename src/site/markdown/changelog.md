@@ -1,6 +1,13 @@
 Changelog
 =========
 
+5.0.1
+-----
+
+_Released 2024.08.20_
+
+* [Issue #246](https://github.com/mongojack/mongojack/issues/246)
+
 5.0.0
 -----
 _Released 2024.04.09_
