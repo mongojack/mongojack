@@ -17,10 +17,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'MongoJack 5.0.0 Test API'
+'MongoJack 5.0.1 Test API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/rosslodge/code/mongojack/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'MongoJack 5.0.0 Test API'
+'MongoJack 5.0.1 Test API'
