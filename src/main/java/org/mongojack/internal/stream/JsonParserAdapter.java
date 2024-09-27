@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JsonParserAdapter extends ParserBase {
 
@@ -34,7 +35,7 @@ public class JsonParserAdapter extends ParserBase {
 
     protected final PatternCodec patternCodec = new PatternCodec();
 
-    protected final BsonJavaScriptWithScopeCodec withScopeCodec = new BsonJavaScriptWithScopeCodec(new BsonDocumentCodec(MongoClientSettings.getDefaultCodecRegistry()));
+    private final AtomicReference<BsonJavaScriptWithScopeCodec> withScopeCodec = new AtomicReference<>();
 
     protected Object currentValue;
 
@@ -149,7 +150,7 @@ public class JsonParserAdapter extends ParserBase {
                 currentValue = new Symbol(reader.readSymbol());
                 return JsonToken.VALUE_EMBEDDED_OBJECT;
             case JAVASCRIPT_WITH_SCOPE:
-                currentValue = withScopeCodec.decode(reader, DecoderContext.builder().build());
+                currentValue = getWithScopeCodec().decode(reader, DecoderContext.builder().build());
                 return JsonToken.VALUE_EMBEDDED_OBJECT;
             case JAVASCRIPT:
                 currentValue = new BsonJavaScript(reader.readJavaScript());
@@ -382,4 +383,12 @@ public class JsonParserAdapter extends ParserBase {
         return reader.getCurrentBsonType();
     }
 
+    private BsonJavaScriptWithScopeCodec getWithScopeCodec() {
+        return withScopeCodec.updateAndGet((existing) -> {
+            if (existing == null) {
+                return new BsonJavaScriptWithScopeCodec(new BsonDocumentCodec(MongoClientSettings.getDefaultCodecRegistry()));
+            }
+            return existing;
+        });
+    }
 }
