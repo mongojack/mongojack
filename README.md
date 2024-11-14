@@ -76,7 +76,7 @@ Quick start
 - Version 2.3.0 and earlier are compatible only with the 2.x series mongo-java-driver.
 - Version 2.5.0 to 2.10.0 are compatible with the 3.x series mongodb-driver using the legacy 3.x series APIs.
 - Version 3.0.0 and later are compatible with versions 3.12.x and later of the mongo driver using mongodb-driver-sync without the legacy APIs.
-- Version 4.N.x+, 5.N.x are compatible with the _matching_ oracle driver, although patch versions are not kept in sync 
+- Version 4.N.x+, 5.N.x are compatible with the _matching_ MongoDB driver, although patch versions are not kept in sync 
 
 ### Installation
 
