@@ -9,7 +9,7 @@
 '/Users/rosslodge/code/mongojack/src/test/java:/Users/rosslodge/code/mongojack/target/generated-test-sources/test-annotations'
 -author
 -bottom
-'Copyright &#169; 2011&#x2013;2024 <a href="http://www.devbliss.com">devbliss GmbH</a>. All rights reserved.'
+'Copyright &#169; 2011&#x2013;2025 <a href="http://www.devbliss.com">devbliss GmbH</a>. All rights reserved.'
 -charset
 'UTF-8'
 -d
@@ -17,10 +17,10 @@
 -docencoding
 'UTF-8'
 -doctitle
-'MongoJack 5.0.2 Test API'
+'MongoJack 5.0.3 Test API'
 -linkoffline
 'https://docs.oracle.com/en/java/javase/11/docs/api' '/Users/rosslodge/code/mongojack/target/javadoc-bundle-options'
 -use
 -version
 -windowtitle
-'MongoJack 5.0.2 Test API'
+'MongoJack 5.0.3 Test API'
