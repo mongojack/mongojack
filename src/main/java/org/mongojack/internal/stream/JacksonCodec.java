@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import com.fasterxml.jackson.databind.introspect.AnnotatedWithParams;
 import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import org.bson.BsonDecimal128;
 import org.bson.BsonDocument;
@@ -121,9 +123,13 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
         return maybeBpd.<Consumer<BsonObjectId>>map(beanPropertyDefinition -> (bsonObjectId) -> {
             try {
                 if (bsonObjectId != null) {
-                    beanPropertyDefinition.getMutator().setValue(
+                    AnnotatedMember mutator = beanPropertyDefinition.getNonConstructorMutator();
+                    Class<?> rawType = mutator instanceof AnnotatedWithParams ? ((AnnotatedWithParams) mutator).getRawParameterType(0)
+                        : beanPropertyDefinition.getRawPrimaryType();
+
+                    mutator.setValue(
                         t,
-                        extractIdValue(bsonObjectId, beanPropertyDefinition.getRawPrimaryType())
+                        extractIdValue(bsonObjectId, rawType)
                     );
                 }
             } catch (Exception e) {
