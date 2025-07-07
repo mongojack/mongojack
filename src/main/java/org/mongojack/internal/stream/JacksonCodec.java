@@ -124,11 +124,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
         return maybeBpd.<Consumer<BsonObjectId>>map(beanPropertyDefinition -> (bsonObjectId) -> {
             try {
                 if (bsonObjectId != null) {
-                    AnnotatedMember member = beanPropertyDefinition.getSetter();
-                    if (member == null) {
-                        member = beanPropertyDefinition.getMutator();
-                    }
-                    member.setValue(
+                    beanPropertyDefinition.getNonConstructorMutator().setValue(
                         t,
                         extractIdValue(bsonObjectId, beanPropertyDefinition.getRawPrimaryType())
                     );

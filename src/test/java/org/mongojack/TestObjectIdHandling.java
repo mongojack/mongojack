@@ -16,8 +16,7 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.*;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
@@ -537,6 +536,43 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         @Id
         public UUID _id;
 
+    }
+
+    @Test
+    public void testObjectIdWithNoSetterSaved() {
+        ObjectWithConstructorOnlyObjectId object = new ObjectWithConstructorOnlyObjectId(null);
+
+        JacksonMongoCollection<ObjectWithConstructorOnlyObjectId> coll = getCollection(ObjectWithConstructorOnlyObjectId.class);
+
+        coll.insert(object);
+
+        assertThat(object.getId()).isNotNull();
+
+        ObjectWithConstructorOnlyObjectId result = coll.findOne();
+        assertThat(result.getId()).isNotNull();
+    }
+
+    public static class ObjectWithConstructorOnlyObjectId {
+
+        @JsonIgnore
+        private ObjectId id;
+
+        @JsonCreator
+        public ObjectWithConstructorOnlyObjectId(@Id  ObjectId id) {
+            this.id = id;
+        }
+
+        @JsonGetter
+        @Id
+        public ObjectId getId() {
+            return id;
+        }
+
+        @JsonSetter
+        @Id
+        public void setId(ObjectId id) {
+            this.id = id;
+        }
     }
 
 }
