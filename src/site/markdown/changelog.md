@@ -1,6 +1,14 @@
 Changelog
 =========
 
+5.0.3
+-----
+
+_Released 2025.07.07_
+
+* [PR #250](https://github.com/mongojack/mongojack/pull/250): fix kotlin id writing or id writing where constructor parameter ends up as @Id
+
+
 5.0.2
 -----
 
