@@ -3,7 +3,7 @@
 
   <groupId>org.mongojack</groupId>
   <artifactId>mongojack</artifactId>
-  <version>5.0.4-SNAPSHOT</version>
+  <version>5.1.0</version>
   <packaging>bundle</packaging>
 
   <name>MongoJack</name>
@@ -579,7 +579,7 @@
     <url>https://github.com/mongojack/mongojack</url>
     <connection>scm:git://github.com/mongojack/mongojack.git</connection>
     <developerConnection>scm:git:git@github.com:mongojack/mongojack.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>mongojack-5.1.0</tag>
   </scm>
 
   <distributionManagement>
