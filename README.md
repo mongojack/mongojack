@@ -89,17 +89,17 @@ Maven:
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>5.0.0</version>
+      <version>5.1.0</version>
     </dependency>
 ```
 
 Gradle:
 ```groovy
-    implementation 'org.mongojack:mongojack:5.0.0'
+    implementation 'org.mongojack:mongojack:5.1.0'
 ```
 or
 ```kotlin
-    implementation("org.mongojack:mongojack:5.0.0")
+    implementation("org.mongojack:mongojack:5.1.0")
 ```
 
 ### Writing code
