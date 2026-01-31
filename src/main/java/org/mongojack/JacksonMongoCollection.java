@@ -51,6 +51,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -578,6 +579,11 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
     }
 
     @Override
+    public Long getTimeout(TimeUnit timeUnit) {
+        return mongoCollection.getTimeout(timeUnit);
+    }
+
+    @Override
     public <NewTDocument> JacksonMongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
         return new JacksonMongoCollection<>(
             objectMapper,
@@ -641,6 +647,19 @@ public class JacksonMongoCollection<TResult> extends MongoCollectionDecorator<TR
             valueClass,
             type,
             mongoCollection.withReadConcern(readConcern),
+            serializationOptions
+        );
+    }
+
+    @Override
+    public MongoCollection<TResult> withTimeout(long l, TimeUnit timeUnit) {
+        return new JacksonMongoCollection<>(
+            objectMapper,
+            jacksonCodecRegistry,
+            view,
+            valueClass,
+            type,
+            mongoCollection.withTimeout(l, timeUnit),
             serializationOptions
         );
     }

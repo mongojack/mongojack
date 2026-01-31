@@ -8,6 +8,7 @@ import com.mongodb.Function;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -224,6 +225,11 @@ public class FindIterableDecorator<TResult> implements FindIterable<TResult> {
     @Override
     public FindIterable<TResult> allowDiskUse(final Boolean aBoolean) {
         return delegate.allowDiskUse(aBoolean);
+    }
+
+    @Override
+    public FindIterable<TResult> timeoutMode(TimeoutMode timeoutMode) {
+        return delegate.timeoutMode(timeoutMode);
     }
 
     /**

@@ -6,6 +6,7 @@ import com.mongodb.Function;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
@@ -93,6 +94,21 @@ public class DistinctIterableDecorator<TResult> implements DistinctIterable<TRes
     @Override
     public DistinctIterable<TResult> comment(final BsonValue bsonValue) {
         return delegate.comment(bsonValue);
+    }
+
+    @Override
+    public DistinctIterable<TResult> hint(Bson bson) {
+        return delegate.hint(bson);
+    }
+
+    @Override
+    public DistinctIterable<TResult> hintString(String s) {
+        return delegate.hintString(s);
+    }
+
+    @Override
+    public DistinctIterable<TResult> timeoutMode(TimeoutMode timeoutMode) {
+        return delegate.timeoutMode(timeoutMode);
     }
 
     /**

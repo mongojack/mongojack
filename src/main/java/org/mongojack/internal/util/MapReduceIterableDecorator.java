@@ -6,6 +6,7 @@ import com.mongodb.Function;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
@@ -174,6 +175,11 @@ public class MapReduceIterableDecorator<TResult> implements MapReduceIterable<TR
     @Override
     public MapReduceIterable<TResult> collation(final Collation collation) {
         return delegate.collation(collation);
+    }
+
+    @Override
+    public MapReduceIterable<TResult> timeoutMode(TimeoutMode timeoutMode) {
+        return delegate.timeoutMode(timeoutMode);
     }
 
     /**
