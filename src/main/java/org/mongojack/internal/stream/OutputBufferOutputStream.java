@@ -16,7 +16,7 @@
  */
 package org.mongojack.internal.stream;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.io.OutputStream;
 
 import org.bson.io.OutputBuffer;
@@ -33,13 +33,13 @@ public class OutputBufferOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(int b) throws JacksonException {
         outputBuffer.write(b);
         count++;
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(byte[] b, int off, int len) throws JacksonException {
         outputBuffer.write(b, off, len);
         count += len;
     }

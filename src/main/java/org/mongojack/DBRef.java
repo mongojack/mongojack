@@ -49,14 +49,14 @@ public class DBRef<T, K> {
      *
      * @param id   The id of the database reference to construct
      * @param type The type of the object
-     * @throws MongoJsonMappingException If no MongoCollection annotation is found on the type
+     * @throws MongoDatabindException If no MongoCollection annotation is found on the type
      */
-    public DBRef(K id, Class<T> type) throws MongoJsonMappingException {
+    public DBRef(K id, Class<T> type) throws MongoDatabindException {
         this.id = id;
         this.objectClass = type;
         MongoCollection collection = type.getAnnotation(MongoCollection.class);
         if (collection == null) {
-            throw new MongoJsonMappingException("Only types that have the @MongoCollection annotation on them can be used with this constructor");
+            throw new MongoDatabindException("Only types that have the @MongoCollection annotation on them can be used with this constructor");
         }
         this.collectionName = collection.name();
         this.databaseName = null;

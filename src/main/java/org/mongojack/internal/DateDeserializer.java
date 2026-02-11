@@ -16,12 +16,12 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.Date;
 
 /**
@@ -39,8 +39,8 @@ public class DateDeserializer extends StdDeserializer<Date> {
 
     @Override
     public Date deserialize(JsonParser jp, DeserializationContext ctxt)
-        throws IOException {
-        JsonToken token = jp.getCurrentToken();
+        throws JacksonException {
+        JsonToken token = jp.currentToken();
         if (token == JsonToken.VALUE_EMBEDDED_OBJECT) {
             // See if it's a date
             Object date = jp.getEmbeddedObject();

@@ -16,12 +16,12 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
 import com.mongodb.DBRef;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 /**
  * Serialises DBRef objects
@@ -29,21 +29,21 @@ import java.io.IOException;
  * @author James Roper
  * @since 1.2
  */
-public class MongoDBRefSerializer extends JsonSerializer<DBRef> {
+public class MongoDBRefSerializer extends ValueSerializer<DBRef> {
 
     @Override
-    public void serialize(final DBRef value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
+    public void serialize(final DBRef value, final JsonGenerator gen, final SerializationContext serializers) throws JacksonException {
         if (value == null) {
             gen.writeNull();
         } else {
             gen.writeStartObject();
-            gen.writeFieldName("$ref");
+            gen.writeName("$ref");
             gen.writeString(value.getCollectionName());
-            gen.writeFieldName("$id");
-            gen.writeObject(value.getId());
+            gen.writeName("$id");
+            gen.writePOJO(value.getId());
             if (value.getDatabaseName() != null) {
-                gen.writeFieldName("$db");
-                gen.writeObject(value.getDatabaseName());
+                gen.writeName("$db");
+                gen.writePOJO(value.getDatabaseName());
             }
             gen.writeEndObject();
         }

@@ -16,14 +16,14 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.util.TokenBuffer;
 import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.util.TokenBuffer;
 
 /**
  * Safe embedded object serializer.
@@ -31,20 +31,20 @@ import java.io.IOException;
  * When used with BsonObjectGenerator or DBEncoderBsonGenerator, passes values straight through.
  * <p>
  * When used with a {@link TokenBuffer} (as by {@link
- * com.fasterxml.jackson.databind.deser.BeanDeserializer#deserializeWithUnwrapped}),
+ * tools.jackson.databind.deser.BeanDeserializer#deserializeWithUnwrapped}),
  * temporarily clears the TokenBuffer codec before passing the value through,
  * so it will be properly serialized as an embedded object.
  * (Failure to do so would blow up the stack, as the TokenBuffer would
  * pass the object right back to the ObjectMapper.)
  * <p>
- * When used with other JsonSerializers, throws {@link IllegalArgumentException}
+ * When used with other ValueSerializers, throws {@link IllegalArgumentException}
  * with a message that it's designed for use only with BsonObjectGenerator or
  * DBEncoderBsonGenerator or TokenBuffer.
  *
  * @author Kevin D. Keck
  * @since 3.0.4
  */
-public abstract class TransformingEmbeddedObjectSerializer<InputType, TransformedType> extends JsonSerializer<InputType> {
+public abstract class TransformingEmbeddedObjectSerializer<InputType, TransformedType> extends ValueSerializer<InputType> {
 
     protected final boolean writeNullAsNull;
 
@@ -57,12 +57,12 @@ public abstract class TransformingEmbeddedObjectSerializer<InputType, Transforme
     }
 
     protected void writeEmbeddedObject(TransformedType value, JsonGenerator jgen)
-        throws IOException {
+            throws JacksonException {
         if (jgen instanceof DBEncoderBsonGenerator) {
             if (value == null && writeNullAsNull) {
                 jgen.writeNull();
             } else {
-                jgen.writeObject(value);
+                jgen.writePOJO(value);
             }
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
@@ -71,7 +71,7 @@ public abstract class TransformingEmbeddedObjectSerializer<InputType, Transforme
             if (value == null && writeNullAsNull) {
                 buffer.writeNull();
             } else {
-                buffer.writeObject(value);
+                buffer.writePOJO(value);
             }
             buffer.setCodec(codec);
         } else {
@@ -96,9 +96,8 @@ public abstract class TransformingEmbeddedObjectSerializer<InputType, Transforme
 
     @Override
     public void serialize(
-        InputType value, JsonGenerator jgen,
-        SerializerProvider provider
-    ) throws IOException {
+            InputType value, JsonGenerator jgen,
+            SerializationContext provider) throws JacksonException {
         writeEmbeddedObject(transform(value), jgen);
     }
 

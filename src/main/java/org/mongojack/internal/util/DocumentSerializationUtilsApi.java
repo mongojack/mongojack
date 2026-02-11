@@ -16,8 +16,8 @@
  */
 package org.mongojack.internal.util;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
 import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;

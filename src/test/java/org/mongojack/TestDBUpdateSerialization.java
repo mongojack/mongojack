@@ -16,18 +16,18 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonSerialize;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -187,11 +187,11 @@ public class TestDBUpdateSerialization extends MongoDBTestBase {
         public List<String> objectIds;
     }
 
-    public static class FooToBarSerializer extends JsonSerializer<String> {
+    public static class FooToBarSerializer extends ValueSerializer<String> {
         @Override
         public void serialize(String value, JsonGenerator jgen,
-                              SerializerProvider provider) throws IOException,
-            JsonProcessingException {
+                              SerializationContext provider) throws JacksonException,
+            JacksonException {
             if ("foo".equals(value)) {
                 jgen.writeString("bar");
             } else {

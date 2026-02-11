@@ -1,14 +1,16 @@
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.datatype.jsr310.ser.InstantSerializer;
-import org.mongojack.TransformingEmbeddedObjectSerializer;
-
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Date;
+
+import org.mongojack.TransformingEmbeddedObjectSerializer;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.ext.javatime.ser.InstantSerializer;
 
 /**
  * Serialises {@link Instant}s as BSON dates when nanosecond precision is disabled.
@@ -30,8 +32,8 @@ public class MongoJackInstantSerializer extends TransformingEmbeddedObjectSerial
     }
 
     @Override
-    public void serialize(Instant value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
-        if (provider.isEnabled(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)) {
+    public void serialize(Instant value, JsonGenerator jgen, SerializationContext provider) throws JacksonException {
+        if (provider.isEnabled(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS)) {
             defaultSerializer.serialize(value, jgen, provider);
         } else {
             super.serialize(value, jgen, provider);

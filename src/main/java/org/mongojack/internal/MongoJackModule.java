@@ -16,14 +16,17 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.mongojack.MongoJackModuleConfiguration;
 import org.mongojack.MongoJackModuleFeature;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import tools.jackson.core.Version;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JacksonModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.introspect.DefaultAccessorNamingStrategy;
 
 /**
  * The ObjectID serialising module
@@ -31,13 +34,11 @@ import org.mongojack.MongoJackModuleFeature;
  * @author James Roper
  * @since 1.0
  */
-public class MongoJackModule extends Module {
+public class MongoJackModule extends JacksonModule {
 
     public static final MongoJackModuleConfiguration DEFAULT_CONFIGURATION = new MongoJackModuleConfiguration();
 
-    public static final Module DEFAULT_MODULE_INSTANCE = new MongoJackModule();
-
-    public static final Module DEFAULT_JAVA_TIME_MODULE = new JavaTimeModule();
+    public static final JacksonModule DEFAULT_MODULE_INSTANCE = new MongoJackModule();
 
     private final MongoJackModuleConfiguration moduleConfiguration;
 
@@ -75,11 +76,6 @@ public class MongoJackModule extends Module {
      * @return This object mapper (for chaining)
      */
     public static ObjectMapper configure(ObjectMapper objectMapper, MongoJackModuleConfiguration moduleConfiguration) {
-        // register java time module
-        if (moduleConfiguration.isEnabled(MongoJackModuleFeature.REGISTER_JAVA_TIME)) {
-            objectMapper.registerModule(DEFAULT_JAVA_TIME_MODULE);
-        }
-
         if (moduleConfiguration == DEFAULT_CONFIGURATION) {
             objectMapper.registerModule(DEFAULT_MODULE_INSTANCE);
         } else {
@@ -109,7 +105,7 @@ public class MongoJackModule extends Module {
 
     @Override
     public void setupModule(SetupContext context) {
-        MongoAnnotationIntrospector annotationIntrospector = new MongoAnnotationIntrospector(context.getTypeFactory());
+        MongoAnnotationIntrospector annotationIntrospector = new MongoAnnotationIntrospector(context.typeFactory());
         context.insertAnnotationIntrospector(annotationIntrospector);
         // Only include non null properties, this makes it possible to use
         // object templates for querying and

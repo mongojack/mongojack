@@ -17,14 +17,14 @@
 package org.mongojack;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonDeserialize;
+import tools.jackson.databind.annotation.JsonSerialize;
 import com.mongodb.DBRef;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
@@ -34,7 +34,7 @@ import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -435,30 +435,30 @@ public class TestQuerySerialization extends MongoDBTestBase {
         }
     }
 
-    static class PlusTenSerializer extends JsonSerializer<Integer> {
+    static class PlusTenSerializer extends ValueSerializer<Integer> {
         @Override
         public void serialize(
             Integer value, JsonGenerator jgen,
-            SerializerProvider provider
-        ) throws IOException {
+            SerializationContext provider
+        ) throws JacksonException {
             jgen.writeNumber(value + 10);
         }
     }
 
-    static class MinusTenDeserializer extends JsonDeserializer<Integer> {
+    static class MinusTenDeserializer extends ValueDeserializer<Integer> {
         @Override
         public Integer deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException {
+            throws JacksonException {
             return jp.getValueAsInt() - 10;
         }
     }
 
-    static class WrappedStringSerializer extends JsonSerializer<StringWrapper> {
+    static class WrappedStringSerializer extends ValueSerializer<StringWrapper> {
         @Override
         public void serialize(
             StringWrapper value, JsonGenerator jgen,
-            SerializerProvider provider
-        ) throws IOException {
+            SerializationContext provider
+        ) throws JacksonException {
             if (value == null) {
                 jgen.writeNull();
             } else {

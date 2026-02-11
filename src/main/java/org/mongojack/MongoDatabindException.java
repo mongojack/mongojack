@@ -16,9 +16,9 @@
  */
 package org.mongojack;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
+import tools.jackson.databind.DatabindException;
 import com.mongodb.MongoException;
 
 /**
@@ -28,21 +28,21 @@ import com.mongodb.MongoException;
  * @author James Roper
  * @since 1.0
  */
-public class MongoJsonMappingException extends MongoException {
+public class MongoDatabindException extends MongoException {
 
-    public MongoJsonMappingException(String msg) {
+    public MongoDatabindException(String msg) {
         super(msg);
     }
 
-    public MongoJsonMappingException(JsonMappingException e) {
+    public MongoDatabindException(DatabindException e) {
         super("Error mapping BSON to POJOs", e);
     }
 
-    public MongoJsonMappingException(String msg, JsonMappingException e) {
+    public MongoDatabindException(String msg, DatabindException e) {
         super(msg, e);
     }
 
-    public MongoJsonMappingException(String msg, IOException e) {
+    public MongoDatabindException(String msg, JacksonException e) {
         super(msg, e);
     }
 

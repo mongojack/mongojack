@@ -1,6 +1,6 @@
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.mongodb.DBObject;
 import com.mongodb.client.model.mql.MqlValue;
 import org.bson.BsonValue;

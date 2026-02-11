@@ -1,7 +1,8 @@
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mongojack.internal.MongoJackModule;
+
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Can be used by OSGi containers (or anyone else) to configure a custom ObjectMapper instance.  This is necessary

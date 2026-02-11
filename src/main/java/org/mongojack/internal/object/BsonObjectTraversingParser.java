@@ -16,26 +16,30 @@
  */
 package org.mongojack.internal.object;
 
-import com.fasterxml.jackson.core.Base64Variant;
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.core.base.ParserMinimalBase;
-import com.mongodb.BasicDBObject;
-import org.bson.BSONObject;
-import org.mongojack.internal.util.VersionUtils;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.bson.BSONObject;
+import org.mongojack.internal.util.VersionUtils;
+
+import com.mongodb.BasicDBObject;
+
+import tools.jackson.core.Base64Variant;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.core.TokenStreamLocation;
+import tools.jackson.core.Version;
+import tools.jackson.core.base.ParserMinimalBase;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.core.io.IOContext;
+
 /**
  * Parses a BSONObject by traversing it. This class was copied from
- * {@link com.fasterxml.jackson.databind.node.TreeTraversingParser} and then
+ * {@link tools.jackson.databind.node.TreeTraversingParser} and then
  * adapted to be for BSONObject's, rather than JsonNode's.
  * <p>
  * While decoding by the cursor uses DBDecoderBsonParser, there are still things
@@ -96,7 +100,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
             nextToken();
             nextToken();
             nextToken();
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             // Ignore
         }
     }
@@ -138,7 +142,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      */
 
     @Override
-    public void close() throws IOException {
+    public void close() throws JacksonException {
         if (!closed) {
             closed = true;
             nodeCursor = null;
@@ -153,7 +157,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      */
 
     @Override
-    public JsonToken nextToken() throws IOException {
+    public JsonToken nextToken() throws JacksonException {
         if (nextToken != null) {
             _currToken = nextToken;
             nextToken = null;
@@ -165,13 +169,13 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
             // minor optimization: empty containers can be skipped
             if (!nodeCursor.currentHasChildren()) {
                 _currToken = (_currToken == JsonToken.START_OBJECT) ? JsonToken.END_OBJECT
-                    : JsonToken.END_ARRAY;
+                        : JsonToken.END_ARRAY;
                 return _currToken;
             }
             nodeCursor = nodeCursor.iterateChildren();
             _currToken = nodeCursor.nextToken();
             if (_currToken == JsonToken.START_OBJECT
-                || _currToken == JsonToken.START_ARRAY) {
+                    || _currToken == JsonToken.START_ARRAY) {
                 startContainer = true;
             }
             return _currToken;
@@ -185,7 +189,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
         _currToken = nodeCursor.nextToken();
         if (_currToken != null) {
             if (_currToken == JsonToken.START_OBJECT
-                || _currToken == JsonToken.START_ARRAY) {
+                    || _currToken == JsonToken.START_ARRAY) {
                 startContainer = true;
             }
             return _currToken;
@@ -197,7 +201,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     }
 
     @Override
-    public JsonParser skipChildren() throws IOException {
+    public JsonParser skipChildren() throws JacksonException {
         if (_currToken == JsonToken.START_OBJECT) {
             startContainer = false;
             _currToken = JsonToken.END_OBJECT;
@@ -220,23 +224,23 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      */
 
     @Override
-    public String getCurrentName() {
-        return (nodeCursor == null) ? null : nodeCursor.getCurrentName();
+    public String currentName() {
+        return (nodeCursor == null) ? null : nodeCursor.currentName();
     }
 
     @Override
-    public JsonStreamContext getParsingContext() {
+    public TokenStreamContext streamReadContext() {
         return nodeCursor;
     }
 
     @Override
-    public JsonLocation getTokenLocation() {
-        return JsonLocation.NA;
+    public TokenStreamLocation currentTokenLocation() {
+        return TokenStreamLocation.NA;
     }
 
     @Override
-    public JsonLocation getCurrentLocation() {
-        return JsonLocation.NA;
+    public TokenStreamLocation currentLocation() {
+        return TokenStreamLocation.NA;
     }
 
     /*
@@ -252,8 +256,8 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
         }
         // need to separate handling a bit...
         switch (_currToken) {
-            case FIELD_NAME:
-                return nodeCursor.getCurrentName();
+            case PROPERTY_NAME:
+                return nodeCursor.currentName();
             case VALUE_STRING:
             case VALUE_NUMBER_INT:
             case VALUE_NUMBER_FLOAT:
@@ -265,24 +269,18 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     }
 
     @Override
-    public char[] getTextCharacters() throws IOException {
+    public char[] getTextCharacters() throws JacksonException {
         return getText().toCharArray();
     }
 
     @Override
-    public int getTextLength() throws IOException {
+    public int getTextLength() throws JacksonException {
         return getText().length();
     }
 
     @Override
-    public int getTextOffset() throws IOException {
+    public int getTextOffset() throws JacksonException {
         return 0;
-    }
-
-    @Override
-    public boolean hasTextCharacters() {
-        // generally we do not have efficient access as char[], hence:
-        return false;
     }
 
     /*
@@ -291,10 +289,10 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      * /**********************************************************
      */
 
-    // public byte getByteValue() throws IOException
+    // public byte getByteValue() throws JacksonException
 
     @Override
-    public NumberType getNumberType() throws IOException {
+    public NumberType getNumberType() throws JacksonException {
         Object n = currentNode();
         if (n instanceof Integer) {
             return NumberType.INT;
@@ -309,12 +307,12 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
         } else if (n instanceof Long) {
             return NumberType.LONG;
         } else {
-            throw _constructError(n + " is not a number");
+            throw _constructReadException(n + " is not a number");
         }
     }
 
     @Override
-    public BigInteger getBigIntegerValue() throws IOException {
+    public BigInteger getBigIntegerValue() throws JacksonException {
         Number n = currentNumericNode();
         if (n instanceof BigInteger) {
             return (BigInteger) n;
@@ -324,7 +322,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     }
 
     @Override
-    public BigDecimal getDecimalValue() throws IOException {
+    public BigDecimal getDecimalValue() throws JacksonException {
         Number n = currentNumericNode();
         if (n instanceof BigDecimal) {
             return (BigDecimal) n;
@@ -334,37 +332,37 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     }
 
     @Override
-    public double getDoubleValue() throws IOException {
+    public double getDoubleValue() throws JacksonException {
         return currentNumericNode().doubleValue();
     }
 
     @Override
-    public float getFloatValue() throws IOException {
+    public float getFloatValue() throws JacksonException {
         return currentNumericNode().floatValue();
     }
 
     @Override
-    public long getLongValue() throws IOException {
+    public long getLongValue() throws JacksonException {
         return currentNumericNode().longValue();
     }
 
     @Override
-    public int getIntValue() throws IOException {
+    public int getIntValue() throws JacksonException {
 
         return currentNumericNode().intValue();
     }
 
     @Override
-    public Number getNumberValue() throws IOException {
+    public Number getNumberValue() throws JacksonException {
         return currentNumericNode();
     }
 
-    private Number currentNumericNode() throws JsonParseException {
+    private Number currentNumericNode() throws StreamReadException {
         Object n = currentNode();
         if (n instanceof Number) {
             return (Number) n;
         } else {
-            throw _constructError(n + " is not a number");
+            throw _constructReadException(n + " is not a number");
         }
     }
 
@@ -375,7 +373,7 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      */
 
     @Override
-    public byte[] getBinaryValue(Base64Variant b64variant) throws IOException {
+    public byte[] getBinaryValue(Base64Variant b64variant) throws JacksonException {
         Object n = currentNode();
         if (n instanceof byte[]) {
             return (byte[]) n;
@@ -386,18 +384,13 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     }
 
     @Override
-    public Object getEmbeddedObject() throws IOException {
+    public Object getEmbeddedObject() throws JacksonException {
         return currentNode();
     }
 
     @Override
-    protected void _handleEOF() throws JsonParseException {
+    protected void _handleEOF() throws StreamReadException {
         // There is no EOF?
-    }
-
-    @Override
-    public void overrideCurrentName(String name) {
-        // Hmm... do nothing?
     }
 
     /*

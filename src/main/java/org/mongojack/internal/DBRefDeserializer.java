@@ -16,15 +16,15 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ValueDeserializer;
 import org.mongojack.DBRef;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 /**
  * Deserializer for DBRefs
@@ -32,18 +32,18 @@ import java.io.IOException;
  * @author James Roper
  * @since 1.2
  */
-public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
+public class DBRefDeserializer<T, K> extends ValueDeserializer<DBRef> {
 
     private final JavaType type;
     private final JavaType keyType;
-    private final JsonDeserializer<K> keyDeserializer;
+    private final ValueDeserializer<K> keyDeserializer;
 
     public DBRefDeserializer(JavaType type, JavaType keyType) {
         this(type, keyType, null);
     }
 
     public DBRefDeserializer(JavaType type, JavaType keyType,
-            JsonDeserializer<K> keyDeserializer) {
+            ValueDeserializer<K> keyDeserializer) {
         this.type = type;
         this.keyType = keyType;
         this.keyDeserializer = keyDeserializer;
@@ -51,11 +51,11 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
 
     @Override
     public DBRef deserialize(JsonParser jp, DeserializationContext ctxt)
-            throws IOException, JsonProcessingException {
+            throws JacksonException, JacksonException {
         K id = null;
         String collectionName = null;
         String databaseName = null;
-        JsonToken token = jp.getCurrentToken();
+        JsonToken token = jp.currentToken();
         if (token == JsonToken.VALUE_NULL) {
             return null;
         }
@@ -78,15 +78,15 @@ public class DBRefDeserializer<T, K> extends JsonDeserializer<DBRef> {
         } else if (token == JsonToken.START_OBJECT) {
             token = jp.nextValue();
             while (token != JsonToken.END_OBJECT) {
-                if (jp.getCurrentName().equals("$id")) {
+                if (jp.currentName().equals("$id")) {
                     if (keyDeserializer != null) {
                         id = keyDeserializer.deserialize(jp, ctxt);
                     } else {
                         id = (K) jp.getEmbeddedObject();
                     }
-                } else if (jp.getCurrentName().equals("$ref")) {
+                } else if (jp.currentName().equals("$ref")) {
                     collectionName = jp.getText();
-                } else if (jp.getCurrentName().equals("$db")) {
+                } else if (jp.currentName().equals("$db")) {
                     databaseName = jp.getText();
                 } else {
                     // Ignore the rest

@@ -1,16 +1,17 @@
 package org.mongojack.internal.stream;
 
-import com.fasterxml.jackson.core.io.IOContext;
-import com.fasterxml.jackson.core.util.BufferRecycler;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
+
 import org.bson.AbstractBsonReader;
 import org.bson.BsonReader;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 
-import java.io.IOException;
-import java.io.InputStream;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.io.ContentReference;
+import tools.jackson.core.io.IOContext;
+import tools.jackson.databind.ObjectMapper;
 
 public class JacksonDecoder<T> implements Decoder<T> {
 

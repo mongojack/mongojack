@@ -16,18 +16,23 @@
  */
 package org.mongojack.internal.stream;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.mongodb.DBRef;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.UUID;
+
 import org.bson.BsonBinary;
 import org.bson.BsonWriter;
 import org.bson.UuidRepresentation;
 import org.bson.types.ObjectId;
 import org.mongojack.internal.util.DocumentSerializationUtils;
 
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.UUID;
+import com.mongodb.DBRef;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.ObjectWriteContext;
+import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.core.io.IOContext;
 
 /**
  * BsonGenerator that adds a bit of functionality specific to DBEncoding to the
@@ -44,24 +49,26 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
     }
 
     @Override
-    protected void _writeSimpleObject(Object value) throws IOException {
-        if (value instanceof Date) {
+    public JsonGenerator writePOJO(Object value) throws JacksonException {
+        if (value == null) {
+            writeNull();
+        } else if (value instanceof Date) {
             writer.writeDateTime(((Date) value).getTime());
         } else if (value instanceof Calendar) {
             writer.writeDateTime(((Calendar) value).getTime().getTime());
         } else if (value instanceof ObjectId) {
             writeBsonObjectId((ObjectId) value);
         } else if (value instanceof UUID) {
-            writer.writeBinaryData(new BsonBinary((UUID)value, uuidRepresentation));
+            writer.writeBinaryData(new BsonBinary((UUID) value, uuidRepresentation));
         } else if (value instanceof DBRef) {
             DBRef dbRef = (DBRef) value;
             writeStartObject();
-            writeFieldName("$ref");
+            writeName("$ref");
             writeString(dbRef.getCollectionName());
-            writeFieldName("$id");
-            writeObject(dbRef.getId());
+            writeName("$id");
+            writePOJO(dbRef.getId());
             if (dbRef.getDatabaseName() != null) {
-                writeFieldName("$db");
+                writeName("$db");
                 writeString(dbRef.getDatabaseName());
             }
             writeEndObject();
@@ -70,5 +77,6 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
                 super._writeSimpleObject(value);
             }
         }
+        return this;
     }
 }

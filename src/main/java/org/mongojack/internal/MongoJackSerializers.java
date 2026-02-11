@@ -16,7 +16,7 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import tools.jackson.databind.module.SimpleSerializers;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;

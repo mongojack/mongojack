@@ -16,18 +16,19 @@
  */
 package org.mongojack.internal;
 
+import java.lang.reflect.Type;
+
 import org.mongojack.DBRef;
 import org.mongojack.ObjectId;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.introspect.Annotated;
-import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
-import com.fasterxml.jackson.databind.introspect.NopAnnotationIntrospector;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.databind.PropertyName;
-
-import java.lang.reflect.Type;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.PropertyName;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.cfg.MapperConfig;
+import tools.jackson.databind.introspect.Annotated;
+import tools.jackson.databind.introspect.AnnotatedMethod;
+import tools.jackson.databind.introspect.NopAnnotationIntrospector;
+import tools.jackson.databind.type.TypeFactory;
 
 /**
  * Annotation introspector that supports @ObjectId's
@@ -44,7 +45,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
 
     // Handling of javax.persistence.Id and jakarta.persistence.Id
     @Override
-    public PropertyName findNameForDeserialization(Annotated a) {
+    public PropertyName findNameForDeserialization(MapperConfig<?> cfg, Annotated a) {
 
         String rawName = findPropertyName(a);
         if (rawName != null) {
@@ -54,7 +55,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     }
 
     @Override
-    public PropertyName findNameForSerialization(Annotated a) {
+    public PropertyName findNameForSerialization(MapperConfig<?> cfg, Annotated a) {
 
         String rawName = findPropertyName(a);
         if (rawName != null) {
@@ -79,7 +80,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
 
     // Handling of ObjectId annotated properties
     @Override
-    public Object findSerializer(Annotated am) {
+    public Object findSerializer(MapperConfig<?> cfg, Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
             return ObjectIdSerializer.class;
         }
@@ -87,7 +88,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     }
 
     @Override
-    public Object findDeserializer(Annotated am) {
+    public Object findDeserializer(MapperConfig<?> cfg, Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
             return findObjectIdDeserializer(typeFactory.constructType(getTypeForAnnotated(am)));
         }
@@ -95,7 +96,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
     }
 
     @Override
-    public JsonDeserializer findContentDeserializer(Annotated am) {
+    public ValueDeserializer findContentDeserializer(MapperConfig<?> cfg, Annotated am) {
         if (am.hasAnnotation(ObjectId.class)) {
             JavaType type = typeFactory.constructType(getTypeForAnnotated(am));
             if (type.isCollectionLikeType()) {
@@ -107,7 +108,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
         return null;
     }
 
-    public JsonDeserializer findObjectIdDeserializer(JavaType type) {
+    public ValueDeserializer findObjectIdDeserializer(JavaType type) {
         if (type.getRawClass() == String.class) {
             return new ObjectIdDeserializers.ToStringDeserializer();
         } else if (type.getRawClass() == byte[].class) {
@@ -125,7 +126,7 @@ public class MongoAnnotationIntrospector extends NopAnnotationIntrospector {
             } else {
                 dbRefType = type;
             }
-            JsonDeserializer keyDeserializer = findObjectIdDeserializer(dbRefType
+            ValueDeserializer keyDeserializer = findObjectIdDeserializer(dbRefType
                     .containedType(1));
             return new DBRefDeserializer(dbRefType.containedType(0),
                     dbRefType.containedType(1), keyDeserializer);

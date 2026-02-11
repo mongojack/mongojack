@@ -1,6 +1,6 @@
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.cfg.ConfigFeature;
+import tools.jackson.databind.cfg.ConfigFeature;
 
 public enum MongoJackModuleFeature implements ConfigFeature {
 
@@ -23,7 +23,7 @@ public enum MongoJackModuleFeature implements ConfigFeature {
     /**
      * Serialises {@link java.time.Instant}s as BSON dates when nanosecond precision is disabled.
      *
-     * @see com.fasterxml.jackson.databind.SerializationFeature#WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS
+     * @see tools.jackson.databind.SerializationFeature#WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS
      */
     WRITE_INSTANT_AS_BSON_DATE(false),
 

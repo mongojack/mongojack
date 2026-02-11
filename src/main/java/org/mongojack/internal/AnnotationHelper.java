@@ -15,9 +15,11 @@
  */
 package org.mongojack.internal;
 
+import java.lang.annotation.Annotation;
+
 import org.mongojack.Id;
 
-import com.fasterxml.jackson.databind.introspect.Annotated;
+import tools.jackson.databind.introspect.Annotated;
 
 /**
  * Helper to deal with annotations.
@@ -26,9 +28,9 @@ import com.fasterxml.jackson.databind.introspect.Annotated;
  */
 public class AnnotationHelper {
 
-    private static final Class<?> JAVAX_PERSIST_ID_CLASS = initPersistIdClass("javax.persistence.Id");
-    private static final Class<?> JAKARTA_PERSIST_ID_CLASS = initPersistIdClass("jakarta.persistence.Id");
-    private static final Class<?> BSON_PERSIST_ID_CLASS = initPersistIdClass("org.bson.codecs.pojo.annotations.BsonId");
+    private static final Class<? extends Annotation> JAVAX_PERSIST_ID_CLASS = initPersistIdClass("javax.persistence.Id");
+    private static final Class<? extends Annotation> JAKARTA_PERSIST_ID_CLASS = initPersistIdClass("jakarta.persistence.Id");
+    private static final Class<? extends Annotation> BSON_PERSIST_ID_CLASS = initPersistIdClass("org.bson.codecs.pojo.annotations.BsonId");
 
     private AnnotationHelper() {
         super();
@@ -36,14 +38,14 @@ public class AnnotationHelper {
 
     public static boolean hasIdAnnotation(Annotated annotated) {
         return annotated.hasAnnotation(Id.class) ||
-            (JAVAX_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAVAX_PERSIST_ID_CLASS)) ||
-            (JAKARTA_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAKARTA_PERSIST_ID_CLASS))||
-            (BSON_PERSIST_ID_CLASS != null && annotated.hasAnnotation(BSON_PERSIST_ID_CLASS));
+                (JAVAX_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAVAX_PERSIST_ID_CLASS)) ||
+                (JAKARTA_PERSIST_ID_CLASS != null && annotated.hasAnnotation(JAKARTA_PERSIST_ID_CLASS)) ||
+                (BSON_PERSIST_ID_CLASS != null && annotated.hasAnnotation(BSON_PERSIST_ID_CLASS));
     }
 
-    private static Class<?> initPersistIdClass(String className) {
+    private static Class<? extends Annotation> initPersistIdClass(String className) {
         try {
-            return Class.forName(className);
+            return (Class<? extends Annotation>) Class.forName(className);
         } catch (ClassNotFoundException e) {
             return null; // javax or jakarta persist @Id will not be supported
         }

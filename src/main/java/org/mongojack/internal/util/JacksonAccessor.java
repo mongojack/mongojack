@@ -16,19 +16,18 @@
  */
 package org.mongojack.internal.util;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
-import com.fasterxml.jackson.databind.ser.impl.ObjectIdWriter;
-import com.fasterxml.jackson.databind.ser.std.BeanSerializerBase;
-
-import java.io.IOException;
 import java.util.Set;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.ser.BeanPropertyWriter;
+import tools.jackson.databind.ser.bean.BeanSerializerBase;
+import tools.jackson.databind.ser.impl.ObjectIdWriter;
+import tools.jackson.databind.util.NameTransformer;
 
 /**
  * Accesses things in Jackson that usually aren't accessible. Here be dragons.
@@ -43,11 +42,6 @@ public class JacksonAccessor {
 
         @Override
         public BeanSerializerBase withObjectIdWriter(final ObjectIdWriter objectIdWriter) {
-            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
-        }
-
-        @Override
-        protected BeanSerializerBase withIgnorals(final Set<String> toIgnore) {
             throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
         }
 
@@ -70,7 +64,12 @@ public class JacksonAccessor {
         }
 
         @Override
-        public void serialize(final Object bean, final JsonGenerator gen, final SerializerProvider provider) throws IOException {
+        public void serialize(final Object bean, final JsonGenerator gen, final SerializationContext provider) throws JacksonException {
+            throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
+        }
+
+        @Override
+        public ValueSerializer<Object> unwrappingSerializer(NameTransformer unwrapper) {
             throw new IllegalStateException("LocalBeanSerializer should never escape confinement");
         }
 
@@ -80,13 +79,12 @@ public class JacksonAccessor {
 
     }
 
-    public static JsonSerializer<?> findJsonSerializer(
-        SerializerProvider serializerProvider,
-        BeanSerializerBase serializer,
-        String propertyName
-    ) {
+    public static ValueSerializer<?> findValueSerializer(
+            SerializationContext serializerProvider,
+            BeanSerializerBase serializer,
+            String propertyName) {
         BeanPropertyWriter writer = findPropertyWriterByName(propertyName, new LocalBeanSerializer(serializer).getProps());
-        JsonSerializer<?> foundSerializer = null;
+        ValueSerializer<?> foundSerializer = null;
         if (writer != null) {
             foundSerializer = writer.getSerializer();
             if (foundSerializer == null) {
@@ -105,33 +103,20 @@ public class JacksonAccessor {
         return null;
     }
 
-    public static SerializerProvider getSerializerProvider(
-        ObjectMapper objectMapper
-    ) {
-        DefaultSerializerProvider serializerProvider = (DefaultSerializerProvider) objectMapper
-            .getSerializerProvider();
-        return serializerProvider.createInstance(
-            objectMapper.getSerializationConfig(),
-            objectMapper.getSerializerFactory()
-        );
-    }
-
-    public static JsonSerializer findValueSerializer(
-        SerializerProvider serializerProvider, JavaType javaType
-    ) {
+    public static ValueSerializer findValueSerializer(
+            SerializationContext serializerProvider, JavaType javaType) {
         try {
-            return serializerProvider.findValueSerializer(javaType, null);
-        } catch (JsonMappingException e) {
+            return serializerProvider.findValueSerializer(javaType);
+        } catch (DatabindException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static JsonSerializer findValueSerializer(
-        SerializerProvider serializerProvider, Class clazz
-    ) {
+    public static ValueSerializer findValueSerializer(
+            SerializationContext serializerProvider, Class clazz) {
         try {
-            return serializerProvider.findValueSerializer(clazz, null);
-        } catch (JsonMappingException e) {
+            return serializerProvider.findValueSerializer(clazz);
+        } catch (DatabindException e) {
             throw new RuntimeException(e);
         }
     }

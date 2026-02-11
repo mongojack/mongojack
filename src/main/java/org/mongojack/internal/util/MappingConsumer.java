@@ -1,10 +1,10 @@
 package org.mongojack.internal.util;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 @FunctionalInterface
 public interface MappingConsumer<T> {
 
-    void accept(T t) throws IOException;
+    void accept(T t) throws JacksonException;
 
 }

@@ -16,13 +16,13 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import com.mongodb.client.model.Filters;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import com.fasterxml.jackson.annotation.JsonView;
+import com.mongodb.client.model.Filters;
 
 public class TestJsonViews extends MongoDBTestBase {
 

@@ -27,8 +27,8 @@ import org.bson.BSONObject;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.core.JsonToken;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.core.JsonToken;
 import com.mongodb.DBRef;
 
 /**
@@ -37,7 +37,7 @@ import com.mongodb.DBRef;
  * @author James Roper
  * @since 1.0
  */
-abstract class DocumentObjectCursor extends JsonStreamContext {
+abstract class DocumentObjectCursor extends TokenStreamContext {
     /**
      * Parent cursor of this cursor, if any; null for root cursors.
      */
@@ -57,7 +57,7 @@ abstract class DocumentObjectCursor extends JsonStreamContext {
     }
 
     @Override
-    public abstract String getCurrentName();
+    public abstract String currentName();
 
     public abstract JsonToken nextToken();
 
@@ -106,12 +106,12 @@ abstract class DocumentObjectCursor extends JsonStreamContext {
         Object currentNode;
 
         public ArrayCursor(Iterable n, DocumentObjectCursor p) {
-            super(JsonStreamContext.TYPE_ARRAY, p);
+            super(TokenStreamContext.TYPE_ARRAY, p);
             contents = n.iterator();
         }
 
         @Override
-        public String getCurrentName() {
+        public String currentName() {
             return null;
         }
 
@@ -147,14 +147,14 @@ abstract class DocumentObjectCursor extends JsonStreamContext {
         boolean needField;
 
         public ObjectCursor(Document object, DocumentObjectCursor p) {
-            super(JsonStreamContext.TYPE_OBJECT, p);
+            super(TokenStreamContext.TYPE_OBJECT, p);
             this.object = object;
             fields = object.keySet().iterator();
             needField = true;
         }
 
         @Override
-        public String getCurrentName() {
+        public String currentName() {
             return currentFieldName;
         }
 
@@ -168,7 +168,7 @@ abstract class DocumentObjectCursor extends JsonStreamContext {
                 }
                 needField = false;
                 currentFieldName = fields.next();
-                return JsonToken.FIELD_NAME;
+                return JsonToken.PROPERTY_NAME;
             }
             needField = true;
             return getToken(object.get(currentFieldName));

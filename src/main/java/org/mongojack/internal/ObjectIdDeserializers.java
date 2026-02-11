@@ -16,14 +16,14 @@
  */
 package org.mongojack.internal;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 import org.bson.types.ObjectId;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.mongodb.DBRef;
 
 /**
@@ -34,10 +34,10 @@ import com.mongodb.DBRef;
  */
 public class ObjectIdDeserializers {
 
-    public static class ToStringDeserializer extends JsonDeserializer<String> {
+    public static class ToStringDeserializer extends ValueDeserializer<String> {
         @Override
         public String deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
+                throws JacksonException, JacksonException {
             Object object = jp.getEmbeddedObject();
             if (object == null) {
                 return null;
@@ -60,10 +60,10 @@ public class ObjectIdDeserializers {
     }
 
     public static class ToByteArrayDeserializer extends
-            JsonDeserializer<byte[]> {
+            ValueDeserializer<byte[]> {
         @Override
         public byte[] deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
+                throws JacksonException, JacksonException {
             Object object = jp.getEmbeddedObject();
             if (object == null) {
                 return null;
@@ -86,10 +86,10 @@ public class ObjectIdDeserializers {
     }
 
     public static class ToObjectIdDeserializer extends
-            JsonDeserializer<ObjectId> {
+            ValueDeserializer<ObjectId> {
         @Override
         public ObjectId deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException, JsonProcessingException {
+                throws JacksonException, JacksonException {
             Object object = jp.getEmbeddedObject();
             if (object == null) {
                 return null;

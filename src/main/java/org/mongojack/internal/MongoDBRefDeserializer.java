@@ -16,13 +16,13 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 import com.mongodb.DBRef;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 
 /**
@@ -31,28 +31,28 @@ import java.io.IOException;
  * @author James Roper
  * @since 1.2
  */
-public class MongoDBRefDeserializer extends JsonDeserializer<DBRef> {
+public class MongoDBRefDeserializer extends ValueDeserializer<DBRef> {
 
     @Override
-    public DBRef deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        if (jp.getCurrentToken() == JsonToken.VALUE_NULL) {
+    public DBRef deserialize(JsonParser jp, DeserializationContext ctxt) throws JacksonException {
+        if (jp.currentToken() == JsonToken.VALUE_NULL) {
             return null;
         }
-        if (jp.getCurrentToken() == JsonToken.VALUE_EMBEDDED_OBJECT) {
+        if (jp.currentToken() == JsonToken.VALUE_EMBEDDED_OBJECT) {
             Object object = jp.getEmbeddedObject();
             if (object instanceof  DBRef) {
                 return (DBRef)object;
             } else {
                 throw ctxt.instantiationException(DBRef.class, "Don't know what to do with embedded object: " + object);
             }
-        } else if (jp.getCurrentToken() == JsonToken.START_OBJECT) {
+        } else if (jp.currentToken() == JsonToken.START_OBJECT) {
             Object id = null;
             String collectionName = null;
             String databaseName = null;
             while (jp.nextValue() != JsonToken.END_OBJECT) {
-                switch (jp.getCurrentName()) {
+                switch (jp.currentName()) {
                     case "$id":
-                        switch (jp.getCurrentToken()) {
+                        switch (jp.currentToken()) {
                             case VALUE_EMBEDDED_OBJECT:
                                 id = jp.getEmbeddedObject();
                                 break;

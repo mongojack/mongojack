@@ -1,6 +1,6 @@
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import org.bson.UuidRepresentation;

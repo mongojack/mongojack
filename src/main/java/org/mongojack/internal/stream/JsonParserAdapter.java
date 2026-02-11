@@ -1,14 +1,10 @@
 package org.mongojack.internal.stream;
 
-import com.fasterxml.jackson.core.Base64Variant;
-import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.base.ParserBase;
-import com.fasterxml.jackson.core.io.IOContext;
-import com.mongodb.MongoClientSettings;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.bson.AbstractBsonReader;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
@@ -20,16 +16,27 @@ import org.bson.codecs.BsonJavaScriptWithScopeCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.PatternCodec;
 import org.bson.types.Symbol;
+import org.mongojack.internal.MongoJackModule;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicReference;
+import com.mongodb.MongoClientSettings;
+
+import tools.jackson.core.Base64Variant;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.StreamReadFeature;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.core.TokenStreamLocation;
+import tools.jackson.core.Version;
+import tools.jackson.core.base.ParserBase;
+import tools.jackson.core.exc.InputCoercionException;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.core.io.ContentReference;
+import tools.jackson.core.io.IOContext;
+import tools.jackson.core.util.SimpleStreamReadContext;
 
 public class JsonParserAdapter extends ParserBase {
-
-    protected ObjectCodec _codec;
 
     protected final AbstractBsonReader reader;
 
@@ -44,10 +51,10 @@ public class JsonParserAdapter extends ParserBase {
     /**
      * Constructs a new parser
      *
-     * @param ctxt         the Jackson IO context
+     * @param ctxt the Jackson IO context
      * @param jsonFeatures bit flag composed of bits that indicate which
-     *                     {@link com.fasterxml.jackson.core.JsonParser.Feature}s are enabled.
-     * @param reader       Bson reader to read from
+     *            {@link tools.jackson.core.JsonParser.Feature}s are enabled.
+     * @param reader Bson reader to read from
      */
     public JsonParserAdapter(IOContext ctxt, int jsonFeatures, AbstractBsonReader reader, final UuidRepresentation uuidRepresentation) {
         super(ctxt, jsonFeatures);
@@ -67,18 +74,18 @@ public class JsonParserAdapter extends ParserBase {
 
     @Override
     public void close() {
-        if (isEnabled(JsonParser.Feature.AUTO_CLOSE_SOURCE)) {
+        if (isEnabled(StreamReadFeature.AUTO_CLOSE_SOURCE)) {
             reader.close();
         }
         _closed = true;
     }
 
     @Override
-    public JsonToken nextToken() throws IOException {
+    public JsonToken nextToken() throws JacksonException {
         return _currToken = _nextToken();
     }
 
-    private JsonToken _nextToken() throws IOException {
+    private JsonToken _nextToken() throws JacksonException {
         currentValue = null;
 
         while (state() == AbstractBsonReader.State.TYPE) {
@@ -90,8 +97,8 @@ public class JsonParserAdapter extends ParserBase {
                 reader.readStartDocument();
                 return JsonToken.START_OBJECT;
             case NAME:
-                getParsingContext().setCurrentName(reader.readName());
-                return JsonToken.FIELD_NAME;
+                ((SimpleStreamReadContext) streamReadContext()).setCurrentName(reader.readName());
+                return JsonToken.PROPERTY_NAME;
             case VALUE:
                 return toJsonToken(type());
             case END_OF_DOCUMENT:
@@ -103,15 +110,14 @@ public class JsonParserAdapter extends ParserBase {
             case DONE:
                 return null;
             default:
-                throw new JsonParseException(
-                    this,
-                    "Unknown state " + state(),
-                    getTokenLocation()
-                );
+                throw new StreamReadException(
+                        this,
+                        "Unknown state " + state(),
+                        currentTokenLocation());
         }
     }
 
-    protected JsonToken toJsonToken(BsonType type) throws IOException {
+    protected JsonToken toJsonToken(BsonType type) throws JacksonException {
         switch (type) {
             case END_OF_DOCUMENT:
                 reader.readEndDocument();
@@ -189,85 +195,78 @@ public class JsonParserAdapter extends ParserBase {
                 currentValue = value;
                 return value ? JsonToken.VALUE_TRUE : JsonToken.VALUE_FALSE;
             default:
-                throw new JsonParseException(
-                    this,
-                    "Unknown element type " + type,
-                    getTokenLocation()
-                );
+                throw new StreamReadException(
+                        this,
+                        "Unknown element type " + type,
+                        currentTokenLocation());
         }
     }
 
     @Override
-    public String nextFieldName() throws IOException {
-        if (nextToken() == JsonToken.FIELD_NAME) {
-            return getParsingContext().getCurrentName();
+    public String nextName() throws JacksonException {
+        if (nextToken() == JsonToken.PROPERTY_NAME) {
+            return streamReadContext().currentName();
         }
         return null;
     }
 
     @Override
-    public String getCurrentName() throws IOException {
+    public String currentName() throws JacksonException {
         if (state() == AbstractBsonReader.State.NAME) {
-            return nextFieldName();
+            return nextName();
         } else if (state() == AbstractBsonReader.State.VALUE) {
             final String currentName = reader.getCurrentName();
-            getParsingContext().setCurrentName(currentName);
+            parserContext.setCurrentName(currentName);
             return currentName;
         }
-        return getParsingContext().getCurrentName();
+        return streamReadContext().currentName();
     }
 
     @Override
-    public JsonLocation getTokenLocation() {
+    public TokenStreamLocation currentTokenLocation() {
         String currentName;
         try {
-            currentName = getCurrentName();
-        } catch (IOException e) {
+            currentName = currentName();
+        } catch (JacksonException e) {
             currentName = "unknown";
         }
-        return new JsonLocation(currentName, -1L, -1, -1);
+        return new TokenStreamLocation(ContentReference.rawReference(currentName), -1L, -1, -1);
     }
 
     @Override
-    public JsonLocation getCurrentLocation() {
+    public TokenStreamLocation currentLocation() {
         String currentName;
         try {
-            currentName = getCurrentName();
-        } catch (IOException e) {
+            currentName = currentName();
+        } catch (JacksonException e) {
             currentName = "unknown";
         }
-        return new JsonLocation(currentName, -1L, -1, -1);
+        return new TokenStreamLocation(ContentReference.rawReference(currentName), -1L, -1, -1);
     }
 
     @Override
-    public String getText() throws IOException {
-        if (currentToken() == JsonToken.FIELD_NAME) {
-            return getCurrentName();
+    public String getText() throws JacksonException {
+        if (currentToken() == JsonToken.PROPERTY_NAME) {
+            return currentName();
         }
         return String.valueOf(currentValue);
     }
 
     @Override
-    public char[] getTextCharacters() throws IOException {
-        //not very efficient; that's why hasTextCharacters()
-        //always returns false
+    public char[] getTextCharacters() throws JacksonException {
+        // not very efficient; that's why hasTextCharacters()
+        // always returns false
         return getText().toCharArray();
     }
 
     @Override
-    public int getTextLength() throws IOException {
+    public int getTextLength() throws JacksonException {
         return getText().length();
     }
 
     @Override
     public int getTextOffset() {
         return 0;
-    }
-
-    @Override
-    public boolean hasTextCharacters() {
-        //getTextCharacters is obviously not the most efficient way
-        return false;
     }
 
     @Override
@@ -280,7 +279,7 @@ public class JsonParserAdapter extends ParserBase {
     }
 
     @Override
-    public Object getNumberValueDeferred() throws IOException {
+    public Object getNumberValueDeferred() throws JacksonException {
         return getNumberValue();
     }
 
@@ -322,7 +321,7 @@ public class JsonParserAdapter extends ParserBase {
             return null;
         }
         if (n instanceof Byte || n instanceof Integer ||
-            n instanceof Long || n instanceof Short) {
+                n instanceof Long || n instanceof Short) {
             return BigInteger.valueOf(n.longValue());
         } else if (n instanceof Double || n instanceof Float) {
             return BigDecimal.valueOf(n.doubleValue()).toBigInteger();
@@ -347,7 +346,7 @@ public class JsonParserAdapter extends ParserBase {
             return null;
         }
         if (n instanceof Byte || n instanceof Integer ||
-            n instanceof Long || n instanceof Short) {
+                n instanceof Long || n instanceof Short) {
             return BigDecimal.valueOf(n.longValue());
         } else if (n instanceof Double || n instanceof Float) {
             return BigDecimal.valueOf(n.doubleValue());
@@ -366,7 +365,7 @@ public class JsonParserAdapter extends ParserBase {
     }
 
     @Override
-    protected void _handleEOF() throws JsonParseException {
+    protected void _handleEOF() throws StreamReadException {
         _reportInvalidEOF();
     }
 

@@ -1,10 +1,10 @@
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.SerializationContext;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 import java.util.UUID;
 
 /**
@@ -14,11 +14,11 @@ import java.util.UUID;
  * @author Jared Tiala
  * @since 2.6.2
  */
-public class UUIDSerializer extends JsonSerializer<UUID> {
+public class UUIDSerializer extends ValueSerializer<UUID> {
 
     @Override
     public void serialize(UUID uuid, JsonGenerator jgen,
-            SerializerProvider provider) throws IOException {
-        jgen.writeObject(uuid);
+            SerializationContext provider) throws JacksonException {
+        jgen.writePOJO(uuid);
     }
 }

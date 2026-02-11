@@ -16,18 +16,20 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.mongodb.client.model.Filters;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.junit.jupiter.api.Test;
 import org.mongojack.internal.MongoJackModule;
 import org.mongojack.mock.IdProxy;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.mongodb.client.model.Filters;
+
+import tools.jackson.databind.BeanDescription;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ser.SerializationContextExt;
 
 public class TestIdAnnotatedClass extends MongoDBTestBase {
 
@@ -169,7 +171,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     @Test
     public void testCreatorGetterObjectIdAnnotated() {
         CreatorGetterObjectIdAnnotated o = new CreatorGetterObjectIdAnnotated(
-            new org.bson.types.ObjectId().toString());
+                new org.bson.types.ObjectId().toString());
         JacksonMongoCollection<CreatorGetterObjectIdAnnotated> coll = createCollFor(o);
         coll.insert(o);
         CreatorGetterObjectIdAnnotated result = coll.findOneById(o.id);
@@ -232,12 +234,11 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testProxyFieldAnnotatedWithoutSettingIt() {
         ObjectMapper om = MongoJackModule.configure(new ObjectMapper());
 
-        final SerializationConfig config = om.getSerializationConfig();
-        final BeanDescription beanDescription = config.introspect(config.constructType(IdFieldProxyAnnotated.class));
+        final SerializationContextExt ctx = om._serializationContext();
+        final BeanDescription beanDescription = ctx.introspectBeanDescription(ctx.constructType(IdFieldProxyAnnotated.class));
         assertThat(beanDescription.findProperties()
-            .stream().filter(
-                bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)
-            ).findFirst().get().getName()).isEqualTo("_id");
+                .stream().filter(
+                        bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)).findFirst().get().getName()).isEqualTo("_id");
 
         IdFieldProxyAnnotated o = new IdFieldProxyAnnotated();
         JacksonMongoCollection<IdFieldProxyAnnotated> coll = createCollFor(o);
@@ -286,12 +287,11 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testProxyFieldAnnotatedWithoutSettingItSubclass() {
         ObjectMapper om = MongoJackModule.configure(new ObjectMapper());
 
-        final SerializationConfig config = om.getSerializationConfig();
-        final BeanDescription beanDescription = config.introspect(config.constructType(IdFieldProxyAnnotatedSubclass.class));
+        final SerializationContextExt ctx = om._serializationContext();
+        final BeanDescription beanDescription = ctx.introspectBeanDescription(ctx.constructType(IdFieldProxyAnnotatedSubclass.class));
         assertThat(beanDescription.findProperties()
-            .stream().filter(
-                bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)
-            ).findFirst().get().getName()).isEqualTo("_id");
+                .stream().filter(
+                        bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)).findFirst().get().getName()).isEqualTo("_id");
 
         IdFieldProxyAnnotatedSubclass o = new IdFieldProxyAnnotatedSubclass();
         JacksonMongoCollection<IdFieldProxyAnnotatedSubclass> coll = createCollFor(o);

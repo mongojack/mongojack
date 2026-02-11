@@ -16,14 +16,14 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.util.TokenBuffer;
 import org.mongojack.TransformingEmbeddedObjectSerializer;
 import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.util.TokenBuffer;
 
 /**
  * Safe embedded object serializer.
@@ -31,13 +31,13 @@ import java.io.IOException;
  * When used with BsonObjectGenerator or DBEncoderBsonGenerator, passes values straight through.
  * <p>
  * When used with a {@link TokenBuffer} (as by {@link
- * com.fasterxml.jackson.databind.deser.BeanDeserializer#deserializeWithUnwrapped}),
+ * tools.jackson.databind.deser.BeanDeserializer#deserializeWithUnwrapped}),
  * temporarily clears the TokenBuffer codec before passing the value through,
  * so it will be properly serialized as an embedded object.
  * (Failure to do so would blow up the stack, as the TokenBuffer would
  * pass the object right back to the ObjectMapper.)
  * <p>
- * When used with other JsonSerializers, throws {@link java.lang.IllegalArgumentException}
+ * When used with other ValueSerializers, throws {@link java.lang.IllegalArgumentException}
  * with a message that it's designed for use only with BsonObjectGenerator or
  * DBEncoderBsonGenerator or TokenBuffer.
  *
@@ -60,9 +60,9 @@ public abstract class EmbeddedObjectSerializer<T> extends TransformingEmbeddedOb
     }
 
     protected void writeEmbeddedObject(T value, JsonGenerator jgen)
-        throws IOException {
+            throws JacksonException {
         if (jgen instanceof DBEncoderBsonGenerator) {
-            jgen.writeObject(value);
+            jgen.writePOJO(value);
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
             ObjectCodec codec = buffer.getCodec();
@@ -83,9 +83,8 @@ public abstract class EmbeddedObjectSerializer<T> extends TransformingEmbeddedOb
 
     @Override
     public void serialize(
-        T value, JsonGenerator jgen,
-        SerializerProvider provider
-    ) throws IOException {
+            T value, JsonGenerator jgen,
+            SerializationContext provider) throws JacksonException {
         writeEmbeddedObject(value, jgen);
     }
 }

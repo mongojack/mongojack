@@ -16,25 +16,24 @@
  */
 package org.mongojack.internal.util;
 
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.core.util.VersionUtil;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import tools.jackson.core.Version;
+import tools.jackson.core.util.VersionUtil;
 
 /**
  * Looks up the version of the MongoJack
  */
 public class VersionUtils {
-    
+
     public static final Version VERSION = mavenVersionFor(VersionUtils.class.getClassLoader(),
-        "org.mongojack", "mongojack"
-    );
+            "org.mongojack", "mongojack");
 
     private static Version mavenVersionFor(ClassLoader cl, String groupId, String artifactId) {
         InputStream pomProperties = cl.getResourceAsStream("META-INF/maven/"
-            + groupId.replaceAll("\\.", "/") + "/" + artifactId + "/pom.properties");
+                + groupId.replaceAll("\\.", "/") + "/" + artifactId + "/pom.properties");
         if (pomProperties != null) {
             try {
                 Properties props = new Properties();

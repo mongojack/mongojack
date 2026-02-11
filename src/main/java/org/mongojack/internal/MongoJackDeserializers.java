@@ -16,21 +16,27 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.module.SimpleDeserializers;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.mongojack.DBRef;
-import org.mongojack.MongoJackModuleConfiguration;
-import org.mongojack.MongoJackModuleFeature;
-
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.mongojack.DBRef;
+import org.mongojack.MongoDatabindException;
+import org.mongojack.MongoJackModuleConfiguration;
+import org.mongojack.MongoJackModuleFeature;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.BeanDescription;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.DeserializationConfig;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.module.SimpleDeserializers;
 
 /**
  * Deserializers for MongoJack
@@ -50,10 +56,10 @@ public class MongoJackDeserializers extends SimpleDeserializers {
         addDeserializer(UUID.class, new UUIDDeserializer());
         addDeserializer(com.mongodb.DBRef.class, new MongoDBRefDeserializer());
         if (config.isEnabled(MongoJackModuleFeature.ENABLE_BSON_VALUE_SERIALIZATION)) {
-            addDeserializer(Bson.class, new JsonDeserializer<Bson>() {
+            addDeserializer(Bson.class, new ValueDeserializer<Bson>() {
                 @Override
-                public Bson deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-                    JsonDeserializer<Object> nonContextualValueDeserializer = ctxt.findRootValueDeserializer(ctxt.constructType(Document.class));
+                public Bson deserialize(JsonParser jp, DeserializationContext ctxt) throws JacksonException {
+                    ValueDeserializer<Object> nonContextualValueDeserializer = ctxt.findRootValueDeserializer(ctxt.constructType(Document.class));
                     return (Document) nonContextualValueDeserializer.deserialize(jp, ctxt);
                 }
             });
@@ -61,17 +67,17 @@ public class MongoJackDeserializers extends SimpleDeserializers {
     }
 
     @Override
-    public JsonDeserializer<?> findBeanDeserializer(JavaType type,
-                                                    DeserializationConfig config, BeanDescription beanDesc)
-        throws JsonMappingException {
+    public ValueDeserializer<?> findBeanDeserializer(JavaType type,
+            DeserializationConfig config, BeanDescription.Supplier beanDescSupplier)
+            throws DatabindException {
         if (type.getRawClass() == DBRef.class) {
             if (type.containedTypeCount() != 2) {
-                throw new JsonMappingException(null, "Property doesn't declare object and key type");
+                throw new MongoDatabindException("Property doesn't declare object and key type");
             }
             JavaType objectType = type.containedType(0);
             JavaType keyType = type.containedType(1);
             return new DBRefDeserializer(objectType, keyType);
         }
-        return super.findBeanDeserializer(type, config, beanDesc);
+        return super.findBeanDeserializer(type, config, beanDescSupplier);
     }
 }

@@ -1,16 +1,19 @@
 package org.mongojack.internal.stream;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.MongoException;
 import org.bson.BsonWriter;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
-import org.mongojack.MongoJsonMappingException;
+import org.mongojack.MongoDatabindException;
 
-import java.io.IOException;
+import com.mongodb.MongoException;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.io.ContentReference;
+import tools.jackson.core.io.IOContext;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.ObjectMapper;
 
 public class JacksonEncoder<T> implements Encoder<T> {
 

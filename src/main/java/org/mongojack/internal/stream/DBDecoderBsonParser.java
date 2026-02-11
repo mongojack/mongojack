@@ -16,13 +16,14 @@
  */
 package org.mongojack.internal.stream;
 
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.io.IOContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.AbstractBsonReader;
 import org.bson.UuidRepresentation;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectReadContext;
+import tools.jackson.core.io.IOContext;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Parser that wraps BSONParser to convert bson4jackson ObjectIds to org.bson
@@ -46,8 +47,8 @@ public class DBDecoderBsonParser extends JsonParserAdapter {
     }
 
     @Override
-    public String getText() throws IOException {
-        if (JsonToken.VALUE_EMBEDDED_OBJECT == getCurrentToken()) {
+    public String getText() throws JacksonException {
+        if (JsonToken.VALUE_EMBEDDED_OBJECT == currentToken()) {
             return null;
         }
         return super.getText();

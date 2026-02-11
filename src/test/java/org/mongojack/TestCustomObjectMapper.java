@@ -16,32 +16,34 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
-import org.bson.Document;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.bson.Document;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.Version;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.KeyDeserializer;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 public class TestCustomObjectMapper extends MongoDBTestBase {
 
@@ -96,13 +98,11 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
         obj.uriStringMap.put(URI.create("baz$qux"), "002");
 
         coll.updateOne(
-            Filters.eq(obj.id),
-            Updates.combine(
-                Updates.set("custom", obj.custom),
-                Updates.set("uriStringMap", obj.uriStringMap)
-            ),
-            new UpdateOptions().upsert(true)
-        );
+                Filters.eq(obj.id),
+                Updates.combine(
+                        Updates.set("custom", obj.custom),
+                        Updates.set("uriStringMap", obj.uriStringMap)),
+                new UpdateOptions().upsert(true));
 
         MockObject saved = coll.findOne();
         assertNotNull(saved);
@@ -135,41 +135,41 @@ public class TestCustomObjectMapper extends MongoDBTestBase {
     private ObjectMapper createObjectMapper() {
         SimpleModule module = new SimpleModule("MySimpleModule", new Version(1,
                 0, 0, null, "", ""));
-        module.addDeserializer(Custom.class, new JsonDeserializer<Custom>() {
+        module.addDeserializer(Custom.class, new ValueDeserializer<Custom>() {
             @Override
             public Custom deserialize(JsonParser jp, DeserializationContext ctxt)
-                    throws IOException {
+                    throws JacksonException {
                 JsonNode node = jp.readValueAsTree();
                 return new Custom(node.get("v1").asText(), node.get("v2")
                         .asText());
             }
         });
-        module.addSerializer(Custom.class, new JsonSerializer<Custom>() {
+        module.addSerializer(Custom.class, new ValueSerializer<Custom>() {
             @Override
             public void serialize(Custom value, JsonGenerator jgen,
-                    SerializerProvider provider) throws IOException {
+                    SerializationContext provider) throws JacksonException {
                 jgen.writeStartObject();
-                jgen.writeFieldName("v1");
+                jgen.writeName("v1");
                 jgen.writeString(value.value1);
-                jgen.writeFieldName("v2");
+                jgen.writeName("v2");
                 jgen.writeString(value.value2);
                 jgen.writeEndObject();
             }
         });
-        module.addKeySerializer(URI.class, new JsonSerializer<URI>() {
+        module.addKeySerializer(URI.class, new ValueSerializer<URI>() {
             @Override
-            public void serialize(final URI value, final JsonGenerator gen, final SerializerProvider serializers) throws IOException {
+            public void serialize(final URI value, final JsonGenerator gen, final SerializationContext serializers) throws JacksonException {
                 if (value == null) {
                     gen.writeNull();
                 } else {
-                    gen.writeFieldName(value.toString().replace(".", "%2E").replace("$","%24"));
+                    gen.writeName(value.toString().replace(".", "%2E").replace("$", "%24"));
                 }
             }
         });
         module.addKeyDeserializer(URI.class, new KeyDeserializer() {
             @Override
-            public Object deserializeKey(final String key, final DeserializationContext ctxt) throws IOException {
-                return URI.create(key.replace("%2E",".").replace("%24","$"));
+            public Object deserializeKey(final String key, final DeserializationContext ctxt) throws JacksonException {
+                return URI.create(key.replace("%2E", ".").replace("%24", "$"));
             }
         });
 

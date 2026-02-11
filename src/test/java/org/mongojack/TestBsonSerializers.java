@@ -1,25 +1,33 @@
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
-import org.bson.*;
-import org.bson.conversions.Bson;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonNull;
+import org.bson.BsonString;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.junit.jupiter.api.Test;
+
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Filters;
+
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
 
 public class TestBsonSerializers extends MongoDBTestBase {
 
     private final ObjectMapper bsonSerializingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(
-        new ObjectMapper(),
-        new MongoJackModuleConfiguration().with(MongoJackModuleFeature.ENABLE_BSON_VALUE_SERIALIZATION)
-    );
+            new ObjectMapper(),
+            new MongoJackModuleConfiguration().with(MongoJackModuleFeature.ENABLE_BSON_VALUE_SERIALIZATION));
 
     @Test
     public void testCollectionOfDocuments() {
@@ -118,25 +126,18 @@ public class TestBsonSerializers extends MongoDBTestBase {
 
         // we don't expect anything here, but it shouldn't throw an exception
         c
-            .aggregate(
-                List.of(
-                    new Document(
-                        "$unionWith",
-                        new Document("coll", "otherCollection")
-                            .append("pipeline",
-                                List.of(
-                                    Aggregates.match(
-                                        Filters.and(
-                                            Filters.eq("a", "a"),
-                                            Filters.eq("a", "c")
-                                        )
-                                    )
-                                )
-                            )
-                    )
-                )
-            )
-            .into(new ArrayList<>());
+                .aggregate(
+                        List.of(
+                                new Document(
+                                        "$unionWith",
+                                        new Document("coll", "otherCollection")
+                                                .append("pipeline",
+                                                        List.of(
+                                                                Aggregates.match(
+                                                                        Filters.and(
+                                                                                Filters.eq("a", "a"),
+                                                                                Filters.eq("a", "c"))))))))
+                .into(new ArrayList<>());
     }
 
     @Test
@@ -144,22 +145,16 @@ public class TestBsonSerializers extends MongoDBTestBase {
         JacksonMongoCollection<Document> c = getCollection(Document.class, bsonSerializingObjectMapper);
 
         c
-            .aggregate(
-                Arrays.asList(
-                    new Document("$match",
-                        new Document(
-                            "$and",
-                            Arrays.asList(
-                                new Document("receiver",
-                                    new Document("$exists", true)
-                                        .append("$ne", new BsonNull())
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-            .into(new ArrayList<>());
+                .aggregate(
+                        Arrays.asList(
+                                new Document("$match",
+                                        new Document(
+                                                "$and",
+                                                Arrays.asList(
+                                                        new Document("receiver",
+                                                                new Document("$exists", true)
+                                                                        .append("$ne", new BsonNull())))))))
+                .into(new ArrayList<>());
     }
 
     @Test
@@ -167,28 +162,20 @@ public class TestBsonSerializers extends MongoDBTestBase {
         JacksonMongoCollection<Document> c = getCollection(Document.class);
 
         assertThrows(
-            MongoJsonMappingException.class,
-            () -> c
-                .aggregate(
-                    List.of(
-                        new Document(
-                            "$unionWith",
-                            new Document("coll", "otherCollection")
-                                .append("pipeline",
-                                    List.of(
-                                        Aggregates.match(
-                                            Filters.and(
-                                                Filters.eq("a", "a"),
-                                                Filters.eq("a", "c")
-                                            )
-                                        )
-                                    )
-                                )
-                        )
-                    )
-                )
-                .into(new ArrayList<>()),
-            "Expected aggregation to throw MongoJsonMappingException, but didn't"
-        );
+                MongoDatabindException.class,
+                () -> c
+                        .aggregate(
+                                List.of(
+                                        new Document(
+                                                "$unionWith",
+                                                new Document("coll", "otherCollection")
+                                                        .append("pipeline",
+                                                                List.of(
+                                                                        Aggregates.match(
+                                                                                Filters.and(
+                                                                                        Filters.eq("a", "a"),
+                                                                                        Filters.eq("a", "c"))))))))
+                        .into(new ArrayList<>()),
+                "Expected aggregation to throw MongoDatabindException, but didn't");
     }
 }

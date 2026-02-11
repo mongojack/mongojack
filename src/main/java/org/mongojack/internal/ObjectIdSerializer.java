@@ -16,14 +16,14 @@
  */
 package org.mongojack.internal;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.SerializationContext;
 import org.bson.types.ObjectId;
 import org.mongojack.DBRef;
 
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
 
 /**
  * Serializer for object ids, serialises strings or byte arrays to an ObjectId
@@ -36,30 +36,30 @@ public class ObjectIdSerializer extends EmbeddedObjectSerializer {
     @Override
     public void serialize(
         Object value, JsonGenerator jgen,
-        SerializerProvider provider
-    ) throws IOException,
-        JsonProcessingException {
+        SerializationContext provider
+    ) throws JacksonException,
+        JacksonException {
         if (value instanceof Iterable) {
             jgen.writeStartArray();
             for (Object item : (Iterable) value) {
-                writeObject(serialiseObject(item, jgen), jgen);
+                writePOJO(serialiseObject(item, jgen), jgen);
             }
             jgen.writeEndArray();
         } else {
-            writeObject(serialiseObject(value, jgen), jgen);
+            writePOJO(serialiseObject(value, jgen), jgen);
         }
     }
 
-    private void writeObject(Object value, JsonGenerator jgen)
-        throws IOException, JsonMappingException {
+    private void writePOJO(Object value, JsonGenerator jgen)
+        throws JacksonException, DatabindException {
         if (value instanceof ObjectId) {
             writeEmbeddedObject(value, jgen);
         } else {
-            jgen.writeObject(value);
+            jgen.writePOJO(value);
         }
     }
 
-    private Object serialiseObject(Object value, JsonGenerator jgen) throws JsonMappingException {
+    private Object serialiseObject(Object value, JsonGenerator jgen) throws DatabindException {
         if (value == null) {
             return null;
         } else if (value instanceof String) {
@@ -76,7 +76,7 @@ public class ObjectIdSerializer extends EmbeddedObjectSerializer {
         } else if (value instanceof ObjectId) {
             return value;
         } else {
-            throw JsonMappingException.from(jgen, "Cannot deserialise object of type " + value.getClass() + " to ObjectId");
+            throw DatabindException.from(jgen, "Cannot deserialise object of type " + value.getClass() + " to ObjectId");
         }
     }
 }

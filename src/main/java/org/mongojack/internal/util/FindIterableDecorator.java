@@ -1,7 +1,7 @@
 package org.mongojack.internal.util;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
 import com.mongodb.CursorType;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;

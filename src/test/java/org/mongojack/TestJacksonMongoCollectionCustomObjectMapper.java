@@ -16,20 +16,25 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.Version;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.module.SimpleModule;
 
 public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBase {
 
@@ -37,9 +42,9 @@ public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBas
 
     @BeforeEach
     public void setUp() {
-        coll = JacksonMongoCollection.<MockObject>builder()
-            .withObjectMapper(createObjectMapper())
-            .build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class, uuidRepresentation);
+        coll = JacksonMongoCollection.<MockObject> builder()
+                .withObjectMapper(createObjectMapper())
+                .build(getMongoCollection("testJacksonMongoCollection", MockObject.class), MockObject.class, uuidRepresentation);
     }
 
     @Test
@@ -84,24 +89,24 @@ public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBas
 
     private ObjectMapper createObjectMapper() {
         SimpleModule module = new SimpleModule("MySimpleModule", new Version(1,
-            0, 0, null, "", ""));
-        module.addDeserializer(Custom.class, new JsonDeserializer<Custom>() {
+                0, 0, null, "", ""));
+        module.addDeserializer(Custom.class, new ValueDeserializer<Custom>() {
             @Override
             public Custom deserialize(JsonParser jp, DeserializationContext ctxt)
-                throws IOException {
+                    throws JacksonException {
                 JsonNode node = jp.readValueAsTree();
                 return new Custom(node.get("v1").asText(), node.get("v2")
-                    .asText());
+                        .asText());
             }
         });
-        module.addSerializer(Custom.class, new JsonSerializer<Custom>() {
+        module.addSerializer(Custom.class, new ValueSerializer<Custom>() {
             @Override
             public void serialize(Custom value, JsonGenerator jgen,
-                                  SerializerProvider provider) throws IOException {
+                    SerializationContext provider) throws JacksonException {
                 jgen.writeStartObject();
-                jgen.writeFieldName("v1");
+                jgen.writeName("v1");
                 jgen.writeString(value.value1);
-                jgen.writeFieldName("v2");
+                jgen.writeName("v2");
                 jgen.writeString(value.value2);
                 jgen.writeEndObject();
             }
