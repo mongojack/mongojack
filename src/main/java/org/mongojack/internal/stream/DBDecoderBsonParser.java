@@ -35,15 +35,14 @@ import tools.jackson.databind.ObjectMapper;
 public class DBDecoderBsonParser extends JsonParserAdapter {
 
     public DBDecoderBsonParser(
-        IOContext ctxt,
-        int jsonFeatures,
-        AbstractBsonReader reader,
-        ObjectMapper objectMapper,
-        final UuidRepresentation uuidRepresentation
-    ) {
+            ObjectReadContext readCtxt,
+            IOContext ctxt,
+            int jsonFeatures,
+            AbstractBsonReader reader,
+            ObjectMapper objectMapper,
+            final UuidRepresentation uuidRepresentation) {
         // Honor document length must be true
-        super(ctxt, jsonFeatures, reader, uuidRepresentation);
-        setCodec(objectMapper);
+        super(readCtxt, ctxt, jsonFeatures, reader, uuidRepresentation);
     }
 
     @Override

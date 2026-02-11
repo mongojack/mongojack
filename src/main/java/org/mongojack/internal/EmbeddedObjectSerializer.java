@@ -65,18 +65,18 @@ public abstract class EmbeddedObjectSerializer<T> extends TransformingEmbeddedOb
             jgen.writePOJO(value);
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
-            ObjectCodec codec = buffer.getCodec();
-            buffer.setCodec(null);
-            buffer.writeObject(value);
-            buffer.setCodec(codec);
+            TokenStreamContext ctx = buffer.streamWriteContext();
+            buffer.overrideParentContext(null);
+            buffer.writePOJO(value);
+            buffer.overrideParentContext(ctx);
         } else {
             String message = "JsonGenerator of type "
-                + jgen.getClass().getName()
-                + " not supported: " + getClass().getName()
-                + " is designed for use only with "
-                + DBEncoderBsonGenerator.class.getName()
-                + " or "
-                + TokenBuffer.class.getName();
+                    + jgen.getClass().getName()
+                    + " not supported: " + getClass().getName()
+                    + " is designed for use only with "
+                    + DBEncoderBsonGenerator.class.getName()
+                    + " or "
+                    + TokenBuffer.class.getName();
             throw new IllegalArgumentException(message);
         }
     }

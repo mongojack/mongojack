@@ -48,6 +48,8 @@ public class JsonParserAdapter extends ParserBase {
 
     private final UuidRepresentation uuidRepresentation;
 
+    private SimpleStreamReadContext parserContext;
+
     /**
      * Constructs a new parser
      *
@@ -56,20 +58,16 @@ public class JsonParserAdapter extends ParserBase {
      *            {@link tools.jackson.core.JsonParser.Feature}s are enabled.
      * @param reader Bson reader to read from
      */
-    public JsonParserAdapter(IOContext ctxt, int jsonFeatures, AbstractBsonReader reader, final UuidRepresentation uuidRepresentation) {
-        super(ctxt, jsonFeatures);
+    public JsonParserAdapter(
+            ObjectReadContext readCtxt,
+            IOContext ctxt,
+            int jsonFeatures,
+            AbstractBsonReader reader,
+            final UuidRepresentation uuidRepresentation) {
+        super(readCtxt, ctxt, jsonFeatures);
+        this.parserContext = SimpleStreamReadContext.createRootContext(null);
         this.reader = reader;
         this.uuidRepresentation = uuidRepresentation;
-    }
-
-    @Override
-    public ObjectCodec getCodec() {
-        return _codec;
-    }
-
-    @Override
-    public void setCodec(ObjectCodec c) {
-        _codec = c;
     }
 
     @Override
@@ -372,6 +370,11 @@ public class JsonParserAdapter extends ParserBase {
     @Override
     protected void _closeInput() {
         reader.close();
+    }
+
+    @Override
+    public TokenStreamContext streamReadContext() {
+        return parserContext;
     }
 
     private AbstractBsonReader.State state() {

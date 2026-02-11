@@ -40,12 +40,21 @@ import tools.jackson.core.io.IOContext;
  */
 public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
 
-    public DBEncoderBsonGenerator(int jsonFeatures, BsonWriter out, final UuidRepresentation uuidRepresentation) {
-        super(jsonFeatures, null, out, uuidRepresentation);
+    public DBEncoderBsonGenerator(
+            ObjectWriteContext context,
+            IOContext ioContext,
+            int jsonFeatures,
+            BsonWriter out,
+            final UuidRepresentation uuidRepresentation) {
+        super(context, ioContext, jsonFeatures, out, uuidRepresentation);
     }
 
-    public DBEncoderBsonGenerator(final BsonWriter writer, final UuidRepresentation uuidRepresentation) {
-        this(JsonGenerator.Feature.collectDefaults(), writer, uuidRepresentation);
+    public DBEncoderBsonGenerator(
+            ObjectWriteContext context,
+            IOContext ioContext,
+            final BsonWriter writer,
+            final UuidRepresentation uuidRepresentation) {
+        this(context, ioContext, StreamWriteFeature.collectDefaults(), writer, uuidRepresentation);
     }
 
     @Override
@@ -74,7 +83,7 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
             writeEndObject();
         } else {
             if (!DocumentSerializationUtils.writeKnownType(value, writer)) {
-                super._writeSimpleObject(value);
+                _objectWriteContext.writeValue(this, value);
             }
         }
         return this;

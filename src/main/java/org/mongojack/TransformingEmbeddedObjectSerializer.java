@@ -66,28 +66,28 @@ public abstract class TransformingEmbeddedObjectSerializer<InputType, Transforme
             }
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
-            ObjectCodec codec = buffer.getCodec();
-            buffer.setCodec(null);
+            TokenStreamContext codec = buffer.streamWriteContext();
+            buffer.overrideParentContext(null);
             if (value == null && writeNullAsNull) {
                 buffer.writeNull();
             } else {
                 buffer.writePOJO(value);
             }
-            buffer.setCodec(codec);
+            buffer.overrideParentContext(codec);
         } else {
             String message = "JsonGenerator of type "
-                + jgen.getClass().getName()
-                + " not supported: " + getClass().getName()
-                + " is designed for use only with "
-                + DBEncoderBsonGenerator.class.getName()
-                + " or "
-                + TokenBuffer.class.getName();
+                    + jgen.getClass().getName()
+                    + " not supported: " + getClass().getName()
+                    + " is designed for use only with "
+                    + DBEncoderBsonGenerator.class.getName()
+                    + " or "
+                    + TokenBuffer.class.getName();
             throw new IllegalArgumentException(message);
         }
     }
 
     /**
-     * Transform to the desired type.  Careful of nulls!
+     * Transform to the desired type. Careful of nulls!
      * 
      * @param value
      * @return

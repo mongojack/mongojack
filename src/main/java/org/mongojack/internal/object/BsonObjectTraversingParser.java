@@ -56,8 +56,6 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      * Configuration /**********************************************************
      */
 
-    protected ObjectCodec objectCodec;
-
     /**
      * Traversal context within tree
      */
@@ -92,10 +90,10 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
      * /**********************************************************
      */
     public BsonObjectTraversingParser(
-        Object rootValue,
-        ObjectCodec codec
-    ) {
-        this(new BasicDBObject("root", rootValue), null);
+            Object rootValue,
+            ObjectReadContext objectReadContext,
+            IOContext ioContext) {
+        this(new BasicDBObject("root", rootValue), objectReadContext, ioContext);
         try {
             nextToken();
             nextToken();
@@ -106,11 +104,10 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     }
 
     private BsonObjectTraversingParser(
-        BSONObject o,
-        ObjectCodec codec
-    ) {
-        super(0);
-        objectCodec = codec;
+            BSONObject o,
+            ObjectReadContext objectReadContext,
+            IOContext ioContext) {
+        super(objectReadContext, ioContext, 0);
         if (o instanceof Iterable) {
             nextToken = JsonToken.START_ARRAY;
             nodeCursor = new BsonObjectCursor.ArrayCursor((Iterable) o, null);
@@ -123,16 +120,6 @@ public class BsonObjectTraversingParser extends ParserMinimalBase {
     @Override
     public Version version() {
         return VersionUtils.VERSION;
-    }
-
-    @Override
-    public void setCodec(ObjectCodec c) {
-        objectCodec = c;
-    }
-
-    @Override
-    public ObjectCodec getCodec() {
-        return objectCodec;
     }
 
     /*

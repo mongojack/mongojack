@@ -49,13 +49,6 @@ import tools.jackson.core.io.IOContext;
  */
 public class DocumentObjectTraversingParser extends ParserMinimalBase {
 
-    /*
-     * /********************************************************** /*
-     * Configuration /**********************************************************
-     */
-
-    protected ObjectCodec objectCodec;
-
     /**
      * Traversal context within tree
      */
@@ -89,20 +82,19 @@ public class DocumentObjectTraversingParser extends ParserMinimalBase {
      * /********************************************************** /* Life-cycle
      * /**********************************************************
      */
-    public DocumentObjectTraversingParser(Object rootValue, ObjectCodec codec) {
-        this(new Document("root", rootValue), null);
+    public DocumentObjectTraversingParser(Object rootValue, ObjectReadContext readContext, IOContext ioContext) {
+        this(new Document("root", rootValue), null, null);
         try {
             nextToken();
             nextToken();
             nextToken();
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             // Ignore
         }
     }
 
-    public DocumentObjectTraversingParser(Document o, ObjectCodec codec) {
-        super(0);
-        objectCodec = codec;
+    public DocumentObjectTraversingParser(Document o, ObjectReadContext readContext, IOContext ioContext) {
+        super(readContext, ioContext, 0);
         if (o instanceof Iterable) {
             nextToken = JsonToken.START_ARRAY;
             nodeCursor = new DocumentObjectCursor.ArrayCursor((Iterable) o, null);
@@ -115,16 +107,6 @@ public class DocumentObjectTraversingParser extends ParserMinimalBase {
     @Override
     public Version version() {
         return VersionUtils.VERSION;
-    }
-
-    @Override
-    public void setCodec(ObjectCodec c) {
-        objectCodec = c;
-    }
-
-    @Override
-    public ObjectCodec getCodec() {
-        return objectCodec;
     }
 
     /*
