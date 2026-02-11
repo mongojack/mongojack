@@ -83,6 +83,9 @@ public class MongoJackModule extends JacksonModule {
             builder.addModule(new MongoJackModule(moduleConfiguration));
         }
 
+        // to allow setters like set_id() which have leading underscore, and are common when using MongoDB
+        builder.accessorNaming(new DefaultAccessorNamingStrategy.Provider().withFirstCharAcceptance(true, true));
+
         // disable serialize dates as timestamps because we have fewer runtime errors that way
         if (moduleConfiguration.isEnabled(MongoJackModuleFeature.DISABLE_DATES_AS_TIMESTAMPS)) {
             builder.configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false);
