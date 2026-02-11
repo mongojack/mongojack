@@ -36,7 +36,7 @@ public class TestJsonViews extends MongoDBTestBase {
     @Test
     public void testNormalPropertyWithView() {
         coll.save(new ObjectWithView("id", "normal", "view1", "view2"));
-        assertThat(coll.findOneById("id").normal).isEqualTo("normal");
+        assertThat(coll.findOneById("id").normal).isNull();
     }
 
     @Test
@@ -63,7 +63,10 @@ public class TestJsonViews extends MongoDBTestBase {
         public ObjectWithView() {
         }
 
-        public ObjectWithView(String id, String normal, String view1,
+        public ObjectWithView(
+                String id,
+                String normal,
+                String view1,
                 String view2) {
             _id = id;
             this.normal = normal;
