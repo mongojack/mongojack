@@ -31,20 +31,28 @@ public class JacksonEncoder<T> implements Encoder<T> {
 
     public JacksonEncoder<T> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
         return new JacksonEncoder<>(
-            clazz,
-            view,
-            objectMapper,
-            uuidRepresentation
-        );
+                clazz,
+                view,
+                objectMapper,
+                uuidRepresentation);
     }
 
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
-        try(JsonGenerator generator = new DBEncoderBsonGenerator(writer, uuidRepresentation)) {
+        var context = objectMapper._serializationContext();
+        var ioContext = new IOContext(
+                context.tokenStreamFactory().streamReadConstraints(),
+                context.tokenStreamFactory().streamWriteConstraints(),
+                context.tokenStreamFactory().errorReportConfiguration(),
+                context.tokenStreamFactory()._getBufferRecycler(),
+                ContentReference.unknown(),
+                false,
+                null);
+        try (JsonGenerator generator = new DBEncoderBsonGenerator(context, ioContext, writer, uuidRepresentation)) {
             objectMapper.writerWithView(view).writeValue(generator, value);
-        } catch (JsonMappingException e) {
-            throw new MongoJsonMappingException(e);
-        } catch (IOException e) {
+        } catch (DatabindException e) {
+            throw new MongoDatabindException(e);
+        } catch (JacksonException e) {
             throw new MongoException("Error writing object out", e);
         }
     }

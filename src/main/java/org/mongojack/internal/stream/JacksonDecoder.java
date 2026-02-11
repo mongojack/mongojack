@@ -31,19 +31,28 @@ public class JacksonDecoder<T> implements Decoder<T> {
 
     public JacksonDecoder<T> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
         return new JacksonDecoder<>(
-            clazz,
-            view,
-            objectMapper,
-            uuidRepresentation
-        );
+                clazz,
+                view,
+                objectMapper,
+                uuidRepresentation);
     }
 
     @Override
     public T decode(BsonReader reader, DecoderContext decoderContext) {
-        try (DBDecoderBsonParser parser = new DBDecoderBsonParser(new IOContext(new BufferRecycler(), EMPTY_INPUT_STREAM, false), 0, (AbstractBsonReader) reader, objectMapper, uuidRepresentation)) {
+        var context = objectMapper._deserializationContext();
+        var ioCtx = new IOContext(
+                context.tokenStreamFactory().streamReadConstraints(),
+                context.tokenStreamFactory().streamWriteConstraints(),
+                context.tokenStreamFactory().errorReportConfiguration(),
+                context.tokenStreamFactory()._getBufferRecycler(),
+                ContentReference.unknown(),
+                false,
+                null);
+        try (DBDecoderBsonParser parser = new DBDecoderBsonParser(context, ioCtx, 0,
+                (AbstractBsonReader) reader, objectMapper, uuidRepresentation)) {
             return objectMapper.reader().forType(clazz).withView(view).readValue(parser);
-        } catch (IOException e) {
-            throw new RuntimeException("IOException encountered while parsing", e);
+        } catch (JacksonException e) {
+            throw new RuntimeException("JacksonException encountered while parsing", e);
         }
     }
 

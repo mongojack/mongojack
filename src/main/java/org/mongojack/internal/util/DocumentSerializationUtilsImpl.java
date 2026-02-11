@@ -349,19 +349,27 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
     @SuppressWarnings("rawtypes")
     @Override
     public Bson serializeFilter(
-        ObjectMapper objectMapper,
-        JavaType type,
-        Bson query,
-        CodecRegistry registry
-    ) {
-        SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
-        JsonSerializer serializer = JacksonAccessor.findValueSerializer(
-            serializerProvider, type);
+            ObjectMapper objectMapper,
+            JavaType type,
+            Bson query,
+            CodecRegistry registry) {
+        SerializationContext serializerProvider = objectMapper._serializationContext();
+        ValueSerializer serializer = JacksonAccessor.findValueSerializer(
+                serializerProvider, type);
+        var context = objectMapper._serializationContext();
+        var ioContext = new IOContext(
+                context.tokenStreamFactory().streamReadConstraints(),
+                context.tokenStreamFactory().streamWriteConstraints(),
+                context.tokenStreamFactory().errorReportConfiguration(),
+                context.tokenStreamFactory()._getBufferRecycler(),
+                ContentReference.unknown(),
+                false,
+                null);
         final BsonDocument document = new BsonDocument();
         try (
-            BsonDocumentWriter writer = new BsonDocumentWriter(document);
-            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
-        ) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(document);
+                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(context, ioContext, writer, attemptToExtractUuidRepresentation(
+                        registry))) {
             serializeFilter(serializerProvider, serializer, query, registry, writer, generator);
             return document;
         } catch (Exception e) {
@@ -500,20 +508,28 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
 
     @Override
     public Bson serializeUpdates(
-        Map<String, Map<String, UpdateOperationValue>> update,
-        ObjectMapper objectMapper,
-        JavaType javaType,
-        CodecRegistry registry
-    ) {
-        SerializerProvider serializerProvider = JacksonAccessor.getSerializerProvider(objectMapper);
+            Map<String, Map<String, UpdateOperationValue>> update,
+            ObjectMapper objectMapper,
+            JavaType javaType,
+            CodecRegistry registry) {
+        SerializationContext serializerProvider = objectMapper._serializationContext();
 
-        JsonSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
+        ValueSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
+        var context = objectMapper._serializationContext();
+        var ioContext = new IOContext(
+                context.tokenStreamFactory().streamReadConstraints(),
+                context.tokenStreamFactory().streamWriteConstraints(),
+                context.tokenStreamFactory().errorReportConfiguration(),
+                context.tokenStreamFactory()._getBufferRecycler(),
+                ContentReference.unknown(),
+                false,
+                null);
 
         final BsonDocument document = new BsonDocument();
         try (
-            BsonDocumentWriter writer = new BsonDocumentWriter(document);
-            DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(writer, attemptToExtractUuidRepresentation(registry))
-        ) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(document);
+                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(context, ioContext, writer, attemptToExtractUuidRepresentation(
+                        registry))) {
             writer.writeStartDocument();
             for (Entry<String, Map<String, UpdateOperationValue>> op : update.entrySet()) {
                 writer.writeName(op.getKey());
