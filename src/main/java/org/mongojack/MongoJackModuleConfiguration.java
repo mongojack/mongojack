@@ -1,14 +1,18 @@
 package org.mongojack;
 
-import com.fasterxml.jackson.databind.cfg.MapperConfig;
-
 @SuppressWarnings("unused")
 public class MongoJackModuleConfiguration {
 
     private final int moduleFeatures;
 
     public MongoJackModuleConfiguration() {
-        moduleFeatures = MapperConfig.collectFeatureDefaults(MongoJackModuleFeature.class);
+        int flags = 0;
+        for (MongoJackModuleFeature value : MongoJackModuleFeature.class.getEnumConstants()) {
+            if (value.enabledByDefault()) {
+                flags |= value.getMask();
+            }
+        }
+        moduleFeatures = flags;
     }
 
     public MongoJackModuleConfiguration(final int moduleFeatures) {
@@ -25,8 +29,7 @@ public class MongoJackModuleConfiguration {
      */
     public MongoJackModuleConfiguration with(MongoJackModuleFeature feature) {
         int newModuleFeatures = (moduleFeatures | feature.getMask());
-        return (newModuleFeatures == moduleFeatures) ? this :
-            new MongoJackModuleConfiguration(newModuleFeatures);
+        return (newModuleFeatures == moduleFeatures) ? this : new MongoJackModuleConfiguration(newModuleFeatures);
     }
 
     /**
@@ -34,15 +37,13 @@ public class MongoJackModuleConfiguration {
      * object instance with specified features enabled.
      */
     public MongoJackModuleConfiguration with(
-        MongoJackModuleFeature first,
-        MongoJackModuleFeature... features
-    ) {
+            MongoJackModuleFeature first,
+            MongoJackModuleFeature... features) {
         int newModuleFeatures = moduleFeatures | first.getMask();
         for (MongoJackModuleFeature f : features) {
             newModuleFeatures |= f.getMask();
         }
-        return (newModuleFeatures == moduleFeatures) ? this :
-            new MongoJackModuleConfiguration(newModuleFeatures);
+        return (newModuleFeatures == moduleFeatures) ? this : new MongoJackModuleConfiguration(newModuleFeatures);
     }
 
     /**
@@ -54,8 +55,7 @@ public class MongoJackModuleConfiguration {
         for (MongoJackModuleFeature f : features) {
             newModuleFeatures |= f.getMask();
         }
-        return (newModuleFeatures == moduleFeatures) ? this :
-            new MongoJackModuleConfiguration(newModuleFeatures);
+        return (newModuleFeatures == moduleFeatures) ? this : new MongoJackModuleConfiguration(newModuleFeatures);
     }
 
     /**
@@ -64,8 +64,7 @@ public class MongoJackModuleConfiguration {
      */
     public MongoJackModuleConfiguration without(MongoJackModuleFeature feature) {
         int newModuleFeatures = moduleFeatures & ~feature.getMask();
-        return (newModuleFeatures == moduleFeatures) ? this :
-            new MongoJackModuleConfiguration(newModuleFeatures);
+        return (newModuleFeatures == moduleFeatures) ? this : new MongoJackModuleConfiguration(newModuleFeatures);
     }
 
     /**
@@ -73,15 +72,13 @@ public class MongoJackModuleConfiguration {
      * object instance with specified features disabled.
      */
     public MongoJackModuleConfiguration without(
-        MongoJackModuleFeature first,
-        MongoJackModuleFeature... features
-    ) {
+            MongoJackModuleFeature first,
+            MongoJackModuleFeature... features) {
         int newModuleFeatures = moduleFeatures & ~first.getMask();
         for (MongoJackModuleFeature f : features) {
             newModuleFeatures &= ~f.getMask();
         }
-        return (newModuleFeatures == moduleFeatures) ? this :
-            new MongoJackModuleConfiguration(newModuleFeatures);
+        return (newModuleFeatures == moduleFeatures) ? this : new MongoJackModuleConfiguration(newModuleFeatures);
     }
 
     /**
@@ -93,8 +90,7 @@ public class MongoJackModuleConfiguration {
         for (MongoJackModuleFeature f : features) {
             newModuleFeatures &= ~f.getMask();
         }
-        return (newModuleFeatures == moduleFeatures) ? this :
-            new MongoJackModuleConfiguration(newModuleFeatures);
+        return (newModuleFeatures == moduleFeatures) ? this : new MongoJackModuleConfiguration(newModuleFeatures);
     }
 
 }

@@ -41,13 +41,14 @@ public class TestJavaTimeHandling extends MongoDBTestBase {
         public org.bson.types.ObjectId _id;
         public LocalDate localDate;
     }
-    
+
     @BeforeEach
     public void setUp() {
-        timestampWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper());
-        timestampWritingObjectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, true);
-        millisWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper(), new MongoJackModuleConfiguration().with(MongoJackModuleFeature.WRITE_INSTANT_AS_BSON_DATE));
-        millisWritingObjectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+        timestampWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper()).rebuild()
+                .configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, true).build();
+        millisWritingObjectMapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper(), new MongoJackModuleConfiguration().with(
+                MongoJackModuleFeature.WRITE_INSTANT_AS_BSON_DATE))
+                .rebuild().configure(DateTimeFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false).build();
     }
 
     @Test

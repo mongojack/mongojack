@@ -76,21 +76,24 @@ public class MongoJackModule extends JacksonModule {
      * @return This object mapper (for chaining)
      */
     public static ObjectMapper configure(ObjectMapper objectMapper, MongoJackModuleConfiguration moduleConfiguration) {
+        var builder = objectMapper.rebuild();
         if (moduleConfiguration == DEFAULT_CONFIGURATION) {
-            objectMapper.registerModule(DEFAULT_MODULE_INSTANCE);
+            builder.addModule(DEFAULT_MODULE_INSTANCE);
         } else {
-            objectMapper.registerModule(new MongoJackModule(moduleConfiguration));
+            builder.addModule(new MongoJackModule(moduleConfiguration));
         }
 
         // disable serialize dates as timestamps because we have fewer runtime errors that way
         if (moduleConfiguration.isEnabled(MongoJackModuleFeature.DISABLE_DATES_AS_TIMESTAMPS)) {
-            objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+            builder.configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         }
 
         if (moduleConfiguration.isEnabled(MongoJackModuleFeature.SET_SERIALIZATION_INCLUSION_NON_NULL)) {
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            builder
+                    .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(JsonInclude.Include.NON_NULL))
+                    .changeDefaultPropertyInclusion(incl -> incl.withContentInclusion(JsonInclude.Include.NON_NULL));
         }
-        return objectMapper;
+        return builder.build();
     }
 
     @Override

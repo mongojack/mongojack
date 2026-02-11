@@ -112,9 +112,8 @@ public class TestJacksonMongoCollectionCustomObjectMapper extends MongoDBTestBas
             }
         });
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(module);
-        ObjectMapperConfigurer.configureObjectMapper(objectMapper);
+        ObjectMapper objectMapper = JsonMapper.builder().addModule(module).build();
+        objectMapper = ObjectMapperConfigurer.configureObjectMapper(objectMapper);
         return objectMapper;
     }
 
