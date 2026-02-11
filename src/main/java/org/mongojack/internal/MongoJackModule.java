@@ -83,6 +83,12 @@ public class MongoJackModule extends JacksonModule {
             builder.addModule(new MongoJackModule(moduleConfiguration));
         }
 
+        // JacksonCodec.decode is called multiple times on the same stream in order to deserialize multiple objects out
+        // of an array.
+        // This means that the stream will have trailing tokens after the first object is deserialized, and we don't
+        // want to fail on that.
+        builder.disable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
+
         // to allow setters like set_id() which have leading underscore, and are common when using MongoDB
         builder.accessorNaming(new DefaultAccessorNamingStrategy.Provider().withFirstCharAcceptance(true, true));
 
