@@ -159,7 +159,11 @@ public class TestBsonSerializers extends MongoDBTestBase {
 
     @Test
     public void testAggregationWithFailingListWithoutCustomObjectMapper() {
-        JacksonMongoCollection<Document> c = getCollection(Document.class);
+        // ensure the serializer is not found, by failing on missing serializers
+        // and asserting that the operation throws
+        var mapper = ObjectMapperConfigurer.configureObjectMapper(new ObjectMapper())
+                .rebuild().enable(SerializationFeature.FAIL_ON_EMPTY_BEANS).build();
+        JacksonMongoCollection<Document> c = getCollection(Document.class, mapper);
 
         assertThrows(
                 MongoDatabindException.class,
