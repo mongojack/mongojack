@@ -217,4 +217,65 @@ public class JsonGeneratorAdapter extends GeneratorBase {
         // no implementation
     }
 
+    @Override
+    protected void _closeInput() throws IOException {
+    }
+
+    @Override
+    public Version version() {
+        return MongoJackModule.DEFAULT_MODULE_INSTANCE.version();
+    }
+
+    @Override
+    public TokenStreamContext streamWriteContext() {
+        return null;
+    }
+
+    @Override
+    public Object streamWriteOutputTarget() {
+        return null;
+    }
+
+    @Override
+    public int streamWriteOutputBuffered() {
+        return 0;
+    }
+
+    protected Object _currentValue = null;
+
+    @Override
+    public Object currentValue() {
+        return _currentValue;
+    }
+
+    @Override
+    public void assignCurrentValue(Object v) {
+        _currentValue = v;
+    }
+
+    @Override
+    public JacksonFeatureSet<StreamWriteCapability> streamWriteCapabilities() {
+        return DEFAULT_TEXTUAL_WRITE_CAPABILITIES;
+    }
+
+    @Override
+    public JsonGenerator writeStartArray(Object currentValue) throws JacksonException {
+        this._currentValue = currentValue;
+        writeStartArray();
+        return this;
+    }
+
+    @Override
+    public JsonGenerator writeStartObject(Object currentValue) throws JacksonException {
+        this._currentValue = currentValue;
+        writeStartObject();
+        return this;
+    }
+
+    @Override
+    public JsonGenerator writePropertyId(long id) throws JacksonException {
+        writeName(Long.toString(id));
+        return this;
+    }
+
 }

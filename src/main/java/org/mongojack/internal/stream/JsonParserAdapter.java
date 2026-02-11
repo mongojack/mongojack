@@ -16,6 +16,7 @@ import org.bson.codecs.BsonJavaScriptWithScopeCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.PatternCodec;
 import org.bson.types.Symbol;
+import org.mongojack.MongoDatabindException;
 import org.mongojack.internal.MongoJackModule;
 
 import com.mongodb.MongoClientSettings;
@@ -392,5 +393,81 @@ public class JsonParserAdapter extends ParserBase {
             }
             return existing;
         });
+    }
+
+    @Override
+    protected void _parseNumericValue(int expType) throws JacksonException, InputCoercionException {
+        switch (type()) {
+            case DECIMAL128:
+                currentValue = reader.readDecimal128();
+                break;
+            case DOUBLE:
+                currentValue = reader.readDouble();
+                break;
+            case INT32:
+                currentValue = reader.readInt32();
+                break;
+            case INT64:
+                currentValue = reader.readInt64();
+                break;
+            default:
+                throw new MongoDatabindException("Trying to parse a numeric value, but current token is not numeric, is " + type());
+        }
+    }
+
+    @Override
+    protected int _parseIntValue() throws JacksonException {
+        switch (type()) {
+            case INT32:
+                return reader.readInt32();
+            default:
+                throw new MongoDatabindException("Trying to parse an int value, but current token is not int32, is " + type());
+        }
+    }
+
+    @Override
+    public Version version() {
+        return MongoJackModule.DEFAULT_MODULE_INSTANCE.version();
+    }
+
+    @Override
+    public Object streamReadInputSource() {
+        return null;
+    }
+
+    @Override
+    public String getString() throws JacksonException {
+        if (_currToken == null) {
+            return null;
+        }
+        // need to separate handling a bit...
+        switch (_currToken) {
+            case PROPERTY_NAME:
+                return currentName();
+            case VALUE_STRING:
+                return (String) currentValue;
+            case VALUE_NUMBER_INT:
+            case VALUE_NUMBER_FLOAT:
+                return String.valueOf((Number) currentValue);
+            case VALUE_EMBEDDED_OBJECT:
+                return null;
+            default:
+                return _currToken.asString();
+        }
+    }
+
+    @Override
+    public char[] getStringCharacters() throws JacksonException {
+        return getString().toCharArray();
+    }
+
+    @Override
+    public int getStringLength() throws JacksonException {
+        return getString().length();
+    }
+
+    @Override
+    public int getStringOffset() throws JacksonException {
+        return 0;
     }
 }

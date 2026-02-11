@@ -378,4 +378,73 @@ public class DocumentObjectTraversingParser extends ParserMinimalBase {
         }
         return nodeCursor.currentNode();
     }
+
+    @Override
+    protected void _closeInput() throws IOException {
+    }
+
+    @Override
+    protected void _releaseBuffers() {
+    }
+
+    @Override
+    public Object streamReadInputSource() {
+        return null;
+    }
+
+    @Override
+    public Object currentValue() {
+        return nodeCursor.currentValue();
+    }
+
+    @Override
+    public void assignCurrentValue(Object v) {
+        nodeCursor.assignCurrentValue(v);
+    }
+
+    @Override
+    public boolean isNaN() {
+        return currentNode() instanceof Number n && Double.isNaN(n.doubleValue());
+    }
+
+    @Override
+    public String getString() throws JacksonException {
+        if (_currToken == null) {
+            return null;
+        }
+        // need to separate handling a bit...
+        switch (_currToken) {
+            case PROPERTY_NAME:
+                return currentName();
+            case VALUE_STRING:
+                return (String) currentNode();
+            case VALUE_NUMBER_INT:
+            case VALUE_NUMBER_FLOAT:
+                return String.valueOf((Number) currentNode());
+            case VALUE_EMBEDDED_OBJECT:
+                return null;
+            default:
+                return _currToken.asString();
+        }
+    }
+
+    @Override
+    public char[] getStringCharacters() throws JacksonException {
+        return getString().toCharArray();
+    }
+
+    @Override
+    public int getStringLength() throws JacksonException {
+        return getString().length();
+    }
+
+    @Override
+    public int getStringOffset() throws JacksonException {
+        return 0;
+    }
+
+    @Override
+    public boolean hasStringCharacters() {
+        return false;
+    }
 }
