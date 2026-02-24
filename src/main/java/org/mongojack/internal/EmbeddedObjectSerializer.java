@@ -21,7 +21,6 @@ import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
-import tools.jackson.core.TokenStreamContext;
 import tools.jackson.databind.SerializationContext;
 import tools.jackson.databind.util.TokenBuffer;
 
@@ -65,10 +64,7 @@ public abstract class EmbeddedObjectSerializer<T> extends TransformingEmbeddedOb
             jgen.writePOJO(value);
         } else if (jgen instanceof TokenBuffer) {
             TokenBuffer buffer = (TokenBuffer) jgen;
-            TokenStreamContext ctx = buffer.streamWriteContext();
-            buffer.overrideParentContext(null);
-            buffer.writePOJO(value);
-            buffer.overrideParentContext(ctx);
+            buffer.writeEmbeddedObject(value);
         } else {
             String message = "JsonGenerator of type "
                     + jgen.getClass().getName()

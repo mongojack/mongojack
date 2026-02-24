@@ -16,14 +16,30 @@
  */
 package org.mongojack;
 
-import com.fasterxml.jackson.annotation.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.StringJoiner;
+import java.util.UUID;
+
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
+import org.mongojack.internal.EmbeddedObjectSerializer;
+import org.mongojack.internal.MongoJackModule;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
 
-import java.util.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import tools.jackson.databind.ObjectMapper;
 
 @SuppressWarnings("ConstantConditions")
 public class TestObjectIdHandling extends MongoDBTestBase {
@@ -193,7 +209,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         ByteArrayIdCollection object = new ByteArrayIdCollection();
         object._id = "id";
         object.list = Arrays.asList(org.bson.types.ObjectId.get().toByteArray(), org.bson.types.ObjectId.get()
-            .toByteArray());
+                .toByteArray());
 
         JacksonMongoCollection<ByteArrayIdCollection> coll = getCollection(ByteArrayIdCollection.class);
         coll.insert(object);
@@ -351,8 +367,10 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             final ConvertibleId that = (ConvertibleId) o;
             return Objects.equals(value, that.value);
         }
@@ -453,8 +471,10 @@ public class TestObjectIdHandling extends MongoDBTestBase {
 
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             final ComplexId complexId = (ComplexId) o;
             return Objects.equals(value1, complexId.value1) && Objects.equals(value2, complexId.value2);
         }
@@ -467,9 +487,9 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         @Override
         public String toString() {
             return new StringJoiner(", ", ComplexId.class.getSimpleName() + "[", "]")
-                .add("value1='" + value1 + "'")
-                .add("value2='" + value2 + "'")
-                .toString();
+                    .add("value1='" + value1 + "'")
+                    .add("value2='" + value2 + "'")
+                    .toString();
         }
     }
 
@@ -558,7 +578,7 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         private ObjectId id;
 
         @JsonCreator
-        public ObjectWithConstructorOnlyObjectId(@Id  ObjectId id) {
+        public ObjectWithConstructorOnlyObjectId(@Id ObjectId id) {
             this.id = id;
         }
 
@@ -573,6 +593,20 @@ public class TestObjectIdHandling extends MongoDBTestBase {
         public void setId(ObjectId id) {
             this.id = id;
         }
+    }
+
+    /**
+     * mapper.convertValue serializes into a TokenBuffer and then deserializes again. This excercises a code path in the
+     * {@link EmbeddedObjectSerializer} which serializes ObjectIds as an embedded object.
+     * 
+     */
+    @Test
+    public void testObjectIdSerializingViaTokenBuffer() throws JsonProcessingException {
+        var mapper = MongoJackModule.configure(new ObjectMapper());
+        var before = new org.bson.types.ObjectId();
+        var after = mapper.convertValue(before, org.bson.types.ObjectId.class);
+        assertEquals(before, after);
+
     }
 
 }
