@@ -23,6 +23,7 @@ import tools.jackson.core.StreamWriteCapability;
 import tools.jackson.core.TokenStreamContext;
 import tools.jackson.core.Version;
 import tools.jackson.core.base.GeneratorBase;
+import tools.jackson.core.io.ContentReference;
 import tools.jackson.core.io.IOContext;
 import tools.jackson.core.util.JacksonFeatureSet;
 
@@ -40,6 +41,34 @@ public class JsonGeneratorAdapter extends GeneratorBase {
         super(writeCtxt, ioCtxt, streamWriteFeatures);
         this.writer = writer;
         this.uuidRepresentation = uuidRepresentation;
+    }
+
+    protected JsonGeneratorAdapter(
+            final ObjectWriteContext writeCtxt,
+            final int streamWriteFeatures,
+            final BsonWriter writer,
+            final UuidRepresentation uuidRepresentation) {
+        this(
+                writeCtxt,
+                createIOContext(writeCtxt),
+                streamWriteFeatures,
+                writer,
+                uuidRepresentation);
+    }
+
+    private static IOContext createIOContext(ObjectWriteContext writeCtxt) {
+        var factory = writeCtxt.tokenStreamFactory();
+        return new IOContext(
+                factory.streamReadConstraints(),
+                factory.streamWriteConstraints(),
+                factory.errorReportConfiguration(),
+                // TODO jackson3: TokenStreamFactory does not expose a public IOContext factory for custom
+                // GeneratorBase implementations in 3.0.4, so this still relies on the internal recycler accessor.
+                // Revisit if Jackson adds a public alternative for custom generator bootstrap.
+                factory._getBufferRecycler(),
+                ContentReference.unknown(),
+                false,
+                null);
     }
 
     @Override

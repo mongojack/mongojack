@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import tools.jackson.databind.BeanDescription;
 import tools.jackson.databind.MapperFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.MapperConfigBase;
+import tools.jackson.databind.introspect.AnnotatedClass;
 import tools.jackson.databind.introspect.BeanPropertyDefinition;
 import tools.jackson.databind.ser.SerializationContextExt;
 
@@ -206,8 +208,8 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
         return deSerializationBPDCache.computeIfAbsent(
                 documentClass,
                 (documentClazz) -> {
-                    var ctx = objectMapper._deserializationContext();
-                    final BeanDescription beanDescription = ctx.introspectBeanDescription(ctx.constructType(documentClass));
+                    var config = objectMapper.deserializationConfig();
+                    final BeanDescription beanDescription = introspectBeanDescription(config, documentClass, false);
 
                     final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
                             .filter(
@@ -218,7 +220,7 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
 
                     found.ifPresent(
                             bpd -> {
-                                if (ctx.isEnabled(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
+                                if (config.isEnabled(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
                                     bpd.getAccessor().fixAccess(true);
                                 }
                             });
@@ -231,9 +233,8 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
         return serializationBPDCache.computeIfAbsent(
                 documentClass,
                 (documentClazz) -> {
-                    final SerializationContextExt serializationContext = objectMapper._serializationContext();
-                    final BeanDescription beanDescription = serializationContext.introspectBeanDescription(serializationContext.constructType(
-                            documentClass));
+                    var config = objectMapper.serializationConfig();
+                    final BeanDescription beanDescription = introspectBeanDescription(config, documentClass, true);
 
                     final Optional<BeanPropertyDefinition> found = beanDescription.findProperties().stream()
                             .filter(bpd -> bpd.getPrimaryMember() != null)
@@ -245,13 +246,25 @@ public class JacksonCodec<T> implements Codec<T>, CollectibleCodec<T>, Overridab
 
                     found.ifPresent(
                             bpd -> {
-                                if (serializationContext.isEnabled(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
+                                if (config.isEnabled(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS)) {
                                     bpd.getMutator().fixAccess(true);
                                 }
                             });
 
                     return found;
                 });
+    }
+
+    private BeanDescription introspectBeanDescription(
+            MapperConfigBase<?, ?> config,
+            Class<?> documentClass,
+            boolean forSerialization) {
+        var type = config.constructType(documentClass);
+        var introspector = config.classIntrospectorInstance().forOperation(config);
+        AnnotatedClass annotatedClass = introspector.introspectClassAnnotations(type);
+        return forSerialization
+                ? introspector.introspectForSerialization(type, annotatedClass)
+                : introspector.introspectForDeserialization(type, annotatedClass);
     }
 
 }

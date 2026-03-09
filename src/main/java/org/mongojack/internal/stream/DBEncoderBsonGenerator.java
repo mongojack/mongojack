@@ -57,6 +57,13 @@ public class DBEncoderBsonGenerator extends JsonGeneratorAdapter {
         this(context, ioContext, StreamWriteFeature.collectDefaults(), writer, uuidRepresentation);
     }
 
+    public DBEncoderBsonGenerator(
+            ObjectWriteContext context,
+            final BsonWriter writer,
+            final UuidRepresentation uuidRepresentation) {
+        super(context, StreamWriteFeature.collectDefaults(), writer, uuidRepresentation);
+    }
+
     @Override
     public JsonGenerator writePOJO(Object value) throws JacksonException {
         if (value == null) {

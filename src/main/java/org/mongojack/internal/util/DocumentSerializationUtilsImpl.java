@@ -65,8 +65,6 @@ import org.mongojack.internal.stream.DBEncoderBsonGenerator;
 import org.mongojack.internal.update.MultiUpdateOperationValue;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.core.io.ContentReference;
-import tools.jackson.core.io.IOContext;
 import tools.jackson.databind.JavaType;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.SerializationContext;
@@ -353,22 +351,17 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
             JavaType type,
             Bson query,
             CodecRegistry registry) {
+        // TODO jackson3: This still uses ObjectMapper._serializationContext() because filter/update serialization
+        // directly looks up and invokes Jackson ValueSerializers. Removing this likely requires a larger refactor to
+        // route more of the flow through ObjectWriter.writeValue(...) instead of manipulating a live serializer
+        // provider/context directly.
         SerializationContext serializerProvider = objectMapper._serializationContext();
         ValueSerializer serializer = JacksonAccessor.findValueSerializer(
                 serializerProvider, type);
-        var context = objectMapper._serializationContext();
-        var ioContext = new IOContext(
-                context.tokenStreamFactory().streamReadConstraints(),
-                context.tokenStreamFactory().streamWriteConstraints(),
-                context.tokenStreamFactory().errorReportConfiguration(),
-                context.tokenStreamFactory()._getBufferRecycler(),
-                ContentReference.unknown(),
-                false,
-                null);
         final BsonDocument document = new BsonDocument();
         try (
                 BsonDocumentWriter writer = new BsonDocumentWriter(document);
-                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(context, ioContext, writer, attemptToExtractUuidRepresentation(
+                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(serializerProvider, writer, attemptToExtractUuidRepresentation(
                         registry))) {
             serializeFilter(serializerProvider, serializer, query, registry, writer, generator);
             return document;
@@ -512,23 +505,17 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
             ObjectMapper objectMapper,
             JavaType javaType,
             CodecRegistry registry) {
+        // TODO jackson3: This still uses ObjectMapper._serializationContext() because update serialization directly
+        // resolves and invokes Jackson ValueSerializers. Removing this likely requires a larger refactor to move this
+        // logic behind ObjectWriter-based serialization instead of depending on a live SerializationContext.
         SerializationContext serializerProvider = objectMapper._serializationContext();
 
         ValueSerializer<?> serializer = JacksonAccessor.findValueSerializer(serializerProvider, javaType);
-        var context = objectMapper._serializationContext();
-        var ioContext = new IOContext(
-                context.tokenStreamFactory().streamReadConstraints(),
-                context.tokenStreamFactory().streamWriteConstraints(),
-                context.tokenStreamFactory().errorReportConfiguration(),
-                context.tokenStreamFactory()._getBufferRecycler(),
-                ContentReference.unknown(),
-                false,
-                null);
 
         final BsonDocument document = new BsonDocument();
         try (
                 BsonDocumentWriter writer = new BsonDocumentWriter(document);
-                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(context, ioContext, writer, attemptToExtractUuidRepresentation(
+                DBEncoderBsonGenerator generator = new DBEncoderBsonGenerator(serializerProvider, writer, attemptToExtractUuidRepresentation(
                         registry))) {
             writer.writeStartDocument();
             for (Entry<String, Map<String, UpdateOperationValue>> op : update.entrySet()) {

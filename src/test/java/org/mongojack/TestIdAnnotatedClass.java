@@ -29,9 +29,17 @@ import com.mongodb.client.model.Filters;
 
 import tools.jackson.databind.BeanDescription;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.ser.SerializationContextExt;
+import tools.jackson.databind.SerializationConfig;
 
 public class TestIdAnnotatedClass extends MongoDBTestBase {
+
+    private BeanDescription introspectForSerialization(ObjectMapper objectMapper, Class<?> type) {
+        SerializationConfig config = objectMapper.serializationConfig();
+        var javaType = config.constructType(type);
+        var introspector = config.classIntrospectorInstance().forOperation(config);
+        var annotatedClass = introspector.introspectClassAnnotations(javaType);
+        return introspector.introspectForSerialization(javaType, annotatedClass);
+    }
 
     @SuppressWarnings("unchecked")
     private <T> JacksonMongoCollection<T> createCollFor(T object) {
@@ -234,8 +242,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testProxyFieldAnnotatedWithoutSettingIt() {
         ObjectMapper om = MongoJackModule.configure(new ObjectMapper());
 
-        final SerializationContextExt ctx = om._serializationContext();
-        final BeanDescription beanDescription = ctx.introspectBeanDescription(ctx.constructType(IdFieldProxyAnnotated.class));
+        final BeanDescription beanDescription = introspectForSerialization(om, IdFieldProxyAnnotated.class);
         assertThat(beanDescription.findProperties()
                 .stream().filter(
                         bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)).findFirst().get().getName()).isEqualTo("_id");
@@ -287,8 +294,7 @@ public class TestIdAnnotatedClass extends MongoDBTestBase {
     public void testProxyFieldAnnotatedWithoutSettingItSubclass() {
         ObjectMapper om = MongoJackModule.configure(new ObjectMapper());
 
-        final SerializationContextExt ctx = om._serializationContext();
-        final BeanDescription beanDescription = ctx.introspectBeanDescription(ctx.constructType(IdFieldProxyAnnotatedSubclass.class));
+        final BeanDescription beanDescription = introspectForSerialization(om, IdFieldProxyAnnotatedSubclass.class);
         assertThat(beanDescription.findProperties()
                 .stream().filter(
                         bpd -> bpd.getPrimaryMember().hasAnnotation(ObjectId.class)).findFirst().get().getName()).isEqualTo("_id");

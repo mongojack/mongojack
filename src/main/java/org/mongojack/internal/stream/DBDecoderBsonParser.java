@@ -45,6 +45,15 @@ public class DBDecoderBsonParser extends JsonParserAdapter {
         super(readCtxt, ctxt, jsonFeatures, reader, uuidRepresentation);
     }
 
+    public DBDecoderBsonParser(
+            ObjectReadContext readCtxt,
+            int jsonFeatures,
+            AbstractBsonReader reader,
+            ObjectMapper objectMapper,
+            final UuidRepresentation uuidRepresentation) {
+        super(readCtxt, jsonFeatures, reader, uuidRepresentation);
+    }
+
     @Override
     public String getText() throws JacksonException {
         if (JsonToken.VALUE_EMBEDDED_OBJECT == currentToken()) {

@@ -10,8 +10,6 @@ import com.mongodb.MongoException;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
-import tools.jackson.core.io.ContentReference;
-import tools.jackson.core.io.IOContext;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -39,16 +37,12 @@ public class JacksonEncoder<T> implements Encoder<T> {
 
     @Override
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
+        // TODO jackson3: This still uses ObjectMapper._serializationContext() because Jackson 3.0.4 does not expose
+        // a public mapper-level API for obtaining the configured live SerializationContext/ObjectWriteContext used by
+        // custom generators. If Jackson exposes one later, or if this flow is refactored around ObjectWriter-only
+        // entry points, this underscore API use can be removed.
         var context = objectMapper._serializationContext();
-        var ioContext = new IOContext(
-                context.tokenStreamFactory().streamReadConstraints(),
-                context.tokenStreamFactory().streamWriteConstraints(),
-                context.tokenStreamFactory().errorReportConfiguration(),
-                context.tokenStreamFactory()._getBufferRecycler(),
-                ContentReference.unknown(),
-                false,
-                null);
-        try (JsonGenerator generator = new DBEncoderBsonGenerator(context, ioContext, writer, uuidRepresentation)) {
+        try (JsonGenerator generator = new DBEncoderBsonGenerator(context, writer, uuidRepresentation)) {
             objectMapper.writerWithView(view).writeValue(generator, value);
         } catch (DatabindException e) {
             throw new MongoDatabindException(e);

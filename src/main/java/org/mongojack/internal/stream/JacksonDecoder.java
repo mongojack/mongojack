@@ -9,8 +9,6 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 
 import tools.jackson.core.JacksonException;
-import tools.jackson.core.io.ContentReference;
-import tools.jackson.core.io.IOContext;
 import tools.jackson.databind.ObjectMapper;
 
 public class JacksonDecoder<T> implements Decoder<T> {
@@ -39,16 +37,12 @@ public class JacksonDecoder<T> implements Decoder<T> {
 
     @Override
     public T decode(BsonReader reader, DecoderContext decoderContext) {
+        // TODO jackson3: This still uses ObjectMapper._deserializationContext() because Jackson 3.0.4 does not expose
+        // a public mapper-level API for obtaining the configured live DeserializationContext/ObjectReadContext used by
+        // custom parsers. If Jackson exposes one later, or if this flow is refactored around ObjectReader-only entry
+        // points, this underscore API use can be removed.
         var context = objectMapper._deserializationContext();
-        var ioCtx = new IOContext(
-                context.tokenStreamFactory().streamReadConstraints(),
-                context.tokenStreamFactory().streamWriteConstraints(),
-                context.tokenStreamFactory().errorReportConfiguration(),
-                context.tokenStreamFactory()._getBufferRecycler(),
-                ContentReference.unknown(),
-                false,
-                null);
-        try (DBDecoderBsonParser parser = new DBDecoderBsonParser(context, ioCtx, 0,
+        try (DBDecoderBsonParser parser = new DBDecoderBsonParser(context, 0,
                 (AbstractBsonReader) reader, objectMapper, uuidRepresentation)) {
             return objectMapper.reader().forType(clazz).withView(view).readValue(parser);
         } catch (JacksonException e) {

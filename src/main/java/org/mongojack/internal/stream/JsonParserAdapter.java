@@ -71,6 +71,29 @@ public class JsonParserAdapter extends ParserBase {
         this.uuidRepresentation = uuidRepresentation;
     }
 
+    public JsonParserAdapter(
+            ObjectReadContext readCtxt,
+            int jsonFeatures,
+            AbstractBsonReader reader,
+            final UuidRepresentation uuidRepresentation) {
+        this(readCtxt, createIOContext(readCtxt), jsonFeatures, reader, uuidRepresentation);
+    }
+
+    private static IOContext createIOContext(ObjectReadContext readCtxt) {
+        var factory = readCtxt.tokenStreamFactory();
+        return new IOContext(
+                factory.streamReadConstraints(),
+                factory.streamWriteConstraints(),
+                factory.errorReportConfiguration(),
+                // TODO jackson3: TokenStreamFactory does not expose a public IOContext factory for custom
+                // ParserBase implementations in 3.0.4, so this still relies on the internal recycler accessor.
+                // Revisit if Jackson adds a public alternative for custom parser bootstrap.
+                factory._getBufferRecycler(),
+                ContentReference.unknown(),
+                false,
+                null);
+    }
+
     @Override
     public void close() {
         if (isEnabled(StreamReadFeature.AUTO_CLOSE_SOURCE)) {
