@@ -16,6 +16,8 @@
  */
 package org.mongojack.internal;
 
+import org.bson.BsonMaxKey;
+import org.bson.BsonMinKey;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DatabindException;
@@ -62,6 +64,10 @@ public class ObjectIdSerializer extends EmbeddedObjectSerializer {
     private Object serialiseObject(Object value, JsonGenerator jgen) throws DatabindException {
         if (value == null) {
             return null;
+        } else if ("MaxKey".equals(value)) {
+            return new BsonMaxKey();
+        } else if ("MinKey".equals(value)) {
+            return new BsonMinKey();
         } else if (value instanceof String) {
             return new ObjectId((String) value);
         } else if (value instanceof byte[]) {

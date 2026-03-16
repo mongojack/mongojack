@@ -365,8 +365,10 @@ public class DocumentSerializationUtilsImpl implements DocumentSerializationUtil
                         registry))) {
             serializeFilter(serializerProvider, serializer, query, registry, writer, generator);
             return document;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
-            return query;
+            throw new RuntimeException(e);
         }
     }
 
