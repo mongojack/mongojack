@@ -1,6 +1,11 @@
 Changelog
 =========
 
+6.0.0
+-----
+
+* [Issue 252](https://github.com/mongojack/mongojack/issues/252), [PR 253](https://github.com/mongojack/mongojack/pull/253): Updatest to Jackson 3.x.  This is a breaking change.
+
 5.0.3
 -----
 

@@ -9,6 +9,12 @@ a massive head start, making it powerful, performant, and robust.
 
 Snapshots, when appropriate, are available in Sonatype's snapshot repositories.
 
+6.x Updates
+-----------
+
+The 6.x update changes the version of Jackson to 3.x.  Because Jackson only supports Java 17+, so Java 17+ is required to use this verison.  We've attempted to keep the API as close to the previous versions as possible,
+but Jackson 3 itself is a breaking change.  The 6.x version is supporting Mongo 5.x driver versions only.
+
 5.x Updates
 -----------
 
@@ -77,6 +83,7 @@ Quick start
 - Version 2.5.0 to 2.10.0 are compatible with the 3.x series mongodb-driver using the legacy 3.x series APIs.
 - Version 3.0.0 and later are compatible with versions 3.12.x and later of the mongo driver using mongodb-driver-sync without the legacy APIs.
 - Version 4.N.x+, 5.N.x are compatible with the _matching_ `mongodb-java-sync` driver, although patch versions are not kept in sync 
+- Version 6.x is compatible with the mongodb-driver-sync 5.x series, but see notes about the 6.x series above.
 
 ### Installation
 
@@ -89,17 +96,17 @@ Maven:
     <dependency>
       <groupId>org.mongojack</groupId>
       <artifactId>mongojack</artifactId>
-      <version>5.1.0</version>
+      <version>6.0.0</version>
     </dependency>
 ```
 
 Gradle:
 ```groovy
-    implementation 'org.mongojack:mongojack:5.1.0'
+    implementation 'org.mongojack:mongojack:6.0.0'
 ```
 or
 ```kotlin
-    implementation("org.mongojack:mongojack:5.1.0")
+    implementation("org.mongojack:mongojack:6.0.0")
 ```
 
 ### Writing code
