@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # 17 is the compile target; the others cover newer runtimes
+        java: [17, 21, 25]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      # The release profile also builds the source jar, Javadoc jar and coverage report. Signing is
+      # skipped so that no key is needed. Javadoc errors fail the build here, unlike a default build.
+      - run: mvn -B -ntp clean verify -Prelease -Dgpg.skip -Dmaven.javadoc.failOnError=true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: failure()
+        with:
+          name: test-reports-jdk${{ matrix.java }}
+          path: target/surefire-reports/
+          if-no-files-found: ignore
