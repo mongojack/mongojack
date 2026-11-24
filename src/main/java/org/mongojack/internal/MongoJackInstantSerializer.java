@@ -8,7 +8,6 @@ import org.mongojack.TransformingEmbeddedObjectSerializer;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.SerializationContext;
-import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.ext.javatime.ser.InstantSerializer;
 
@@ -17,7 +16,7 @@ import tools.jackson.databind.ext.javatime.ser.InstantSerializer;
  *
  * @author Vladimir Petrakovich
  *
- * @see SerializationFeature#WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS
+ * @see DateTimeFeature#WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS
  */
 public class MongoJackInstantSerializer extends TransformingEmbeddedObjectSerializer<Instant, Date> {
 

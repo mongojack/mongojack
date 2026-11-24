@@ -30,7 +30,7 @@ import tools.jackson.databind.util.TokenBuffer;
  * When used with BsonObjectGenerator or DBEncoderBsonGenerator, passes values straight through.
  * <p>
  * When used with a {@link TokenBuffer} (as by {@link
- * tools.jackson.databind.deser.BeanDeserializer#deserializeWithUnwrapped}),
+ * tools.jackson.databind.deser.bean.BeanDeserializer#deserializeWithUnwrapped}),
  * temporarily clears the TokenBuffer codec before passing the value through,
  * so it will be properly serialized as an embedded object.
  * (Failure to do so would blow up the stack, as the TokenBuffer would

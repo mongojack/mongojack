@@ -15,11 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test parsing and generating polymorphic types.
- * <p>Related issues:
- *   <ul>
- *     <li><a href="https://github.com/mongojack/mongojack/issues/236">mongojack/mongojack#236</a></li>
- *   </ul>
- * </p>
+ * <p>Related issues:</p>
+ * <ul>
+ *   <li><a href="https://github.com/mongojack/mongojack/issues/236">mongojack/mongojack#236</a></li>
+ * </ul>
  */
 public class TestParsingAndGeneratingPolymorphicTypes extends MongoDBTestBase {
     private JacksonMongoCollection<Metric> coll;

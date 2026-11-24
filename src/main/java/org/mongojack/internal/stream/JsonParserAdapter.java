@@ -56,7 +56,7 @@ public class JsonParserAdapter extends ParserBase {
      *
      * @param ctxt the Jackson IO context
      * @param jsonFeatures bit flag composed of bits that indicate which
-     *            {@link tools.jackson.core.JsonParser.Feature}s are enabled.
+     *            {@link tools.jackson.core.StreamReadFeature}s are enabled.
      * @param reader Bson reader to read from
      */
     public JsonParserAdapter(
