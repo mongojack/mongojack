@@ -10,7 +10,7 @@ public enum MongoJackModuleFeature implements ConfigFeature {
     REGISTER_JAVA_TIME(true),
 
     /**
-     * Disable writing dates as timestamps {@code objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);},
+     * Disable writing dates as timestamps {@code builder.configure(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS, false);},
      * because we get fewer runtime problems that way.
      */
     DISABLE_DATES_AS_TIMESTAMPS(true),
@@ -23,7 +23,7 @@ public enum MongoJackModuleFeature implements ConfigFeature {
     /**
      * Serialises {@link java.time.Instant}s as BSON dates when nanosecond precision is disabled.
      *
-     * @see tools.jackson.databind.SerializationFeature#WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS
+     * @see tools.jackson.databind.cfg.DateTimeFeature#WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS
      */
     WRITE_INSTANT_AS_BSON_DATE(false),
 

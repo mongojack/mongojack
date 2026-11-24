@@ -1,6 +1,6 @@
 package org.mongojack.testing;
 
-import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.mongodb.MongoDBContainer;
 
 /**
  * @author Ben McCann (benmccann.com)
