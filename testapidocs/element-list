@@ -1,6 +1,3 @@
-org.junit.rules
-org.junit.runner
-org.junit.runners.model
 org.mongojack
 org.mongojack.mock
 org.mongojack.testing
